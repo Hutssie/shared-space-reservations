@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     String    @id @default(cuid())
+  email                  String    @unique
+  passwordHash           String    @map("password_hash")
+  name                   String
+  avatarUrl              String?   @map("avatar_url")
+  professionalTitle      String?   @map("professional_title")
+  bio                    String?   @db.Text
+  availabilityStartTime  String?   @map("availability_start_time")
+  availabilityEndTime    String?   @map("availability_end_time")
+  createdAt              DateTime  @default(now()) @map("created_at")
+
+  spacesAsHost         Space[]               @relation("HostSpaces")
+  bookings             Booking[]
+  reviews              Review[]
+  favorites            Favorite[]
+  passwordResetTokens  PasswordResetToken[]
+}
+
+model Space {
+  id                String   @id @default(cuid())
+  hostId            String   @map("host_id")
+  category          String
+  title             String
+  location          String
+  capacity          Int
+  pricePerHour      Decimal  @map("price_per_hour") @db.Decimal(10, 2)
+  squareMeters      Int?     @map("square_meters")
+  description       String   @db.Text
+  imageUrl          String?  @map("image_url")
+  imagesJson        String?  @map("images_json") @db.Text
+  amenitiesJson     String?  @map("amenities_json") @db.Text
+  isInstantBookable Boolean  @default(false) @map("is_instant_bookable")
+  availabilityStartTime String? @map("availability_start_time")
+  availabilityEndTime   String? @map("availability_end_time")
+  sameDayBookingAllowed Boolean @default(false) @map("same_day_booking_allowed")
+  minDurationHours      Int?    @map("min_duration_hours")
+  maxDurationHours      Int?    @map("max_duration_hours")
+  maxAdvanceBookingDays Int?    @map("max_advance_booking_days")
+  cancellationPolicy    String? @map("cancellation_policy")
+  cleaningFeeCents      Int?    @map("cleaning_fee_cents")
+  equipmentFeeCents     Int?    @map("equipment_fee_cents")
+  bannedDaysJson        String? @map("banned_days_json") @db.Text
+  blockedDatesJson     String? @map("blocked_dates_json") @db.Text
+  hostLastSeenBookingsAt DateTime? @map("host_last_seen_bookings_at")
+  status            String   @default("active") @map("status")
+  latitude          Float?
+  longitude         Float?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  host      User       @relation("HostSpaces", fields: [hostId], references: [id], onDelete: Cascade)
+  bookings  Booking[]
+  reviews   Review[]
+  favorites Favorite[]
+
+  @@index([category])
+  @@index([hostId])
+}
+
+model Booking {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  spaceId    String   @map("space_id")
+  date       DateTime @db.Date
+  startTime  String   @map("start_time")
+  endTime    String   @map("end_time")
+  status     String   @default("pending")
+  totalPrice Decimal  @map("total_price") @db.Decimal(10, 2)
+  cleaningFeeCents Int? @map("cleaning_fee_cents")
+  equipmentFeeCents Int? @map("equipment_fee_cents")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId, date])
+  @@index([userId])
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  spaceId       String   @map("space_id")
+  userId        String   @map("user_id")
+  rating        Float
+  text          String   @db.Text
+  cleanliness   Int?
+  communication Int?
+  location      Int?
+  value         Int?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId])
+}
+
+model Favorite {
+  userId  String @map("user_id")
+  spaceId String @map("space_id")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, spaceId])
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([userId])
+}

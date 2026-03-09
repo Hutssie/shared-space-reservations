@@ -1,0 +1,19 @@
+@import './fonts.css';
+@import './tailwind.css';
+@import './theme.css';
+
+/* Leaflet map styles */
+.leaflet-container {
+  font-family: 'Inter', sans-serif;
+}
+
+/* Remove default leaflet marker container styles */
+.price-marker-container {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Leaflet popup adjustments */
+.leaflet-popup-content-wrapper {
+  padding: 0;
+}
