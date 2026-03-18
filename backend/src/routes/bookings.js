@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.js';
 import { Decimal } from '@prisma/client/runtime/library';
+import { createNotification } from './notifications.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -166,7 +167,8 @@ router.post('/', authMiddleware, async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid time range' });
     }
     if (endM <= startM) {
-      if (endTime === '12:00 AM' && startM > 0) {
+      // Treat midnight as next-day when it would otherwise wrap (including full-day 12 AM -> 12 AM).
+      if (endTime === '12:00 AM') {
         endM = 24 * 60;
       } else {
         return res.status(400).json({ error: 'Invalid time range' });
@@ -201,7 +203,8 @@ router.post('/', authMiddleware, async (req, res, next) => {
     const totalPrice = Number(space.pricePerHour) * hours + cleaningCents / 100 + equipmentCents / 100;
 
     const existing = await prisma.booking.findMany({
-      where: { spaceId, date: d, status: { not: 'cancelled' } },
+      // Allow overlapping *requests* (pending). Only confirmed bookings block a slot.
+      where: { spaceId, date: d, status: 'confirmed' },
     });
     const overlaps = existing.some((b) => {
       const bStart = parseTimeToMinutes(b.startTime);
@@ -228,6 +231,41 @@ router.post('/', authMiddleware, async (req, res, next) => {
       include: { space: true },
     });
 
+    const dateStr = booking.date.toISOString().slice(0, 10);
+    if (booking.status === 'confirmed') {
+      await createNotification(prisma, {
+        userId: booking.userId,
+        type: 'booking_confirmed',
+        title: 'Booking Confirmed',
+        message: `Your reservation at ${space.title} is confirmed for ${dateStr} at ${booking.startTime}.`,
+        data: { bookingId: booking.id, spaceId, spaceTitle: space.title },
+      });
+      if (space.hostId && space.hostId !== booking.userId) {
+        await createNotification(prisma, {
+          userId: space.hostId,
+          type: 'booking_confirmed',
+          title: 'New Booking Confirmed',
+          message: `A new booking for "${space.title}" was confirmed for ${dateStr} at ${booking.startTime}.`,
+          data: { bookingId: booking.id, spaceId, spaceTitle: space.title, destination: 'host_space_bookings' },
+        });
+      }
+    } else {
+      await createNotification(prisma, {
+        userId: booking.userId,
+        type: 'booking_request',
+        title: 'Booking Request Sent',
+        message: `Your request for ${space.title} on ${dateStr} is pending host approval.`,
+        data: { bookingId: booking.id, spaceId, spaceTitle: space.title },
+      });
+      await createNotification(prisma, {
+        userId: space.hostId,
+        type: 'booking_request',
+        title: 'New Booking Request',
+        message: `You have a new request for "${space.title}" for ${dateStr} at ${booking.startTime}.`,
+        data: { bookingId: booking.id, spaceId, spaceTitle: space.title, destination: 'host_space_bookings' },
+      });
+    }
+
     res.status(201).json({
       id: booking.id,
       spaceId: booking.spaceId,
@@ -246,13 +284,18 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
   try {
     const booking = await prisma.booking.findFirst({
       where: { id: req.params.id },
-      include: { space: { select: { hostId: true, cancellationPolicy: true } } },
+      include: {
+        space: { select: { hostId: true, cancellationPolicy: true, title: true } },
+        user: { select: { name: true } },
+      },
     });
     if (!booking) return res.status(404).json({ error: 'Booking not found' });
 
     const { status } = req.body;
     const isHost = booking.space.hostId === req.userId;
     const isBooker = booking.userId === req.userId;
+    const spaceTitle = booking.space.title;
+    const dateStr = booking.date.toISOString().slice(0, 10);
 
     if (isHost && (status === 'confirmed' || status === 'cancelled')) {
       if (status === 'cancelled') {
@@ -260,15 +303,50 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
           where: { id: req.params.id },
           data: { status: 'cancelled' },
         });
+        await createNotification(prisma, {
+          userId: booking.userId,
+          type: 'booking_cancelled',
+          title: 'Booking Cancelled',
+          message: `Your reservation at ${spaceTitle} for ${dateStr} was cancelled by the host.`,
+          data: { bookingId: booking.id, spaceId: booking.spaceId, spaceTitle },
+        });
         return res.json({ id: booking.id, status: 'cancelled' });
       }
       if (status === 'confirmed') {
         if (isBookingStartInPast(booking)) {
           return res.status(400).json({ error: 'Cannot confirm a booking that has already passed.' });
         }
+        const startM = parseTimeToMinutes(booking.startTime);
+        let endM = parseTimeToMinutes(booking.endTime);
+        if (endM === 0) endM = 24 * 60;
+        const confirmed = await prisma.booking.findMany({
+          where: {
+            id: { not: booking.id },
+            spaceId: booking.spaceId,
+            date: booking.date,
+            status: 'confirmed',
+          },
+          select: { startTime: true, endTime: true },
+        });
+        const overlaps = confirmed.some((b) => {
+          const bStart = parseTimeToMinutes(b.startTime);
+          let bEnd = parseTimeToMinutes(b.endTime);
+          if (bEnd === 0) bEnd = 24 * 60;
+          return (startM ?? 0) < bEnd && (endM ?? 0) > bStart;
+        });
+        if (overlaps) {
+          return res.status(409).json({ error: 'Time slot is already booked' });
+        }
         await prisma.booking.update({
           where: { id: req.params.id },
           data: { status: 'confirmed' },
+        });
+        await createNotification(prisma, {
+          userId: booking.userId,
+          type: 'booking_confirmed',
+          title: 'Booking Confirmed',
+          message: `Your reservation at ${spaceTitle} is confirmed for ${dateStr} at ${booking.startTime}.`,
+          data: { bookingId: booking.id, spaceId: booking.spaceId, spaceTitle },
         });
         return res.json({ id: booking.id, status: 'confirmed' });
       }
@@ -291,6 +369,13 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
       await prisma.booking.update({
         where: { id: req.params.id },
         data: { status: 'cancelled' },
+      });
+      await createNotification(prisma, {
+        userId: booking.space.hostId,
+        type: 'booking_cancelled',
+        title: 'Booking Cancelled',
+        message: `${booking.user?.name ?? 'A guest'}'s reservation for "${spaceTitle}" on ${dateStr} was cancelled.`,
+        data: { bookingId: booking.id, spaceId: booking.spaceId, spaceTitle, destination: 'host_space_bookings' },
       });
       return res.json({ id: booking.id, status: 'cancelled' });
     }

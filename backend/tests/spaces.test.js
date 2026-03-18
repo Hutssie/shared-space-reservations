@@ -16,13 +16,13 @@ describe('Spaces', () => {
   beforeAll(async () => {
     const reg = await request(app)
       .post('/api/auth/register')
-      .send({ email: hostEmail, password: 'pass', name: 'Host User' });
+      .send({ email: hostEmail, password: 'Password123', name: 'Host User' });
     hostToken = reg.body.token;
     hostId = reg.body.user.id;
 
     const other = await request(app)
       .post('/api/auth/register')
-      .send({ email: `${unique()}@other.com`, password: 'pass', name: 'Other' });
+      .send({ email: `${unique()}@other.com`, password: 'Password123', name: 'Other' });
     otherUserToken = other.body.token;
 
     const createRes = await request(app)

@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, Menu, User, Bell as BellIcon, X, ChevronRight, LogIn, UserPlus } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
-import { NotificationsDropdown } from './NotificationsDropdown';
+import { NotificationsDropdown, hasUnreadNotifications } from './NotificationsDropdown';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserMenuDropdown } from './UserMenuDropdown';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../contexts/NotificationsContext';
 
 export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -14,6 +15,7 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
   const navigate = useNavigate();
   const { token, logout } = useAuth();
   const isAuthenticated = !!token;
+  const { unreadCount } = useNotifications();
   const isActive = (path: string) => location.pathname === path;
 
   useEffect(() => {
@@ -73,7 +75,9 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
                     trigger={
                       <button className="p-2 text-brand-700 hover:bg-brand-100 rounded-full transition-colors cursor-pointer relative group">
                         <BellIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-brand-500 rounded-full border-2 border-white animate-pulse" />
+                        {hasUnreadNotifications(unreadCount) && (
+                          <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse shadow-sm shadow-red-500/50" />
+                        )}
                       </button>
                     }
                   />
@@ -200,7 +204,9 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
                           <BellIcon className="w-5 h-5" />
                           Notifications
                         </div>
-                        <span className="w-2.5 h-2.5 bg-brand-500 rounded-full border-2 border-white animate-pulse" />
+                        {hasUnreadNotifications(unreadCount) && (
+                          <span className="w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white animate-pulse shadow-sm shadow-red-500/50" />
+                        )}
                       </Link>
                       <button 
                         onClick={() => {

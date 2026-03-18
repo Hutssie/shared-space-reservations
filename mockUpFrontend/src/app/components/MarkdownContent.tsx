@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 type MarkdownContentProps = {
   children: string;
   className?: string;
+  onImageClick?: (src: string) => void;
 };
 
 const proseClasses = [
@@ -17,13 +18,35 @@ const proseClasses = [
   '[&_h1]:text-2xl [&_h1]:font-black [&_h1]:mb-2 [&_h2]:text-xl [&_h2]:font-black [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mb-1',
 ].join(' ');
 
-export const MarkdownContent = ({ children, className = '' }: MarkdownContentProps) => {
+export const MarkdownContent = ({ children, className = '', onImageClick }: MarkdownContentProps) => {
   if (!children || typeof children !== 'string') {
     return <span className={className}>{children}</span>;
   }
+  const components = onImageClick
+    ? {
+        img: ({ src, alt }: { src?: string; alt?: string }) =>
+          src ? (
+            <img
+              src={src}
+              alt={alt ?? ''}
+              className="cursor-pointer rounded-2xl max-w-full h-auto border border-brand-100 shadow-sm"
+              onClick={(e) => {
+                e.preventDefault();
+                onImageClick(src);
+              }}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && onImageClick(src)}
+            />
+          ) : null,
+      }
+    : undefined;
+
   return (
     <div className={`${proseClasses} ${className}`}>
-      <ReactMarkdown remarkPlugins={[remarkGfm]}>{children}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+        {children}
+      </ReactMarkdown>
     </div>
   );
 };

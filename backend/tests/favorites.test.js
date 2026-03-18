@@ -16,12 +16,12 @@ describe('Favorites', () => {
   beforeAll(async () => {
     const reg = await request(app)
       .post('/api/auth/register')
-      .send({ email: userEmail, password: 'pass', name: 'Fav User' });
+      .send({ email: userEmail, password: 'Password123', name: 'Fav User' });
     userToken = reg.body.token;
 
     const hostReg = await request(app)
       .post('/api/auth/register')
-      .send({ email: hostEmail, password: 'pass', name: 'Fav Host' });
+      .send({ email: hostEmail, password: 'Password123', name: 'Fav Host' });
     hostToken = hostReg.body.token;
 
     const createRes = await request(app)

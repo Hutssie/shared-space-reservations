@@ -24,6 +24,55 @@ model User {
   reviews              Review[]
   favorites            Favorite[]
   passwordResetTokens  PasswordResetToken[]
+  conversations        ConversationParticipant[]
+  messagesSent         Message[]             @relation("MessagesSent")
+  notifications        Notification[]
+}
+
+model Conversation {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  lastMessageAt DateTime? @map("last_message_at")
+
+  participants ConversationParticipant[]
+  messages      Message[]
+
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  conversationId String   @map("conversation_id")
+  userId         String   @map("user_id")
+  joinedAt       DateTime @default(now()) @map("joined_at")
+  lastReadAt     DateTime? @map("last_read_at")
+  // Per-user deletion behavior:
+  // - hiddenAt: conversation is hidden from this user’s list
+  // - clearedAt: messages before this timestamp are hidden for this user
+  hiddenAt       DateTime? @map("hidden_at")
+  clearedAt      DateTime? @map("cleared_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([conversationId, userId])
+  @@index([userId])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  conversationId String    @map("conversation_id")
+  senderId       String    @map("sender_id")
+  text           String    @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+  editedAt       DateTime? @map("edited_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessagesSent", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
 }
 
 model Space {
@@ -127,4 +176,20 @@ model PasswordResetToken {
 
   @@index([token])
   @@index([userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  type      String    @map("type")
+  title     String    @map("title")
+  message   String    @db.Text
+  dataJson  String?   @map("data_json") @db.Text
+  readAt    DateTime? @map("read_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }

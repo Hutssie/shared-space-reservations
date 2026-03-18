@@ -11,6 +11,8 @@ import { hostRouter } from './routes/host.js';
 import { uploadRouter } from './routes/upload.js';
 import { placesRouter } from './routes/places.js';
 import { statsRouter } from './routes/stats.js';
+import { messagesRouter } from './routes/messages.js';
+import { notificationsRouter } from './routes/notifications.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,6 +30,8 @@ app.use('/api/host', hostRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/places', placesRouter);
 app.use('/api/stats', statsRouter);
+app.use('/api/messages', messagesRouter);
+app.use('/api/notifications', notificationsRouter);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 

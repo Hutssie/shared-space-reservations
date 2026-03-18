@@ -7,6 +7,33 @@ import * as favoritesApi from '../api/favorites';
 
 vi.mock('../api/bookings', () => ({ fetchBookings: vi.fn() }));
 vi.mock('../api/favorites', () => ({ fetchFavorites: vi.fn() }));
+vi.mock('../api/messages', () => ({
+  fetchConversations: vi.fn().mockResolvedValue([]),
+  fetchMessages: vi.fn().mockResolvedValue({ messages: [], nextCursor: null }),
+  createOrGetConversation: vi.fn(),
+  sendMessage: vi.fn(),
+  markConversationRead: vi.fn(),
+  subscribeToMessageStream: () => () => {},
+}));
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({
+    user: { id: 'u1', email: 'u1@test.com', name: 'U1', avatarUrl: null },
+    token: 't',
+    isLoading: false,
+    setUser: vi.fn(),
+    setAuth: vi.fn(),
+    logout: vi.fn(),
+  }),
+}));
+vi.mock('../contexts/UnreadBookingsContext', () => ({
+  useUnreadBookings: () => ({
+    hasUnreadBookings: false,
+    markBookingsAsRead: vi.fn(),
+    addNewBooking: vi.fn(),
+    newestBookingId: null,
+    clearNewestBooking: vi.fn(),
+  }),
+}));
 
 describe('Dashboard', () => {
   beforeEach(() => {

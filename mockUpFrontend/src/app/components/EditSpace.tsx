@@ -80,6 +80,15 @@ const cancellationPolicies = [
 const STATUS_UI_TO_API: Record<string, string> = { Active: 'active', Maintenance: 'maintenance', Inactive: 'inactive' };
 const STATUS_API_TO_UI: Record<string, string> = { active: 'Active', maintenance: 'Maintenance', inactive: 'Inactive' };
 
+const clampInt = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+const parseDurationHoursInput = (raw: string) => {
+  const trimmed = raw.trim();
+  if (trimmed === '') return null;
+  const n = parseInt(trimmed, 10);
+  if (Number.isNaN(n)) return null;
+  return clampInt(n, 1, 24);
+};
+
 export const EditSpace = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -791,10 +800,19 @@ export const EditSpace = () => {
                     <div className="flex items-center gap-4">
                       <input
                         type="number"
+                        min={1}
+                        max={24}
+                        step={1}
                         disabled={!hasCustomDuration}
-                        value={hasCustomDuration ? (listing.bookingSettings?.minDuration ?? 2) : ''}
+                        value={hasCustomDuration ? (listing.bookingSettings?.minDuration ?? '') : ''}
                         placeholder={hasCustomDuration ? undefined : '—'}
-                        onChange={(e) => setListing({ ...listing, bookingSettings: { ...(listing.bookingSettings || {}), minDuration: parseInt(e.target.value) || 0 } })}
+                        onChange={(e) => {
+                          const next = parseDurationHoursInput(e.target.value);
+                          setListing({
+                            ...listing,
+                            bookingSettings: { ...(listing.bookingSettings || {}), minDuration: next },
+                          });
+                        }}
                         className="bg-transparent border-none focus:ring-0 text-4xl md:text-5xl font-black text-brand-700 p-0 outline-none w-16 md:w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-transparent disabled:cursor-not-allowed"
                       />
                       <div className="space-y-0 md:space-y-1">
@@ -816,10 +834,19 @@ export const EditSpace = () => {
                     <div className="flex items-center gap-4">
                       <input
                         type="number"
+                        min={1}
+                        max={24}
+                        step={1}
                         disabled={!hasCustomDuration}
-                        value={hasCustomDuration ? (listing.bookingSettings?.maxDuration ?? 8) : ''}
+                        value={hasCustomDuration ? (listing.bookingSettings?.maxDuration ?? '') : ''}
                         placeholder={hasCustomDuration ? undefined : '—'}
-                        onChange={(e) => setListing({ ...listing, bookingSettings: { ...(listing.bookingSettings || {}), maxDuration: parseInt(e.target.value) || 0 } })}
+                        onChange={(e) => {
+                          const next = parseDurationHoursInput(e.target.value);
+                          setListing({
+                            ...listing,
+                            bookingSettings: { ...(listing.bookingSettings || {}), maxDuration: next },
+                          });
+                        }}
                         className="bg-transparent border-none focus:ring-0 text-4xl md:text-5xl font-black text-brand-700 p-0 outline-none w-16 md:w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-transparent disabled:cursor-not-allowed"
                       />
                       <div className="space-y-0 md:space-y-1">

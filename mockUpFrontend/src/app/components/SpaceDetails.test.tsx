@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router';
 import { SpaceDetails } from './SpaceDetails';
@@ -23,6 +23,15 @@ const mockUseAuth = vi.fn();
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => mockUseAuth(),
 }));
+vi.mock('../contexts/UnreadBookingsContext', () => ({
+  useUnreadBookings: () => ({
+    hasUnreadBookings: false,
+    markBookingsAsRead: vi.fn(),
+    addNewBooking: vi.fn(),
+    newestBookingId: null,
+    clearNewestBooking: vi.fn(),
+  }),
+}));
 
 const fetchSpaceMock = spacesApi.fetchSpace as ReturnType<typeof vi.fn>;
 const fetchAvailabilityMock = spacesApi.fetchAvailability as ReturnType<typeof vi.fn>;
@@ -42,15 +51,25 @@ const mockSpace = {
   description: 'A bright space.',
   amenities: [],
   isInstantBookable: true,
-  host: { name: 'Sarah', avatar: null, since: '2020', isSuperhost: false },
+  host: { id: 'host-1', name: 'Sarah', avatar: null, since: '2020', isSuperhost: false },
 };
 
 describe('SpaceDetails', () => {
   beforeEach(() => {
+    vi.spyOn(Date, 'now').mockReturnValue(new Date('2026-01-01T01:00:00').getTime());
     mockUseAuth.mockReturnValue({ token: 'logged-in-token' });
     fetchSpaceMock.mockResolvedValue(mockSpace);
-    fetchAvailabilityMock.mockResolvedValue({ slots: ['09:00 AM', '10:00 AM'], booked: [] });
+    fetchAvailabilityMock.mockResolvedValue({
+      granularityMinutes: 60,
+      slotMinutes: [540, 600, 660, 720, 780, 840, 900, 960, 1020, 1080, 1140, 1200, 1260, 1320, 1380, 1440],
+      bookedIntervals: [],
+      unavailableIntervals: [],
+    });
     (spacesApi.fetchSpaceReviews as ReturnType<typeof vi.fn>).mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('C18: With valid space id: fetches space and shows title, price', async () => {

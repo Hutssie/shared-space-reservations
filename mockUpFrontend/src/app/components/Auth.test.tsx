@@ -22,6 +22,7 @@ vi.mock('../api/auth', async (importOriginal) => {
     clearAuth: actual.clearAuth,
     login: vi.fn(),
     register: vi.fn(),
+    fetchPublicStats: vi.fn().mockResolvedValue({ spaces: 0, users: 0, cities: 0 }),
     saveAuth: vi.fn(),
   };
 });

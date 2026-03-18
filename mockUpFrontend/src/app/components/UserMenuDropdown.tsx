@@ -5,6 +5,7 @@ import {
   Heart, 
   MessageSquare, 
   Bell as BellIcon,
+  Star,
   CreditCard, 
   Settings, 
   LogOut, 
@@ -39,6 +40,7 @@ export const UserMenuDropdown = () => {
     { label: 'Favorites', icon: Heart, tab: 'Favorites' },
     { label: 'Messages', icon: MessageSquare, tab: 'Messages' },
     { label: 'Notifications', icon: BellIcon, tab: 'Notifications' },
+    { label: 'Reviews', icon: Star, tab: 'Reviews' },
     { label: 'Billing', icon: CreditCard, tab: 'Billing' },
     { label: 'Settings', icon: Settings, tab: 'Settings' },
   ];

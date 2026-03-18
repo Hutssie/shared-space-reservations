@@ -14,7 +14,7 @@ export type Space = {
   description: string;
   amenities: string[];
   images: string[];
-  host: { name: string; avatar: string | null; since: string; isSuperhost: boolean } | null;
+  host: { id: string; name: string; avatar: string | null; since: string; isSuperhost: boolean } | null;
   latitude?: number | null;
   longitude?: number | null;
   squareMeters?: number | null;
@@ -73,6 +73,10 @@ export function fetchSpace(id: string): Promise<Space> {
   return apiGet<Space>(`/api/spaces/${id}`);
 }
 
+export function shareSpaceLink(spaceId: string): Promise<{ success: boolean; link: string }> {
+  return apiPost<{ success: boolean; link: string }>(`/api/spaces/${spaceId}/share`, {});
+}
+
 export function fetchCategoryCounts(): Promise<Record<string, number>> {
   return apiGet<Record<string, number>>('/api/spaces/category-counts');
 }
@@ -85,8 +89,10 @@ export function fetchFeaturedSpacesThisWeek(): Promise<{ spaces: Space[]; total:
   return apiGet<{ spaces: Space[]; total: number }>('/api/spaces/featured-this-week');
 }
 
-export function fetchAvailability(spaceId: string, date: string): Promise<{ slots: string[]; booked: string[]; unavailable?: string[] }> {
-  return apiGet<{ slots: string[]; booked: string[]; unavailable?: string[] }>(`/api/spaces/${spaceId}/availability?date=${encodeURIComponent(date)}`);
+export type BookedRange = { start: string; end: string };
+
+export function fetchAvailability(spaceId: string, date: string): Promise<{ slots: string[]; booked: string[]; unavailable?: string[]; bookedRanges?: BookedRange[] }> {
+  return apiGet<{ slots: string[]; booked: string[]; unavailable?: string[]; bookedRanges?: BookedRange[] }>(`/api/spaces/${spaceId}/availability?date=${encodeURIComponent(date)}`);
 }
 
 export function createSpace(data: {

@@ -314,7 +314,9 @@ export const ListingBookings = () => {
 
                         <div className="grid grid-cols-1 gap-3">
                           <button
-                            onClick={() => toast.success(`Message sent to ${booking.guest.name}`)}
+                            onClick={() => {
+                              navigate(`/dashboard?tab=Messages&with=${encodeURIComponent(booking.guest.id)}`);
+                            }}
                             className="w-full py-4 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-lg shadow-brand-700/20"
                           >
                             <MessageSquare className="w-5 h-5" />
@@ -528,7 +530,7 @@ export const ListingBookings = () => {
                       onClick={() => {
                         setSelectedGuest(null);
                         setGuestProfile(null);
-                        toast.success(`Message sent to ${selectedGuest.guest.name}`);
+                      navigate(`/dashboard?tab=Messages&with=${encodeURIComponent(selectedGuest.guest.id)}`);
                       }}
                       className="w-full py-5 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-3"
                     >

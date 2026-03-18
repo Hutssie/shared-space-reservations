@@ -36,7 +36,7 @@ describe('FindSpace', () => {
   it('C15: Renders search input and filter controls', async () => {
     renderFindSpace();
     await waitFor(() => expect(fetchSpacesMock).toHaveBeenCalled());
-    expect(screen.getByPlaceholderText(/search by city or location/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/where are you going/i)).toBeInTheDocument();
     expect(screen.getByText(/space type/i)).toBeInTheDocument();
   });
 

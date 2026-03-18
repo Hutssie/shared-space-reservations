@@ -9,7 +9,6 @@ import {
   Car, 
   Shield, 
   Wind, 
-  Clock, 
   Star, 
   Heart, 
   Users, 
@@ -498,17 +497,6 @@ export const DateDropdown = ({ trigger, value, onChange }: any) => {
                   </button>
               );
             })}
-          </div>
-
-          <div className="flex items-center gap-2 p-3 sm:p-4 bg-brand-50 rounded-xl sm:rounded-2xl border border-brand-100 mb-2 group/check cursor-pointer">
-            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-400" />
-            <span className="text-[10px] sm:text-xs font-bold text-brand-700">Flexible dates? (+/- 3 days)</span>
-            <div className="flex-1" />
-            <Checkbox.Root className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-white border border-brand-200 flex items-center justify-center data-[state=checked]:bg-brand-700 data-[state=checked]:border-brand-700 transition-colors outline-none cursor-pointer">
-              <Checkbox.Indicator>
-                <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white rotate-45" />
-              </Checkbox.Indicator>
-            </Checkbox.Root>
           </div>
         </div>
 

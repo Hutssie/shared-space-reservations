@@ -14,7 +14,7 @@ describe('Users', () => {
     userEmail = `${unique()}@test.com`;
     const res = await request(app)
       .post('/api/auth/register')
-      .send({ email: userEmail, password: 'pass', name: 'User Test' });
+      .send({ email: userEmail, password: 'Password123', name: 'User Test' });
     token = res.body.token;
   });
 

@@ -8,6 +8,7 @@ const unique = () => `test-${Date.now()}-${Math.random().toString(36).slice(2, 8
 
 describe('Bookings', () => {
   let userToken;
+  let hostToken;
   let spaceId;
   let bookingId;
   const userEmail = `${unique()}@booker.com`;
@@ -15,28 +16,29 @@ describe('Bookings', () => {
   beforeAll(async () => {
     const reg = await request(app)
       .post('/api/auth/register')
-      .send({ email: userEmail, password: 'pass', name: 'Booker' });
+      .send({ email: userEmail, password: 'Password123', name: 'Booker' });
     userToken = reg.body.token;
 
-    const list = await request(app).get('/api/spaces');
-    spaceId = list.body.spaces?.[0]?.id;
-    if (!spaceId) {
-      const host = await request(app)
-        .post('/api/auth/register')
-        .send({ email: `${unique()}@host.com`, password: 'pass', name: 'Host' });
-      const create = await request(app)
-        .post('/api/spaces')
-        .set('Authorization', `Bearer ${host.body.token}`)
-        .send({
-          category: 'Room',
-          title: 'Space',
-          location: 'City',
-          capacity: 5,
-          pricePerHour: 50,
-          description: 'D',
-        });
-      spaceId = create.body.id;
-    }
+    const host = await request(app)
+      .post('/api/auth/register')
+      .send({ email: `${unique()}@host.com`, password: 'Password123', name: 'Host' });
+    hostToken = host.body.token;
+
+    // Always create a fresh non-instant-bookable space so the first booking is a *request* (pending),
+    // and overlapping requests should be allowed.
+    const create = await request(app)
+      .post('/api/spaces')
+      .set('Authorization', `Bearer ${hostToken}`)
+      .send({
+        category: 'Room',
+        title: `Space-${unique()}`,
+        location: 'City',
+        capacity: 5,
+        pricePerHour: 50,
+        description: 'D',
+        isInstantBookable: false,
+      });
+    spaceId = create.body.id;
   });
 
   afterAll(async () => {
@@ -127,8 +129,9 @@ describe('Bookings', () => {
         start_time: '11:00 AM',
         end_time: '01:00 PM',
       });
-    expect(res.status).toBe(409);
-    expect(res.body.error).toMatch(/already booked|slot/i);
+    expect(res.status).toBe(201);
+    expect(res.body.id).toBeDefined();
+    expect(res.body.status).toBe('pending');
   });
 
   it('B8: POST /api/bookings for non-existent space returns 404', async () => {
@@ -165,14 +168,14 @@ describe('Bookings', () => {
     expect(res.body.status).toBe('cancelled');
   });
 
-  it('B10: PATCH /api/bookings/:id as another user returns 404', async () => {
+  it('B10: PATCH /api/bookings/:id as another user returns 403', async () => {
     const other = await request(app)
       .post('/api/auth/register')
-      .send({ email: `${unique()}@other.com`, password: 'pass', name: 'Other' });
+      .send({ email: `${unique()}@other.com`, password: 'Password123', name: 'Other' });
     const res = await request(app)
       .patch(`/api/bookings/${bookingId}`)
       .set('Authorization', `Bearer ${other.body.token}`)
       .send({ status: 'cancelled' });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(403);
   });
 });

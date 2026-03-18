@@ -22,7 +22,11 @@ import {
   ArrowDownWideNarrow,
   History,
   Check,
-  X
+  X,
+  Lock,
+  AlertCircle,
+  XCircle,
+  MessageSquare
 } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { ImageWithFallback } from './figma/ImageWithFallback';
@@ -31,7 +35,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { format, addHours, addDays, differenceInHours, parse } from 'date-fns';
 import { useParams, useNavigate, Link, useSearchParams, useLocation } from 'react-router';
 import { toast } from 'sonner';
-import { fetchSpace, fetchAvailability, fetchSpaceReviews } from '../api/spaces';
+import { fetchSpace, fetchAvailability, fetchSpaceReviews, shareSpaceLink } from '../api/spaces';
 import { fetchFavorites, addFavorite, removeFavorite } from '../api/favorites';
 import { AmenitiesList } from './FilterDropdowns';
 import { formatRatingScore } from '../utils/formatRating';
@@ -39,32 +43,102 @@ import { createBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
 import { useUnreadBookings } from '../contexts/UnreadBookingsContext';
 import { MarkdownContent } from './MarkdownContent';
-import type { Space } from '../api/spaces';
+import { fetchPublicHostProfile } from '../api/users';
+import type { Space, BookedRange } from '../api/spaces';
 
+// Daily time slots (12 AM to 11 PM), plus next-day midnight.
 const allTimeSlots = [
   '12:00 AM', '01:00 AM', '02:00 AM', '03:00 AM', '04:00 AM', '05:00 AM', '06:00 AM', '07:00 AM',
   '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
   '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
   '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM',
+  '12:00 AM+1',
 ];
 
-/** End is "after" start: normal order, or any hour (except 12 AM) booking to 12 AM. */
-const isEndAfterStart = (startIdx: number, endIdx: number) =>
-  endIdx > startIdx || (endIdx === 0 && startIdx > 0);
+/** Convert time string to comparable number (handles next-day +1). */
+function timeToNumber(time: string): number {
+  const isNextDay = time.includes('+1');
+  const cleanTime = time.replace('+1', '').trim();
+  const [timePart, period] = cleanTime.split(' ');
+  let [hours, minutes] = timePart.split(':').map(Number);
+  if (period === 'PM' && hours !== 12) hours += 12;
+  if (period === 'AM' && hours === 12) hours = 0;
+  if (isNextDay) hours += 24;
+  return hours + (minutes ?? 0) / 60;
+}
 
-/** Slots between start and end (exclusive of end). Handles wrap to 12 AM. */
-const getSlotsInRange = (startIdx: number, endIdx: number) => {
-  if (startIdx < endIdx) return allTimeSlots.slice(startIdx, endIdx);
-  if (endIdx === 0 && startIdx > 0) return allTimeSlots.slice(startIdx, allTimeSlots.length);
-  return [];
-};
+/** Normalize API end time: 12:00 AM after a late start is next-day midnight. */
+function normalizeRangeEnd(start: string, end: string): string {
+  if (end === '12:00 AM' && timeToNumber(start) >= timeToNumber(end)) return '12:00 AM+1';
+  return end;
+}
 
-/** Duration in hours. Handles wrap to 12 AM. */
-const getDuration = (startIdx: number, endIdx: number) => {
-  if (startIdx < endIdx) return endIdx - startIdx;
-  if (endIdx === 0 && startIdx > 0) return allTimeSlots.length - startIdx;
-  return 0;
-};
+/** Check if two time ranges overlap. */
+function rangesOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
+  const e1 = normalizeRangeEnd(start1, end1);
+  const e2 = normalizeRangeEnd(start2, end2);
+  const s1 = timeToNumber(start1);
+  const e1n = timeToNumber(e1);
+  const s2 = timeToNumber(start2);
+  const e2n = timeToNumber(e2);
+  return s1 < e2n && s2 < e1n;
+}
+
+/** Check if proposed range is available (no overlap with any booked range). */
+function isRangeAvailable(proposedStart: string, proposedEnd: string, bookedRanges: BookedRange[]): boolean {
+  const normalized = bookedRanges.map((r) => ({ start: r.start, end: normalizeRangeEnd(r.start, r.end) }));
+  return !normalized.some((r) => rangesOverlap(proposedStart, proposedEnd, r.start, r.end));
+}
+
+/** Check if a time lies inside any booked range. */
+function isTimeInBookedRange(time: string, bookedRanges: BookedRange[]): boolean {
+  const t = timeToNumber(time);
+  return bookedRanges.some((r) => {
+    const start = timeToNumber(r.start);
+    const end = timeToNumber(normalizeRangeEnd(r.start, r.end));
+    return t >= start && t < end;
+  });
+}
+
+/** Color-coded rating badge classes (Figma mockup). */
+function getRatingColor(rating: number): string {
+  if (rating >= 4.5) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  if (rating >= 4.0) return 'bg-blue-50 text-blue-700 border-blue-200';
+  if (rating >= 3.5) return 'bg-amber-50 text-amber-700 border-amber-200';
+  return 'bg-orange-50 text-orange-700 border-orange-200';
+}
+
+function slotToDateTime(selectedDate: Date, slot: string): Date | null {
+  const isNextDay = slot.includes('+1');
+  const cleanTime = slot.replace('+1', '').trim();
+  const parsed = parse(cleanTime, 'hh:mm a', selectedDate);
+  if (isNaN(parsed.getTime())) return null;
+  return isNextDay ? addDays(parsed, 1) : parsed;
+}
+
+/** Render star rating visualization (5 stars, filled by rating). */
+function renderStars(rating: number) {
+  return Array.from({ length: 5 }).map((_, idx) => (
+    <Star
+      key={idx}
+      className={`w-3.5 h-3.5 transition-all ${
+        idx < rating
+          ? 'text-brand-700 fill-brand-700'
+          : 'text-brand-200 fill-brand-50'
+      }`}
+    />
+  ));
+}
+
+/** End is after start in the extended slot list (no wrap within our list). */
+const isEndAfterStart = (startIdx: number, endIdx: number) => endIdx > startIdx;
+
+/** Slots between start and end (exclusive of end). */
+const getSlotsInRange = (startIdx: number, endIdx: number) =>
+  allTimeSlots.slice(startIdx, endIdx);
+
+/** Duration in hours. */
+const getDuration = (startIdx: number, endIdx: number) => endIdx - startIdx;
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -133,6 +207,15 @@ export const SpaceDetails = () => {
   const { token } = useAuth();
   const { addNewBooking } = useUnreadBookings();
 
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Map YYYY-MM-DD -> whether the entire day is unavailable (booked or outside availability).
+  const [fullyBookedByDate, setFullyBookedByDate] = useState<Record<string, boolean>>({});
+
   const [spaceDetails, setSpaceDetails] = useState<Space | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -140,8 +223,13 @@ export const SpaceDetails = () => {
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [unavailableSlots, setUnavailableSlots] = useState<string[]>([]);
-  const [reviews, setReviews] = useState<Array<{ name: string; date: string; timestamp: number; rating: number; avatar: string | null; text: string }>>([]);
+  const [reviews, setReviews] = useState<Array<{ id: string; name: string; date: string; timestamp: number; rating: number; avatar: string | null; text: string }>>([]);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [showHostProfile, setShowHostProfile] = useState(false);
+  const [hostProfileLoading, setHostProfileLoading] = useState(false);
+  const [hostBio, setHostBio] = useState<string | null>(null);
+  const [hostActiveBookings, setHostActiveBookings] = useState<number | null>(null);
+  const [hostAvgRating, setHostAvgRating] = useState<number | null>(null);
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     const dateParam = searchParams.get('date');
@@ -155,6 +243,8 @@ export const SpaceDetails = () => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
+  const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
+  const [bookingConflict, setBookingConflict] = useState(false);
   const [bookingStep, setBookingStep] = useState<'viewing' | 'requesting' | 'confirmed'>('viewing');
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
@@ -192,6 +282,37 @@ export const SpaceDetails = () => {
       document.body.style.overflow = prevOverflow;
     };
   }, [galleryOpen, spaceDetails]);
+
+  useEffect(() => {
+    if (!showHostProfile) return;
+    const hostId = spaceDetails?.host?.id;
+    if (!hostId) return;
+
+    let cancelled = false;
+    setHostProfileLoading(true);
+    fetchPublicHostProfile(hostId)
+      .then((res) => {
+        if (cancelled) return;
+        const bio = res.user.bio?.trim() ? res.user.bio : null;
+        setHostBio(bio);
+        setHostActiveBookings(res.hostStats.activeBookings);
+        setHostAvgRating(res.hostStats.avgListingRating);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setHostBio(null);
+        setHostActiveBookings(null);
+        setHostAvgRating(null);
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setHostProfileLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [showHostProfile, spaceDetails?.host?.id]);
 
   useLayoutEffect(() => {
     if (isDescriptionOpen) return;
@@ -231,18 +352,21 @@ export const SpaceDetails = () => {
     if (!id || !dateStr) {
       setAvailableSlots([...allTimeSlots]);
       setBookedSlots([]);
+      setBookedRanges([]);
       setUnavailableSlots([]);
       return;
     }
     fetchAvailability(id, dateStr)
-      .then(({ slots, booked, unavailable }) => {
+      .then(({ slots, booked, unavailable, bookedRanges: ranges }) => {
         setAvailableSlots(slots.length ? slots : [...allTimeSlots]);
-        setBookedSlots(booked);
+        setBookedSlots(booked ?? []);
+        setBookedRanges(ranges ?? []);
         setUnavailableSlots(unavailable ?? []);
       })
       .catch(() => {
         setAvailableSlots([...allTimeSlots]);
         setBookedSlots([]);
+        setBookedRanges([]);
         setUnavailableSlots([]);
       });
   }, [id, dateStr]);
@@ -254,6 +378,7 @@ export const SpaceDetails = () => {
         setReviewAggregates(aggregates || { cleanliness: null, communication: null, location: null, value: null });
         setReviews(
           list.map((r) => ({
+            id: r.id,
             name: r.name,
             date: format(new Date(r.createdAt), 'MMMM yyyy'),
             timestamp: new Date(r.createdAt).getTime(),
@@ -286,6 +411,17 @@ export const SpaceDetails = () => {
     });
   }, [reviews, sortBy]);
 
+  const ratingDistribution = useMemo(() => {
+    const dist = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    reviews.forEach((review) => {
+      const rounded = Math.floor(review.rating);
+      if (rounded >= 1 && rounded <= 5) {
+        dist[rounded as keyof typeof dist]++;
+      }
+    });
+    return dist;
+  }, [reviews]);
+
   const totalReviewPages = Math.ceil(sortedReviews.length / reviewsPerPage);
   const currentReviews = sortedReviews.slice((reviewPage - 1) * reviewsPerPage, reviewPage * reviewsPerPage);
 
@@ -315,6 +451,57 @@ export const SpaceDetails = () => {
     const month = date.getMonth();
     return new Date(year, month, 1).getDay();
   };
+
+  const daySlotsForBookingCheck = useMemo(
+    () => allTimeSlots.filter((t) => !t.includes('+1')),
+    []
+  );
+
+  // Prefetch "fully booked" status for the currently visible month so the date picker can disable them.
+  useEffect(() => {
+    if (!id || !spaceDetails) return;
+
+    let cancelled = false;
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    const days = daysInMonth(currentMonth);
+
+    const dateStrings: string[] = [];
+    for (let day = 1; day <= days; day++) {
+      const d = new Date(year, month, day);
+      dateStrings.push(format(d, 'yyyy-MM-dd'));
+    }
+
+    const missing = dateStrings.filter((ds) => fullyBookedByDate[ds] === undefined);
+    if (missing.length === 0) return;
+
+    (async () => {
+      const results = await Promise.allSettled(
+        missing.map(async (ds) => {
+          const { booked, unavailable } = await fetchAvailability(id, ds);
+          const bookedSet = new Set(booked ?? []);
+          const unavailableSet = new Set(unavailable ?? []);
+          const isFullyBooked = daySlotsForBookingCheck.every((slot) => bookedSet.has(slot) || unavailableSet.has(slot));
+          return { ds, isFullyBooked };
+        })
+      );
+
+      if (cancelled) return;
+      setFullyBookedByDate((prev) => {
+        const next = { ...prev };
+        for (const r of results) {
+          if (r.status === 'fulfilled') {
+            next[r.value.ds] = r.value.isFullyBooked;
+          }
+        }
+        return next;
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id, spaceDetails, currentMonth, daySlotsForBookingCheck, fullyBookedByDate]);
 
   const changeMonth = (offset: number) => {
     const next = new Date(currentMonth);
@@ -354,10 +541,23 @@ export const SpaceDetails = () => {
     }
   }, [bookingStep]);
 
+  const unavailableForGrid = useMemo(() => {
+    const start = spaceDetails?.availabilityStartTime ?? null;
+    const end = spaceDetails?.availabilityEndTime ?? null;
+    if (start == null || end == null) return [];
+    const startN = timeToNumber(start);
+    const endN = timeToNumber(normalizeRangeEnd(start, end));
+    return allTimeSlots.filter((slot) => {
+      const n = timeToNumber(slot);
+      return n < startN || n > endN;
+    });
+  }, [spaceDetails?.availabilityStartTime, spaceDetails?.availabilityEndTime]);
+
   const duration = useMemo(() => {
     if (!startTime || !endTime) return 0;
     const startIdx = allTimeSlots.indexOf(startTime);
     const endIdx = allTimeSlots.indexOf(endTime);
+    if (startIdx === -1 || endIdx === -1) return 0;
     return getDuration(startIdx, endIdx);
   }, [startTime, endTime]);
 
@@ -389,8 +589,9 @@ export const SpaceDetails = () => {
       return;
     }
     setBookingSubmitting(true);
+    const endTimeForApi = endTime === '12:00 AM+1' ? '12:00 AM' : endTime;
     try {
-      const res = await createBooking(id, dateStr, startTime, endTime);
+      const res = await createBooking(id, dateStr, startTime, endTimeForApi);
       setBookingStep('confirmed');
       const bookingId = res?.id ?? (res as { id?: string }).id;
       if (bookingId) addNewBooking(String(bookingId));
@@ -402,28 +603,39 @@ export const SpaceDetails = () => {
   };
 
   const handleTimeClick = (time: string) => {
-    if (bookedSlots.includes(time) || unavailableSlots.includes(time)) return;
+    if (unavailableForGrid.includes(time)) return;
+    if (selectedDate) {
+      const dt = slotToDateTime(selectedDate, time);
+      if (dt && dt.getTime() <= nowMs) return;
+    }
+
+    setBookingConflict(false);
 
     if (!startTime || (startTime && endTime)) {
       setStartTime(time);
       setEndTime('');
-    } else {
-      const startIdx = allTimeSlots.indexOf(startTime);
-      const clickedIdx = allTimeSlots.indexOf(time);
+      return;
+    }
 
-      if (!isEndAfterStart(startIdx, clickedIdx)) {
+    const startIdx = allTimeSlots.indexOf(startTime);
+    const clickedIdx = allTimeSlots.indexOf(time);
+
+    if (!isEndAfterStart(startIdx, clickedIdx)) {
+      setStartTime(time);
+      setEndTime('');
+      return;
+    }
+
+    if (isRangeAvailable(startTime, time, bookedRanges)) {
+      setEndTime(time);
+      setBookingConflict(false);
+    } else {
+      setBookingConflict(true);
+      setTimeout(() => {
         setStartTime(time);
         setEndTime('');
-      } else {
-        const rangeSlots = getSlotsInRange(startIdx, clickedIdx);
-        const hasBookedOrUnavailableInRange = rangeSlots.some((t) => bookedSlots.includes(t) || unavailableSlots.includes(t));
-        if (hasBookedOrUnavailableInRange) {
-          setStartTime(time);
-          setEndTime('');
-        } else {
-          setEndTime(time);
-        }
-      }
+        setBookingConflict(false);
+      }, 2000);
     }
   };
 
@@ -432,9 +644,8 @@ export const SpaceDetails = () => {
     const startIdx = allTimeSlots.indexOf(startTime);
     const endIdx = allTimeSlots.indexOf(endTime);
     const currentIdx = allTimeSlots.indexOf(time);
-    if (startIdx < endIdx) return currentIdx > startIdx && currentIdx < endIdx;
-    if (endIdx === 0 && startIdx > 0) return currentIdx > startIdx;
-    return false;
+    if (startIdx === -1 || endIdx === -1 || currentIdx === -1) return false;
+    return currentIdx > startIdx && currentIdx < endIdx;
   };
 
   if (loading && !spaceDetails) {
@@ -534,7 +745,21 @@ export const SpaceDetails = () => {
             Back to results
           </button>
           <div className="flex gap-4">
-            <button className="flex items-center gap-2 px-6 py-2.5 bg-brand-50 border border-brand-200 rounded-xl text-brand-700 font-bold hover:bg-brand-100 transition-all cursor-pointer">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!id) return;
+                try {
+                  const { link } = await shareSpaceLink(id);
+                  // Also log in browser console for convenience.
+                  console.log('[Share] Space link:', link);
+                  toast.success('Share link printed in backend console');
+                } catch (err) {
+                  toast.error(err instanceof Error ? err.message : 'Failed to share');
+                }
+              }}
+              className="flex items-center gap-2 px-6 py-2.5 bg-brand-50 border border-brand-200 rounded-xl text-brand-700 font-bold hover:bg-brand-100 transition-all cursor-pointer"
+            >
               <Share2 className="w-4 h-4" /> Share
             </button>
             <button 
@@ -842,9 +1067,14 @@ export const SpaceDetails = () => {
                 </p>
               </div>
               <div className="relative">
-                <div className="w-20 h-20 rounded-3xl overflow-hidden border-2 border-brand-200">
+                <button
+                  type="button"
+                  onClick={() => spaceDetails.host && setShowHostProfile(true)}
+                  className="w-20 h-20 rounded-3xl overflow-hidden border-2 border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 cursor-pointer hover:border-brand-400 transition-colors"
+                  aria-label={`View ${spaceDetails.host?.name ?? 'host'}'s profile`}
+                >
                   <ImageWithFallback src={spaceDetails.host?.avatar ?? ''} alt="Host" className="w-full h-full object-cover" />
-                </div>
+                </button>
                 {spaceDetails.host?.isSuperhost && (
                   <div className="absolute -bottom-2 -right-2 bg-brand-200 p-2 rounded-xl border-4 border-white">
                     <ShieldCheck className="w-5 h-5 text-brand-700" />
@@ -852,6 +1082,120 @@ export const SpaceDetails = () => {
                 )}
               </div>
             </section>
+
+            {/* Host profile modal (same UX as "View Full Profile" in booking page) */}
+            <AnimatePresence>
+              {showHostProfile && spaceDetails.host && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setShowHostProfile(false)}
+                    className="absolute inset-0 bg-brand-900/40 backdrop-blur-md"
+                  />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="relative w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+                  >
+                    <button
+                      onClick={() => setShowHostProfile(false)}
+                      className="absolute top-6 right-6 p-3 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-2xl transition-all z-10 cursor-pointer"
+                      aria-label="Close profile"
+                    >
+                      <XCircle className="w-5 h-5" />
+                    </button>
+
+                    <div className="overflow-y-auto custom-scrollbar">
+                      <div className="p-8 md:p-12 bg-gradient-to-b from-brand-50/50 to-white">
+                        <div className="flex flex-col md:flex-row items-center gap-8">
+                          <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl shrink-0">
+                            <ImageWithFallback
+                              src={spaceDetails.host.avatar ?? ''}
+                              alt={spaceDetails.host.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                          <div className="text-center md:text-left space-y-3">
+                            <h2 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">
+                              {spaceDetails.host.name}
+                            </h2>
+                            {spaceDetails.host.isSuperhost && (
+                              <div className="flex items-center justify-center md:justify-start gap-2">
+                                <ShieldCheck className="w-5 h-5 text-brand-500" />
+                                <span className="text-lg font-black text-brand-700">Superhost</span>
+                              </div>
+                            )}
+                            <p className="text-brand-600 font-medium">
+                              Host on SpaceBook since {spaceDetails.host.since}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="px-8 md:px-12 pb-12 space-y-8">
+                        {hostProfileLoading ? (
+                          <div className="py-6">
+                            <div className="h-5 w-40 bg-brand-100 rounded-lg animate-pulse mb-4" />
+                            <div className="h-4 w-full bg-brand-50 rounded-lg animate-pulse mb-2" />
+                            <div className="h-4 w-5/6 bg-brand-50 rounded-lg animate-pulse" />
+                          </div>
+                        ) : (
+                          hostBio && (
+                            <div className="space-y-4 pt-2">
+                              <h3 className="text-xl font-black text-brand-700">
+                                About {spaceDetails.host.name.split(' ')[0]}
+                              </h3>
+                              <p className="text-brand-600 font-medium leading-relaxed">
+                                {hostBio}
+                              </p>
+                            </div>
+                          )
+                        )}
+
+                        <div className="space-y-4">
+                          <h3 className="text-xl font-black text-brand-700">Host Stats</h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="bg-brand-50 rounded-2xl p-5 border border-brand-100">
+                              <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1">Active Bookings</p>
+                              <p className="text-2xl font-black text-brand-700">
+                                {hostProfileLoading ? '—' : String(hostActiveBookings ?? '—')}
+                              </p>
+                            </div>
+                            <div className="bg-brand-50 rounded-2xl p-5 border border-brand-100">
+                              <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1">Avg. Rating</p>
+                              <p className="text-2xl font-black text-brand-700">
+                                {hostProfileLoading
+                                  ? '—'
+                                  : hostAvgRating != null
+                                    ? hostAvgRating.toFixed(2)
+                                    : '—'}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-4">
+                          <button
+                            onClick={() => {
+                              setShowHostProfile(false);
+                              navigate(`/dashboard?tab=Messages&with=${encodeURIComponent(spaceDetails.host.id)}`);
+                            }}
+                            className="w-full py-5 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-3"
+                          >
+                            <MessageSquare className="w-6 h-6" />
+                            Contact {spaceDetails.host.name.split(' ')[0]}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
 
             {/* Description */}
             <section className="space-y-8">
@@ -930,20 +1274,30 @@ export const SpaceDetails = () => {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
                 {reviews.slice(0, 2).map((review) => (
-                  <div key={review.name + review.date + review.timestamp} className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-brand-100 rounded-2xl overflow-hidden">
-                        {review.avatar ? (
-                          <ImageWithFallback src={review.avatar} alt={review.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center text-brand-500 font-black text-lg">
-                            {review.name.charAt(0)}
-                          </div>
-                        )}
+                  <div key={review.id} className="space-y-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-center gap-4 flex-1">
+                        <div className="w-12 h-12 bg-brand-100 rounded-2xl overflow-hidden shrink-0">
+                          {review.avatar ? (
+                            <ImageWithFallback src={review.avatar} alt={review.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-brand-500 font-black text-lg">
+                              {review.name.charAt(0)}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="font-black text-brand-700">{review.name}</h4>
+                          <p className="text-brand-400 text-sm font-bold">{review.date}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-black text-brand-700">{review.name}</h4>
-                        <p className="text-brand-400 text-sm font-bold">{review.date}</p>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <span className={`px-2.5 py-1 rounded-xl font-black text-xs border-2 ${getRatingColor(review.rating)}`}>
+                          ⭐ {review.rating.toFixed(1)}
+                        </span>
+                        <div className="flex items-center gap-0.5">
+                          {renderStars(review.rating)}
+                        </div>
                       </div>
                     </div>
                     <p className="text-brand-500 font-medium leading-relaxed">{review.text}</p>
@@ -997,6 +1351,37 @@ export const SpaceDetails = () => {
                       <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-10 lg:gap-16">
                         {/* Rating Breakdown */}
                         <div className="space-y-6 md:space-y-8 lg:sticky lg:top-0 h-fit">
+                          {/* Rating Distribution Chart */}
+                          <div className="bg-brand-50 rounded-3xl p-6 space-y-4 border-2 border-brand-100">
+                            <h3 className="text-sm font-black text-brand-700 uppercase tracking-widest">Rating Distribution</h3>
+                            <div className="space-y-3">
+                              {([5, 4, 3, 2, 1] as const).map((rating) => {
+                                const count = ratingDistribution[rating];
+                                const percentage = reviews.length > 0 ? (count / reviews.length) * 100 : 0;
+                                return (
+                                  <div key={rating} className="flex items-center gap-3">
+                                    <div className="flex items-center gap-1 w-12 shrink-0">
+                                      <span className="text-xs font-black text-brand-700">{rating}</span>
+                                      <Star className="w-3 h-3 text-brand-700 fill-brand-700" />
+                                    </div>
+                                    <div className="flex-1 h-2 bg-white rounded-full overflow-hidden border border-brand-200">
+                                      <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${percentage}%` }}
+                                        transition={{ duration: 0.8, delay: (5 - rating) * 0.1 }}
+                                        className="h-full bg-brand-700 rounded-full"
+                                      />
+                                    </div>
+                                    <span className="text-xs font-black text-brand-400 w-6 text-right">
+                                      {count}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Category Ratings */}
                           {[
                             { label: 'Cleanliness', score: reviewAggregates.cleanliness ?? 0 },
                             { label: 'Communication', score: reviewAggregates.communication ?? 0 },
@@ -1092,19 +1477,34 @@ export const SpaceDetails = () => {
                           <div className="space-y-12 min-h-[600px]">
                             {currentReviews.map((review, idx) => (
                               <motion.div 
-                                key={review.name}
+                                key={review.id}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: idx * 0.1 }}
                                 className="space-y-4"
                               >
-                                <div className="flex items-center gap-4">
-                                  <div className="w-14 h-14 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100">
-                                    <ImageWithFallback src={review.avatar} alt={review.name} className="w-full h-full object-cover" />
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex items-center gap-4 flex-1">
+                                    <div className="w-14 h-14 rounded-2xl overflow-hidden bg-brand-50 border border-brand-100 shrink-0">
+                                      <ImageWithFallback src={review.avatar} alt={review.name} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div>
+                                      <h4 className="font-black text-brand-700">{review.name}</h4>
+                                      <p className="text-brand-400 text-sm font-bold">{review.date}</p>
+                                    </div>
                                   </div>
-                                  <div>
-                                    <h4 className="font-black text-brand-700">{review.name}</h4>
-                                    <p className="text-brand-400 text-sm font-bold">{review.date}</p>
+                                  <div className="flex flex-col items-end gap-1.5 shrink-0">
+                                    <motion.div 
+                                      initial={{ scale: 0 }}
+                                      animate={{ scale: 1 }}
+                                      transition={{ delay: idx * 0.1 + 0.2, type: 'spring', stiffness: 200 }}
+                                      className={`px-3 py-1.5 rounded-xl font-black text-sm border-2 ${getRatingColor(review.rating)}`}
+                                    >
+                                      ⭐ {review.rating.toFixed(1)}
+                                    </motion.div>
+                                    <div className="flex items-center gap-0.5">
+                                      {renderStars(review.rating)}
+                                    </div>
                                   </div>
                                 </div>
                                 <p className="text-brand-500 font-medium leading-relaxed text-base md:text-lg">{review.text}</p>
@@ -1315,11 +1715,13 @@ export const SpaceDetails = () => {
                             const isBannedDay = (spaceDetails?.bannedDays?.length ?? 0) > 0 && spaceDetails?.bannedDays?.includes(dayName);
                             const dateStr = format(date, 'yyyy-MM-dd');
                             const isBlockedDate = isDateInBlockedRanges(dateStr, spaceDetails?.blockedDates ?? null);
+                            const isFullyBooked = fullyBookedByDate[dateStr] === true;
                             const isDisabled = isPast ||
                               (isToday && spaceDetails?.sameDayBookingAllowed === false) ||
                               isBeyondAdvance ||
                               isBannedDay ||
-                              isBlockedDate;
+                              isBlockedDate ||
+                              isFullyBooked;
 
                             return (
                               <button
@@ -1354,18 +1756,38 @@ export const SpaceDetails = () => {
 
                 {/* Availability Grid Selection */}
                 <div className="space-y-4">
+                  <AnimatePresence>
+                    {bookingConflict && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10, height: 0 }}
+                        animate={{ opacity: 1, y: 0, height: 'auto' }}
+                        exit={{ opacity: 0, y: -10, height: 0 }}
+                        className="flex items-center gap-2 p-3 bg-red-50 border-2 border-red-200 rounded-xl overflow-hidden"
+                      >
+                        <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
+                        <p className="text-xs font-bold text-red-600">
+                          This time range overlaps with an existing booking. Please select a different time.
+                        </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
                   <div className="flex items-center justify-between px-4 flex-wrap gap-2">
                     <label className="block text-[10px] font-black text-brand-400 uppercase tracking-[0.2em]">Daily Availability</label>
                     <div className="flex gap-4 flex-wrap">
-                      {unavailableSlots.length > 0 && (
+                      {unavailableForGrid.length > 0 && (
                         <div className="flex items-center gap-1.5">
                           <div className="w-2 h-2 rounded-full bg-brand-200" />
                           <span className="text-[10px] font-bold text-brand-400">Outside availability window</span>
                         </div>
                       )}
                       <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-brand-100" />
+                        <div className="w-2 h-2 rounded-full bg-brand-200/60" />
                         <span className="text-[10px] font-bold text-brand-400">Booked</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-full bg-brand-50 border border-brand-200" />
+                        <span className="text-[10px] font-bold text-brand-400">Available</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-brand-700" />
@@ -1376,25 +1798,29 @@ export const SpaceDetails = () => {
 
                   <div className="grid grid-cols-4 gap-2">
                     {allTimeSlots.map((time) => {
-                      const isBooked = bookedSlots.includes(time);
-                      const isUnavailable = unavailableSlots.includes(time);
+                      const isInBooked = isTimeInBookedRange(time, bookedRanges);
+                      const isUnavailable = unavailableForGrid.includes(time);
+                      const slotDt = selectedDate ? slotToDateTime(selectedDate, time) : null;
+                      const isPast = slotDt ? slotDt.getTime() <= nowMs : false;
                       const isStart = startTime === time;
                       const isEnd = endTime === time;
                       const inRange = isTimeInRange(time);
                       const isSelected = isStart || isEnd || inRange;
-                      const isDisabled = isBooked || isUnavailable;
+                      const displayTime = time.replace('+1', '').replace(':00', '');
+                      const isNextDay = time.includes('+1');
 
                       return (
                         <button
                           key={time}
-                          disabled={isDisabled}
+                          type="button"
+                          disabled={isUnavailable || isPast}
                           onClick={() => handleTimeClick(time)}
                           className={`
                             relative py-3 rounded-xl text-[11px] font-black transition-all cursor-pointer
-                            ${isUnavailable 
-                              ? 'bg-brand-100 text-brand-300 cursor-not-allowed opacity-60' 
-                              : isBooked 
-                              ? 'bg-brand-50 text-brand-200 cursor-not-allowed opacity-50' 
+                            ${isUnavailable || isPast
+                              ? 'bg-brand-100 text-brand-300 cursor-not-allowed opacity-60'
+                              : isInBooked && !isSelected
+                              ? 'bg-brand-200/30 text-brand-300 cursor-pointer'
                               : isSelected
                                 ? 'bg-brand-700 text-white shadow-lg z-10'
                                 : 'bg-brand-50 text-brand-500 hover:bg-brand-100 border border-transparent hover:border-brand-200'
@@ -1404,9 +1830,15 @@ export const SpaceDetails = () => {
                             ${inRange ? 'rounded-none' : ''}
                           `}
                         >
-                          {time.replace(':00', '')}
+                          <span className="relative z-10">{displayTime}</span>
+                          {isNextDay && !isSelected && (
+                            <span className="absolute top-0.5 right-1 text-[7px] font-black text-brand-300">+1</span>
+                          )}
                           {isStart && !endTime && (
                             <div className="absolute -top-1 -right-1 w-3 h-3 bg-brand-400 rounded-full border-2 border-white animate-pulse" />
+                          )}
+                          {isInBooked && !isSelected && (
+                            <Lock className="absolute top-1 right-1 w-3 h-3 text-brand-300 opacity-50" />
                           )}
                         </button>
                       );

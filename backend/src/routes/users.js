@@ -5,6 +5,31 @@ import { authMiddleware } from '../middleware/auth.js';
 const router = Router();
 const prisma = new PrismaClient();
 
+router.get('/search', authMiddleware, async (req, res, next) => {
+  try {
+    const q = String(req.query.q ?? '').trim();
+    if (!q) return res.json({ users: [] });
+    const take = Math.min(parseInt(String(req.query.limit ?? '10'), 10) || 10, 25);
+
+    const users = await prisma.user.findMany({
+      where: {
+        id: { not: req.userId },
+        OR: [
+          { name: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true, name: true, avatarUrl: true, email: true },
+      take,
+      orderBy: [{ name: 'asc' }],
+    });
+
+    res.json({ users });
+  } catch (e) {
+    next(e);
+  }
+});
+
 router.get('/me', authMiddleware, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
@@ -59,6 +84,46 @@ router.patch('/me', authMiddleware, async (req, res, next) => {
       select: { id: true, email: true, name: true, avatarUrl: true, professionalTitle: true, bio: true },
     });
     res.json(user);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Public host profile (used on space details page)
+router.get('/:id/public', async (req, res, next) => {
+  try {
+    const id = String(req.params.id ?? '').trim();
+    if (!id) return res.status(400).json({ error: 'Missing user id' });
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      select: { id: true, name: true, avatarUrl: true, bio: true, createdAt: true },
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const activeBookings = await prisma.booking.count({
+      where: {
+        status: 'confirmed',
+        space: { hostId: id },
+      },
+    });
+
+    const spaces = await prisma.space.findMany({
+      where: { hostId: id },
+      select: { reviews: { select: { rating: true } } },
+    });
+    const perListingAverages = spaces
+      .map((s) => (s.reviews.length ? s.reviews.reduce((sum, r) => sum + r.rating, 0) / s.reviews.length : null))
+      .filter((v) => v != null);
+    const avgListingRating =
+      perListingAverages.length > 0
+        ? Math.round((perListingAverages.reduce((sum, v) => sum + v, 0) / perListingAverages.length) * 100) / 100
+        : null;
+
+    res.json({
+      user,
+      hostStats: { activeBookings, avgListingRating },
+    });
   } catch (e) {
     next(e);
   }

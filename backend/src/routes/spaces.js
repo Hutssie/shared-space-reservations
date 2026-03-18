@@ -42,6 +42,7 @@ export function spaceToResponse(space) {
   if (!space) return null;
   const host = space.host
     ? {
+        id: space.host.id,
         name: space.host.name,
         avatar: space.host.avatarUrl,
         since: String(new Date(space.host.createdAt).getFullYear()),
@@ -252,7 +253,7 @@ router.get('/featured-this-week', async (req, res, next) => {
     const spacesRaw = await prisma.space.findMany({
       where: { id: { in: candidateIds }, status: 'active' },
       include: {
-        host: { select: { name: true, avatarUrl: true, createdAt: true } },
+        host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
         reviews: { select: { rating: true } },
       },
     });
@@ -294,12 +295,109 @@ router.get('/', async (req, res, next) => {
       ? String(amenitiesParam).split(',').map((a) => a.trim()).filter(Boolean)
       : [];
 
+    // If a date filter is provided, exclude spaces that have no available hourly slots on that date.
+    // This matches the Space page semantics (12 AM -> 11 PM) and treats 12 AM -> 12 AM as full-day.
+    const dateStrFilter = date ? String(date) : null;
+    let dateStart = null;
+    let dateEnd = null;
+    let dayName = null;
+    if (dateStrFilter) {
+      const parsed = new Date(dateStrFilter);
+      if (!isNaN(parsed.getTime())) {
+        dateStart = new Date(parsed);
+        dateStart.setUTCHours(0, 0, 0, 0);
+        dateEnd = new Date(parsed);
+        dateEnd.setUTCHours(23, 59, 59, 999);
+        const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        dayName = DAY_NAMES[parsed.getDay()];
+      }
+    }
+
+    const DAY_SLOTS = [
+      '12:00 AM', '01:00 AM', '02:00 AM', '03:00 AM', '04:00 AM', '05:00 AM', '06:00 AM', '07:00 AM',
+      '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+      '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
+      '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM',
+    ];
+
+    function parseTimeToMinutes(t) {
+      const match = String(t).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+      if (!match) return null;
+      let h = parseInt(match[1], 10);
+      const m = parseInt(match[2], 10);
+      if (match[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+      if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
+      return h * 60 + m;
+    }
+
+    function computeIsSpaceAvailableOnDate(space, bookingsForSpace) {
+      if (!dateStrFilter || !dateStart || !dateEnd) return true;
+
+      // Banned day
+      if (dayName && space.bannedDaysJson) {
+        try {
+          const banned = JSON.parse(space.bannedDaysJson);
+          if (Array.isArray(banned) && banned.includes(dayName)) return false;
+        } catch {}
+      }
+
+      // Blocked date ranges
+      const yyyyMmDd = dateStart.toISOString().slice(0, 10);
+      if (space.blockedDatesJson) {
+        try {
+          const blocked = JSON.parse(space.blockedDatesJson);
+          if (Array.isArray(blocked)) {
+            for (const block of blocked) {
+              const start = block?.startDate;
+              const end = block?.endDate || block?.startDate;
+              if (start && end && yyyyMmDd >= start && yyyyMmDd <= end) return false;
+            }
+          }
+        } catch {}
+      }
+
+      // Outside availability window -> unavailable
+      const windowStart = space.availabilityStartTime ?? null;
+      const windowEnd = space.availabilityEndTime ?? null;
+      const wStartM = windowStart ? parseTimeToMinutes(windowStart) : null;
+      let wEndM = windowEnd ? parseTimeToMinutes(windowEnd) : null;
+      if (wEndM === 0) wEndM = 24 * 60;
+
+      const unavailableSet = new Set();
+      if (wStartM != null && wEndM != null) {
+        for (const s of DAY_SLOTS) {
+          const m = parseTimeToMinutes(s);
+          if (m == null) continue;
+          const inWindow = m >= wStartM && m <= wEndM;
+          if (!inWindow) unavailableSet.add(s);
+        }
+      }
+
+      // Booked set from bookings
+      const bookedSet = new Set();
+      for (const b of bookingsForSpace) {
+        const sIdx = DAY_SLOTS.indexOf(b.startTime);
+        const eIdx = DAY_SLOTS.indexOf(b.endTime);
+        if (sIdx === -1 || eIdx === -1) continue;
+        if (sIdx < eIdx) {
+          for (let i = sIdx; i < eIdx; i++) bookedSet.add(DAY_SLOTS[i]);
+        } else if (sIdx === 0 && eIdx === 0) {
+          for (const slot of DAY_SLOTS) bookedSet.add(slot);
+        } else if (eIdx === 0 && sIdx > 0) {
+          for (let i = sIdx; i < DAY_SLOTS.length; i++) bookedSet.add(DAY_SLOTS[i]);
+        }
+      }
+
+      // If any slot is not booked and not unavailable, space is available.
+      return DAY_SLOTS.some((s) => !bookedSet.has(s) && !unavailableSet.has(s));
+    }
+
     if (amenityIds.length > 0) {
       const takePool = 500;
       const spaces = await prisma.space.findMany({
         where,
         include: {
-          host: { select: { name: true, avatarUrl: true, createdAt: true } },
+          host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
           reviews: { select: { rating: true } },
         },
         take: takePool,
@@ -315,8 +413,67 @@ router.get('/', async (req, res, next) => {
           );
         });
       });
+
+      if (dateStrFilter && dateStart && dateEnd) {
+        const ids = filtered.map((s) => s.id);
+        const bookings = await prisma.booking.findMany({
+          where: {
+            spaceId: { in: ids },
+            date: { gte: dateStart, lte: dateEnd },
+            status: { in: ['confirmed', 'pending'] },
+          },
+          select: { spaceId: true, startTime: true, endTime: true },
+        });
+        const bySpaceId = new Map();
+        for (const b of bookings) {
+          if (!bySpaceId.has(b.spaceId)) bySpaceId.set(b.spaceId, []);
+          bySpaceId.get(b.spaceId).push(b);
+        }
+        const dateFiltered = filtered.filter((s) => computeIsSpaceAvailableOnDate(s, bySpaceId.get(s.id) ?? []));
+        const total = dateFiltered.length;
+        const paginated = dateFiltered.slice(skip, skip + requestedTake);
+        res.json({ spaces: paginated.map(spaceToResponse), total });
+        return;
+      }
+
       const total = filtered.length;
       const paginated = filtered.slice(skip, skip + requestedTake);
+      res.json({ spaces: paginated.map(spaceToResponse), total });
+      return;
+    }
+
+    if (dateStrFilter && dateStart && dateEnd) {
+      // Overfetch a pool, filter by date availability, then paginate.
+      const takePool = Math.max(skip + requestedTake, 200);
+      const spacesPool = await prisma.space.findMany({
+        where,
+        include: {
+          host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
+          reviews: { select: { rating: true } },
+        },
+        take: Math.min(takePool, 1000),
+        skip: 0,
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const ids = spacesPool.map((s) => s.id);
+      const bookings = await prisma.booking.findMany({
+        where: {
+          spaceId: { in: ids },
+          date: { gte: dateStart, lte: dateEnd },
+          status: { in: ['confirmed', 'pending'] },
+        },
+        select: { spaceId: true, startTime: true, endTime: true },
+      });
+      const bySpaceId = new Map();
+      for (const b of bookings) {
+        if (!bySpaceId.has(b.spaceId)) bySpaceId.set(b.spaceId, []);
+        bySpaceId.get(b.spaceId).push(b);
+      }
+
+      const dateFiltered = spacesPool.filter((s) => computeIsSpaceAvailableOnDate(s, bySpaceId.get(s.id) ?? []));
+      const total = dateFiltered.length;
+      const paginated = dateFiltered.slice(skip, skip + requestedTake);
       res.json({ spaces: paginated.map(spaceToResponse), total });
       return;
     }
@@ -326,7 +483,7 @@ router.get('/', async (req, res, next) => {
       prisma.space.findMany({
         where,
         include: {
-          host: { select: { name: true, avatarUrl: true, createdAt: true } },
+          host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
           reviews: { select: { rating: true } },
         },
         take,
@@ -445,12 +602,28 @@ router.delete('/:id/reviews/:reviewId', authMiddleware, async (req, res, next) =
   }
 });
 
+router.post('/:id/share', async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ error: 'Space id is required' });
+
+    // Mirror forgot-password behavior: generate and log a frontend link in backend console.
+    const baseUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:5173';
+    const shareLink = `${baseUrl}/space/${id}`;
+    console.log('[Share] Space link for', id, ':', shareLink);
+
+    res.json({ success: true, link: shareLink });
+  } catch (e) {
+    next(e);
+  }
+});
+
 router.get('/:id', async (req, res, next) => {
   try {
     const space = await prisma.space.findUnique({
       where: { id: req.params.id },
       include: {
-        host: { select: { name: true, avatarUrl: true, createdAt: true } },
+        host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
         reviews: { select: { rating: true } },
       },
     });
@@ -488,14 +661,14 @@ router.get('/:id/availability', async (req, res, next) => {
         '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
         '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM',
       ];
-      return res.json({ slots: [], booked: [], unavailable: slots });
+      return res.json({ slots: [], booked: [], unavailable: slots, bookedRanges: [] });
     }
 
     const bookings = await prisma.booking.findMany({
       where: {
         spaceId: req.params.id,
         date: { gte: startOfDay, lte: endOfDay },
-        status: 'confirmed',
+        status: { in: ['confirmed', 'pending'] },
       },
     });
 
@@ -512,6 +685,9 @@ router.get('/:id/availability', async (req, res, next) => {
       if (startIdx === -1 || endIdx === -1) continue;
       if (startIdx < endIdx) {
         for (let i = startIdx; i < endIdx; i++) booked.add(slots[i]);
+      } else if (startIdx === 0 && endIdx === 0) {
+        // Full-day booking: 12:00 AM -> 12:00 AM (next day)
+        for (let i = 0; i < slots.length; i++) booked.add(slots[i]);
       } else if (endIdx === 0 && startIdx > 0) {
         for (let i = startIdx; i < slots.length; i++) booked.add(slots[i]);
       }
@@ -535,10 +711,13 @@ router.get('/:id/availability', async (req, res, next) => {
 
     const available = slots.filter((s) => !booked.has(s) && !unavailable.includes(s));
 
+    const bookedRanges = bookings.map((b) => ({ start: b.startTime, end: b.endTime }));
+
     res.json({
       slots: available,
       booked: slots.filter((s) => booked.has(s)),
       unavailable,
+      bookedRanges,
     });
   } catch (e) {
     next(e);
@@ -582,7 +761,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
         blockedDatesJson: null,
       },
       include: {
-        host: { select: { name: true, avatarUrl: true, createdAt: true } },
+        host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
         reviews: { select: { rating: true } },
       },
     });
@@ -622,7 +801,9 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
           if (v == null) data[key] = null;
           else {
             const n = parseInt(v, 10);
-            if (Number.isNaN(n) || n < 1) return res.status(400).json({ error: `${key} must be a positive integer` });
+            if (Number.isNaN(n) || n < 1 || n > 24) {
+              return res.status(400).json({ error: `${key} must be an integer between 1 and 24` });
+            }
             data[key] = n;
           }
         } else if (key === 'maxAdvanceBookingDays') {
@@ -734,7 +915,7 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
       where: { id: req.params.id },
       data,
       include: {
-        host: { select: { name: true, avatarUrl: true, createdAt: true } },
+        host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
         reviews: { select: { rating: true } },
       },
     });

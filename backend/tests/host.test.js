@@ -13,7 +13,7 @@ describe('Host', () => {
   beforeAll(async () => {
     const reg = await request(app)
       .post('/api/auth/register')
-      .send({ email: hostEmail, password: 'pass', name: 'Host User' });
+      .send({ email: hostEmail, password: 'Password123', name: 'Host User' });
     hostToken = reg.body.token;
   });
 
