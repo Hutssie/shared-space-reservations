@@ -25,5 +25,8 @@ coverage/
 playwright-report/
 test-results/
 
+# Images
+backend/uploads/
+
 # Prisma
 # (schema and migrations are committed; generated client lives in node_modules)
