@@ -118,6 +118,17 @@ async function main() {
     },
   });
 
+  await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
+    update: { role: 'admin', passwordHash: hash },
+    create: {
+      email: 'admin@example.com',
+      passwordHash: hash,
+      name: 'Admin',
+      role: 'admin',
+    },
+  });
+
   const existingSpaces = await prisma.space.count();
   if (existingSpaces === 0) {
     for (const s of SPACES) {

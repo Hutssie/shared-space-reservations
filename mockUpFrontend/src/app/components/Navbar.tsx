@@ -13,8 +13,9 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
   const authDropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
-  const { token, logout } = useAuth();
+  const { token, user, logout } = useAuth();
   const isAuthenticated = !!token;
+  const isAdmin = user?.role === 'admin';
   const { unreadCount } = useNotifications();
   const isActive = (path: string) => location.pathname === path;
 
@@ -32,6 +33,7 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
     { name: 'Find a Space', path: '/find' },
     { name: 'List your Space', path: '/list-your-space' },
     ...(isAuthenticated ? [{ name: 'Host Portal', path: '/host' }] : []),
+    ...(isAdmin ? [{ name: 'Admin', path: '/admin' }] : []),
   ];
 
   return (

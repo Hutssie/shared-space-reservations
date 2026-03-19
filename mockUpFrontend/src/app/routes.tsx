@@ -20,6 +20,8 @@ import { ManageListings } from "./components/ManageListings";
 import { EditSpace } from "./components/EditSpace";
 import { ListingBookings } from "./components/ListingBookings";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AdminRoute } from "./components/AdminRoute";
+import { Admin } from "./components/Admin";
 import { AISearchModal } from "./components/AISearchModal";
 import { useUnreadBookings } from "./contexts/UnreadBookingsContext";
 
@@ -200,6 +202,14 @@ export const router = createBrowserRouter([
           <ProtectedRoute>
             <Onboarding />
           </ProtectedRoute>
+        ),
+      },
+      {
+        path: "admin",
+        element: (
+          <AdminRoute>
+            <Admin />
+          </AdminRoute>
         ),
       },
     ],

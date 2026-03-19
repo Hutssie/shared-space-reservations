@@ -7,6 +7,7 @@ export type User = {
   avatarUrl: string | null;
   professionalTitle?: string | null;
   bio?: string | null;
+  role?: 'user' | 'admin';
 };
 
 export type AuthResponse = {

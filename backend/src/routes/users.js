@@ -34,7 +34,7 @@ router.get('/me', authMiddleware, async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: { id: true, email: true, name: true, avatarUrl: true, professionalTitle: true, bio: true, createdAt: true },
+      select: { id: true, email: true, name: true, avatarUrl: true, professionalTitle: true, bio: true, createdAt: true, role: true },
     });
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
@@ -81,7 +81,7 @@ router.patch('/me', authMiddleware, async (req, res, next) => {
     const user = await prisma.user.update({
       where: { id: req.userId },
       data,
-      select: { id: true, email: true, name: true, avatarUrl: true, professionalTitle: true, bio: true },
+      select: { id: true, email: true, name: true, avatarUrl: true, professionalTitle: true, bio: true, role: true },
     });
     res.json(user);
   } catch (e) {

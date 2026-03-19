@@ -12,11 +12,13 @@ model User {
   email                  String    @unique
   passwordHash           String    @map("password_hash")
   name                   String
+  role                   String    @default("user") @map("role")
   avatarUrl              String?   @map("avatar_url")
   professionalTitle      String?   @map("professional_title")
   bio                    String?   @db.Text
   availabilityStartTime  String?   @map("availability_start_time")
   availabilityEndTime    String?   @map("availability_end_time")
+  bannedAt               DateTime? @map("banned_at")
   createdAt              DateTime  @default(now()) @map("created_at")
 
   spacesAsHost         Space[]               @relation("HostSpaces")

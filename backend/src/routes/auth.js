@@ -26,6 +26,7 @@ function sanitizeUser(user) {
     email: user.email,
     name: user.name,
     avatarUrl: user.avatarUrl,
+    role: user.role ?? 'user',
   };
 }
 
@@ -41,7 +42,7 @@ router.post('/register', async (req, res, next) => {
     if (!pwValidation.valid) return res.status(400).json({ error: pwValidation.error });
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { email, passwordHash, name },
+      data: { email, passwordHash, name, role: 'user' },
     });
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
     res.status(201).json({ token, user: sanitizeUser(user) });
@@ -56,9 +57,15 @@ router.post('/login', async (req, res, next) => {
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({
+      where: { email },
+      select: { id: true, passwordHash: true, bannedAt: true, email: true, name: true, avatarUrl: true, role: true },
+    });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({ error: 'Invalid email or password' });
+    }
+    if (user.bannedAt) {
+      return res.status(401).json({ error: 'Your account has been suspended. Contact support.' });
     }
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: sanitizeUser(user) });
