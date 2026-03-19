@@ -34,6 +34,15 @@ export type Space = {
 
 export type SpaceListItem = Space;
 
+export type CategoryPricingStats = {
+  avgPrice: number;
+  minPrice: number;
+  maxPrice: number;
+  count: number;
+};
+
+export type CategoryPricingResponse = Record<string, CategoryPricingStats>;
+
 export function fetchSpaces(params: {
   q?: string;
   location?: string;
@@ -79,6 +88,10 @@ export function shareSpaceLink(spaceId: string): Promise<{ success: boolean; lin
 
 export function fetchCategoryCounts(): Promise<Record<string, number>> {
   return apiGet<Record<string, number>>('/api/spaces/category-counts');
+}
+
+export function fetchCategoryPricing(): Promise<CategoryPricingResponse> {
+  return apiGet<CategoryPricingResponse>('/api/spaces/category-pricing');
 }
 
 export function fetchPopularCategoriesThisWeek(): Promise<{ categories: string[] }> {

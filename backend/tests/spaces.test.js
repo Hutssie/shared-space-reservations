@@ -75,6 +75,27 @@ describe('Spaces', () => {
     });
   });
 
+  it('S4b: GET /api/spaces/category-pricing returns 200 and stats per category', async () => {
+    const res = await request(app).get('/api/spaces/category-pricing');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(expect.any(Object));
+    for (const [category, stats] of Object.entries(res.body)) {
+      expect(typeof category).toBe('string');
+      expect(stats).toMatchObject({
+        avgPrice: expect.any(Number),
+        minPrice: expect.any(Number),
+        maxPrice: expect.any(Number),
+        count: expect.any(Number),
+      });
+      expect(stats.count).toBeGreaterThanOrEqual(0);
+    }
+    expect(res.body['Conference Room']).toBeDefined();
+    expect(res.body['Conference Room'].count).toBeGreaterThanOrEqual(1);
+    expect(res.body['Conference Room'].avgPrice).toBeGreaterThanOrEqual(0);
+    expect(res.body['Conference Room'].minPrice).toBeGreaterThanOrEqual(0);
+    expect(res.body['Conference Room'].maxPrice).toBeGreaterThanOrEqual(res.body['Conference Room'].minPrice);
+  });
+
   it('S5: GET /api/spaces/:id with valid id returns 200 and space', async () => {
     const res = await request(app).get(`/api/spaces/${spaceId}`);
     expect(res.status).toBe(200);

@@ -91,6 +91,25 @@ function canCancelBooking(b: Booking): boolean {
   return now + noticeHours * 60 * 60 * 1000 <= bookingStartMs;
 }
 
+function getMessageDateKey(createdAt: string | undefined): string {
+  if (!createdAt) return new Date().toISOString().slice(0, 10);
+  const d = new Date(createdAt);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getDateDividerLabel(dateKey: string): string {
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  if (dateKey === todayKey) return 'Today';
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayKey = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
+  if (dateKey === yesterdayKey) return 'Yesterday';
+  const [y, m, day] = dateKey.split('-').map(Number);
+  const date = new Date(y, m - 1, day);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
 const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Booking[]; setBookings: React.Dispatch<React.SetStateAction<Booking[]>>; newestBookingId: string | null }) => {
   const [filter, setFilter] = useState('All Bookings');
   const [isOpen, setIsOpen] = useState(false);
@@ -1261,12 +1280,6 @@ const MessagesTab = () => {
           ref={messagesScrollRef}
           className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 md:space-y-12 bg-gradient-to-b from-brand-50/20 to-white custom-scrollbar"
         >
-          <div className="flex justify-center mb-4">
-            <div className="px-5 py-2 bg-white/80 border border-brand-100 backdrop-blur-sm text-brand-300 text-[10px] font-black uppercase tracking-[0.25em] rounded-full shadow-sm">
-              Today
-            </div>
-          </div>
-
           {loadingMessages && (
             <div className="space-y-6">
               {[0, 1, 2].map((i) => (
@@ -1287,61 +1300,79 @@ const MessagesTab = () => {
             </div>
           )}
 
-          {activeChat && chatMessages.map((chat) => (
-            <div
-              key={chat.id}
-              className={`flex gap-4 max-w-[85%] md:max-w-[75%] ${chat.type === 'sent' ? 'flex-row-reverse ml-auto' : ''}`}
-            >
-              {chat.type === 'received' && (
-                <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shrink-0 mt-1 ring-2 ring-brand-50">
-                  <ImageWithFallback src={activeChat.avatar ?? ''} alt={activeChat.user} />
+          {!loadingMessages && activeChat && (() => {
+            const byDate = new Map<string, typeof chatMessages>();
+            for (const chat of chatMessages) {
+              const key = getMessageDateKey(chat.createdAt as string | undefined);
+              if (!byDate.has(key)) byDate.set(key, []);
+              byDate.get(key)!.push(chat);
+            }
+            const dateKeys = Array.from(byDate.keys()).sort();
+            return dateKeys.map((dateKey) => (
+              <div key={dateKey} className="space-y-6 md:space-y-8">
+                <div className="flex justify-center">
+                  <div className="px-5 py-2 bg-white/80 border border-brand-100 backdrop-blur-sm text-brand-300 text-[10px] font-black uppercase tracking-[0.25em] rounded-full shadow-sm">
+                    {getDateDividerLabel(dateKey)}
+                  </div>
                 </div>
-              )}
-              {chat.type === 'sent' && (
-                <div className="w-10 h-10 rounded-xl bg-brand-700 flex items-center justify-center text-white shrink-0 mt-1 shadow-lg shadow-brand-700/20">
-                  <User className="w-5 h-5" />
-                </div>
-              )}
-              <div className={`space-y-2 ${chat.type === 'sent' ? 'text-right' : ''}`}>
-                <div className={`px-5 py-4 md:px-7 md:py-5 shadow-xl rounded-[2rem] text-sm md:text-base leading-relaxed
-                  ${chat.type === 'sent'
-                    ? 'bg-brand-700 text-white rounded-tr-none shadow-brand-700/10'
-                    : 'bg-white text-brand-700 rounded-tl-none border border-brand-100 shadow-brand-700/5'
-                  }
-                `}>
-                  <MarkdownContent
-                    className={[
-                      chat.type === 'sent'
-                        ? 'text-white [&_a]:text-brand-100 [&_a]:hover:text-white [&_strong]:text-white'
-                        : 'text-brand-700',
-                      '[&_img]:rounded-2xl [&_img]:max-w-full [&_img]:h-auto [&_img]:border [&_img]:border-brand-100 [&_img]:shadow-sm [&_p]:mb-0',
-                    ].join(' ')}
-                    onImageClick={setFullscreenImageUrl}
+                {(byDate.get(dateKey) ?? []).map((chat) => (
+                  <div
+                    key={chat.id}
+                    className={`flex gap-4 max-w-[85%] md:max-w-[75%] ${chat.type === 'sent' ? 'flex-row-reverse ml-auto' : ''}`}
                   >
-                    {chat.text}
-                  </MarkdownContent>
-                </div>
-                <div className={`flex items-center gap-2 px-1 ${chat.type === 'sent' ? 'justify-end' : ''}`}>
-                  <span className="text-[10px] font-black text-brand-200 uppercase tracking-tighter">{chat.time}</span>
-                  {chat.type === 'sent' && (() => {
-                    const seen =
-                      Boolean(otherParticipantLastReadAt) &&
-                      Boolean(chat.createdAt) &&
-                      new Date(chat.createdAt as string).getTime() <= new Date(otherParticipantLastReadAt as string).getTime();
-                    return seen ? (
-                      <span title="Message seen" className="inline-flex">
-                        <CheckCheck className="w-4 h-4 text-brand-300" />
-                      </span>
-                    ) : (
-                      <span title="Message sent" className="inline-flex">
-                        <Check className="w-4 h-4 text-brand-300" />
-                      </span>
-                    );
-                  })()}
-                </div>
+                    {chat.type === 'received' && (
+                      <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shrink-0 mt-1 ring-2 ring-brand-50">
+                        <ImageWithFallback src={activeChat.avatar ?? ''} alt={activeChat.user} />
+                      </div>
+                    )}
+                    {chat.type === 'sent' && (
+                      <div className="w-10 h-10 rounded-xl bg-brand-700 flex items-center justify-center text-white shrink-0 mt-1 shadow-lg shadow-brand-700/20">
+                        <User className="w-5 h-5" />
+                      </div>
+                    )}
+                    <div className={`space-y-2 ${chat.type === 'sent' ? 'text-right' : ''}`}>
+                      <div className={`px-5 py-4 md:px-7 md:py-5 shadow-xl rounded-[2rem] text-sm md:text-base leading-relaxed
+                        ${chat.type === 'sent'
+                          ? 'bg-brand-700 text-white rounded-tr-none shadow-brand-700/10'
+                          : 'bg-white text-brand-700 rounded-tl-none border border-brand-100 shadow-brand-700/5'
+                        }
+                      `}>
+                        <MarkdownContent
+                          className={[
+                            chat.type === 'sent'
+                              ? 'text-white [&_a]:text-brand-100 [&_a]:hover:text-white [&_strong]:text-white'
+                              : 'text-brand-700',
+                            '[&_img]:rounded-2xl [&_img]:max-w-full [&_img]:h-auto [&_img]:border [&_img]:border-brand-100 [&_img]:shadow-sm [&_p]:mb-0',
+                          ].join(' ')}
+                          onImageClick={setFullscreenImageUrl}
+                        >
+                          {chat.text}
+                        </MarkdownContent>
+                      </div>
+                      <div className={`flex items-center gap-2 px-1 ${chat.type === 'sent' ? 'justify-end' : ''}`}>
+                        <span className="text-[10px] font-black text-brand-200 uppercase tracking-tighter">{chat.time}</span>
+                        {chat.type === 'sent' && (() => {
+                          const seen =
+                            Boolean(otherParticipantLastReadAt) &&
+                            Boolean(chat.createdAt) &&
+                            new Date(chat.createdAt as string).getTime() <= new Date(otherParticipantLastReadAt as string).getTime();
+                          return seen ? (
+                            <span title="Message seen" className="inline-flex">
+                              <CheckCheck className="w-4 h-4 text-brand-300" />
+                            </span>
+                          ) : (
+                            <span title="Message sent" className="inline-flex">
+                              <Check className="w-4 h-4 text-brand-300" />
+                            </span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
+            ));
+          })()}
         </div>
 
         <div className="p-3 md:p-10 border-t border-brand-100 bg-white">

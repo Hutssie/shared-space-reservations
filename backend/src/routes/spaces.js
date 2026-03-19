@@ -133,6 +133,30 @@ router.get('/category-counts', async (req, res, next) => {
   }
 });
 
+router.get('/category-pricing', async (req, res, next) => {
+  try {
+    const groups = await prisma.space.groupBy({
+      by: ['category'],
+      _count: { id: true },
+      _avg: { pricePerHour: true },
+      _min: { pricePerHour: true },
+      _max: { pricePerHour: true },
+      where: { status: 'active' },
+    });
+    const pricing = {};
+    for (const g of groups) {
+      const count = g._count.id;
+      const avg = g._avg.pricePerHour != null ? Number(g._avg.pricePerHour) : 0;
+      const min = g._min.pricePerHour != null ? Number(g._min.pricePerHour) : 0;
+      const max = g._max.pricePerHour != null ? Number(g._max.pricePerHour) : 0;
+      pricing[g.category] = { avgPrice: avg, minPrice: min, maxPrice: max, count };
+    }
+    res.json(pricing);
+  } catch (e) {
+    next(e);
+  }
+});
+
 router.get('/locations', async (req, res, next) => {
   try {
     const { q } = req.query;

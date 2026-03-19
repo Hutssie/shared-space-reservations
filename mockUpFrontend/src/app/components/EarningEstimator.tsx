@@ -3,29 +3,70 @@ import { Calculator, TrendingUp, Calendar, Info, ArrowRight, CheckCircle2, Dolla
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { fetchCategoryPricing, type CategoryPricingResponse } from '../api/spaces';
+
+const CATEGORY_NAMES = [
+  'Art Studio',
+  'Sports Space',
+  'Classroom',
+  'Conference Room',
+  'IT Classroom',
+  'Laboratory',
+  'Photo Studio',
+  'Recording Studio',
+  'Kitchen Studio',
+  'Dancing Studio',
+];
+
+const FALLBACK_AVG_RATE: Record<string, number> = {
+  'Art Studio': 60,
+  'Sports Space': 85,
+  'Classroom': 50,
+  'Conference Room': 120,
+  'IT Classroom': 95,
+  'Laboratory': 150,
+  'Photo Studio': 75,
+  'Recording Studio': 80,
+  'Kitchen Studio': 110,
+  'Dancing Studio': 70,
+};
 
 export const EarningEstimator = () => {
   const navigate = useNavigate();
   const [spaceType, setSpaceType] = useState('Photo Studio');
-  const [hourlyRate, setHourlyRate] = useState(75);
+  const [hourlyRate, setHourlyRate] = useState(FALLBACK_AVG_RATE['Photo Studio']);
   const [hoursPerWeek, setHoursPerWeek] = useState(15);
-  
+  const [categoryPricing, setCategoryPricing] = useState<CategoryPricingResponse | null>(null);
+  const [pricingLoading, setPricingLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCategoryPricing()
+      .then((data) => {
+        setCategoryPricing(data);
+        const photoStudioStats = data['Photo Studio'];
+        if (photoStudioStats && photoStudioStats.count > 0 && photoStudioStats.avgPrice > 0) {
+          setHourlyRate(Math.round(photoStudioStats.avgPrice));
+        }
+      })
+      .catch(() => setCategoryPricing({}))
+      .finally(() => setPricingLoading(false));
+  }, []);
+
+  const getAvgRateForCategory = (category: string): number => {
+    const stats = categoryPricing?.[category];
+    if (stats && stats.count > 0 && stats.avgPrice > 0) return Math.round(stats.avgPrice);
+    return FALLBACK_AVG_RATE[category] ?? 75;
+  };
+
+  const spaceTypes = CATEGORY_NAMES.map((name) => ({
+    name,
+    avgRate: getAvgRateForCategory(name),
+    count: categoryPricing?.[name]?.count ?? 0,
+  }));
+
   const weeklyEarnings = hourlyRate * hoursPerWeek;
   const monthlyEarnings = weeklyEarnings * 4.3;
   const yearlyEarnings = monthlyEarnings * 12;
-
-  const spaceTypes = [
-    { name: 'Art Studio', avgRate: 60 },
-    { name: 'Sports Space', avgRate: 85 },
-    { name: 'Classroom', avgRate: 50 },
-    { name: 'Conference Room', avgRate: 120 },
-    { name: 'IT Classroom', avgRate: 95 },
-    { name: 'Laboratory', avgRate: 150 },
-    { name: 'Photo Studio', avgRate: 75 },
-    { name: 'Recording Studio', avgRate: 80 },
-    { name: 'Kitchen Studio', avgRate: 110 },
-    { name: 'Dancing Studio', avgRate: 70 },
-  ];
 
   const handleSpaceTypeChange = (type: string, rate: number) => {
     setSpaceType(type);
@@ -101,6 +142,20 @@ export const EarningEstimator = () => {
                       </button>
                     ))}
                   </div>
+                  {!pricingLoading && (() => {
+                    const selected = spaceTypes.find((t) => t.name === spaceType);
+                    if (!selected) return null;
+                    if (selected.count > 0) {
+                      return (
+                        <p className="mt-3 text-xs font-medium text-brand-400">
+                          Based on {selected.count} {selected.count === 1 ? 'space' : 'spaces'} in this category
+                        </p>
+                      );
+                    }
+                    return (
+                      <p className="mt-3 text-xs font-medium text-brand-400">No market data for this category yet</p>
+                    );
+                  })()}
                 </div>
 
                 {/* Hourly Rate Slider */}

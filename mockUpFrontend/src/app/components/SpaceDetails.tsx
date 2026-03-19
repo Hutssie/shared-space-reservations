@@ -1293,7 +1293,7 @@ export const SpaceDetails = () => {
                       </div>
                       <div className="flex flex-col items-end gap-1 shrink-0">
                         <span className={`px-2.5 py-1 rounded-xl font-black text-xs border-2 ${getRatingColor(review.rating)}`}>
-                          ⭐ {review.rating.toFixed(1)}
+                          ⭐ {review.rating.toFixed(2)}
                         </span>
                         <div className="flex items-center gap-0.5">
                           {renderStars(review.rating)}
@@ -1500,7 +1500,7 @@ export const SpaceDetails = () => {
                                       transition={{ delay: idx * 0.1 + 0.2, type: 'spring', stiffness: 200 }}
                                       className={`px-3 py-1.5 rounded-xl font-black text-sm border-2 ${getRatingColor(review.rating)}`}
                                     >
-                                      ⭐ {review.rating.toFixed(1)}
+                                      ⭐ {review.rating.toFixed(2)}
                                     </motion.div>
                                     <div className="flex items-center gap-0.5">
                                       {renderStars(review.rating)}
