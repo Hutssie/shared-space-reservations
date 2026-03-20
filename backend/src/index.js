@@ -14,6 +14,7 @@ import { statsRouter } from './routes/stats.js';
 import { messagesRouter } from './routes/messages.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { adminRouter } from './routes/admin.js';
+import { aiSearchRouter } from './routes/ai-search.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -34,6 +35,7 @@ app.use('/api/stats', statsRouter);
 app.use('/api/messages', messagesRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/admin', adminRouter);
+app.use('/api/ai-search', aiSearchRouter);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 

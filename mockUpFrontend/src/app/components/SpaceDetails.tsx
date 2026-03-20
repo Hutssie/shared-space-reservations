@@ -241,8 +241,14 @@ export const SpaceDetails = () => {
   });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [startTime, setStartTime] = useState<string>('');
-  const [endTime, setEndTime] = useState<string>('');
+  const [startTime, setStartTime] = useState<string>(() => {
+    const st = searchParams.get('startTime');
+    return st && allTimeSlots.includes(st) ? st : '';
+  });
+  const [endTime, setEndTime] = useState<string>(() => {
+    const et = searchParams.get('endTime');
+    return et && allTimeSlots.includes(et) ? et : '';
+  });
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
   const [bookingConflict, setBookingConflict] = useState(false);
   const [bookingStep, setBookingStep] = useState<'viewing' | 'requesting' | 'confirmed'>('viewing');

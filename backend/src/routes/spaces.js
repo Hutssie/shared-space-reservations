@@ -6,7 +6,7 @@ import { Decimal } from '@prisma/client/runtime/library';
 const router = Router();
 const prisma = new PrismaClient();
 
-const TIME_SLOTS = [
+export const TIME_SLOTS = [
   '12:00 AM', '01:00 AM', '02:00 AM', '03:00 AM', '04:00 AM', '05:00 AM', '06:00 AM', '07:00 AM',
   '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
   '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
@@ -14,7 +14,7 @@ const TIME_SLOTS = [
 ];
 
 // Maps frontend amenity ids to possible labels (so seed/DB can use labels and still match).
-const AMENITY_ID_TO_LABELS = {
+export const AMENITY_ID_TO_LABELS = {
   wifi: ['High-speed WiFi'],
   light: ['Natural Light'],
   coffee: ['Free Coffee'],
@@ -37,6 +37,154 @@ const AMENITY_ID_TO_LABELS = {
   showers: ['Locker Rooms'],
   lab: ['Lab Equipment'],
 };
+
+export function buildSpaceWhereClause({ q, location, category, minPrice, maxPrice, minCapacity, minSquareMeters, maxSquareMeters } = {}) {
+  const where = { status: 'active' };
+  if (location) {
+    where.location = { contains: String(location), mode: 'insensitive' };
+  } else if (q) {
+    where.OR = [
+      { title: { contains: q, mode: 'insensitive' } },
+      { description: { contains: q, mode: 'insensitive' } },
+      { location: { contains: q, mode: 'insensitive' } },
+      { category: { contains: q, mode: 'insensitive' } },
+    ];
+  }
+  if (category) {
+    const cats = String(category).split(',').map((c) => c.trim()).filter(Boolean);
+    where.category = cats.length === 1 ? cats[0] : { in: cats };
+  }
+  if (minPrice != null) where.pricePerHour = { ...where.pricePerHour, gte: parseFloat(minPrice) };
+  if (maxPrice != null) where.pricePerHour = { ...where.pricePerHour, lte: parseFloat(maxPrice) };
+  if (minCapacity != null) where.capacity = { gte: parseInt(minCapacity, 10) };
+  if (minSquareMeters != null) where.squareMeters = { ...where.squareMeters, gte: parseInt(minSquareMeters, 10) };
+  if (maxSquareMeters != null) where.squareMeters = { ...where.squareMeters, lte: parseInt(maxSquareMeters, 10) };
+  return where;
+}
+
+export function parseTimeToMinutes(t) {
+  const match = String(t).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return null;
+  let h = parseInt(match[1], 10);
+  const m = parseInt(match[2], 10);
+  if (match[3].toUpperCase() === 'PM' && h !== 12) h += 12;
+  if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
+  return h * 60 + m;
+}
+
+export function computeIsSpaceAvailableOnDate(space, bookingsForSpace, { dateStr, dayName }) {
+  if (!dateStr) return true;
+
+  if (dayName && space.bannedDaysJson) {
+    try {
+      const banned = JSON.parse(space.bannedDaysJson);
+      if (Array.isArray(banned) && banned.includes(dayName)) return false;
+    } catch {}
+  }
+
+  if (space.blockedDatesJson) {
+    try {
+      const blocked = JSON.parse(space.blockedDatesJson);
+      if (Array.isArray(blocked)) {
+        for (const block of blocked) {
+          const start = block?.startDate;
+          const end = block?.endDate || block?.startDate;
+          if (start && end && dateStr >= start && dateStr <= end) return false;
+        }
+      }
+    } catch {}
+  }
+
+  const windowStart = space.availabilityStartTime ?? null;
+  const windowEnd = space.availabilityEndTime ?? null;
+  const wStartM = windowStart ? parseTimeToMinutes(windowStart) : null;
+  let wEndM = windowEnd ? parseTimeToMinutes(windowEnd) : null;
+  if (wEndM === 0) wEndM = 24 * 60;
+
+  const unavailableSet = new Set();
+  if (wStartM != null && wEndM != null) {
+    for (const s of TIME_SLOTS) {
+      const m = parseTimeToMinutes(s);
+      if (m == null) continue;
+      if (!(m >= wStartM && m <= wEndM)) unavailableSet.add(s);
+    }
+  }
+
+  const bookedSet = new Set();
+  for (const b of bookingsForSpace) {
+    const sIdx = TIME_SLOTS.indexOf(b.startTime);
+    const eIdx = TIME_SLOTS.indexOf(b.endTime);
+    if (sIdx === -1 || eIdx === -1) continue;
+    if (sIdx < eIdx) {
+      for (let i = sIdx; i < eIdx; i++) bookedSet.add(TIME_SLOTS[i]);
+    } else if (sIdx === 0 && eIdx === 0) {
+      for (const slot of TIME_SLOTS) bookedSet.add(slot);
+    } else if (eIdx === 0 && sIdx > 0) {
+      for (let i = sIdx; i < TIME_SLOTS.length; i++) bookedSet.add(TIME_SLOTS[i]);
+    }
+  }
+
+  return TIME_SLOTS.some((s) => !bookedSet.has(s) && !unavailableSet.has(s));
+}
+
+export function computeIsSpaceAvailableInRange(space, bookingsForSpace, { dateStr, dayName, startTime, endTime }) {
+  if (!dateStr || !startTime || !endTime) return true;
+
+  if (dayName && space.bannedDaysJson) {
+    try {
+      const banned = JSON.parse(space.bannedDaysJson);
+      if (Array.isArray(banned) && banned.includes(dayName)) return false;
+    } catch {}
+  }
+
+  if (space.blockedDatesJson) {
+    try {
+      const blocked = JSON.parse(space.blockedDatesJson);
+      if (Array.isArray(blocked)) {
+        for (const block of blocked) {
+          const s = block?.startDate;
+          const e = block?.endDate || block?.startDate;
+          if (s && e && dateStr >= s && dateStr <= e) return false;
+        }
+      }
+    } catch {}
+  }
+
+  const reqStartIdx = TIME_SLOTS.indexOf(startTime);
+  const reqEndIdx = TIME_SLOTS.indexOf(endTime);
+  if (reqStartIdx === -1 || reqEndIdx === -1 || reqStartIdx >= reqEndIdx) return false;
+
+  const requestedSlots = TIME_SLOTS.slice(reqStartIdx, reqEndIdx);
+
+  const windowStart = space.availabilityStartTime ?? null;
+  const windowEnd = space.availabilityEndTime ?? null;
+  const wStartM = windowStart ? parseTimeToMinutes(windowStart) : null;
+  let wEndM = windowEnd ? parseTimeToMinutes(windowEnd) : null;
+  if (wEndM === 0) wEndM = 24 * 60;
+
+  if (wStartM != null && wEndM != null) {
+    for (const slot of requestedSlots) {
+      const m = parseTimeToMinutes(slot);
+      if (m == null || m < wStartM || m > wEndM) return false;
+    }
+  }
+
+  const bookedSet = new Set();
+  for (const b of bookingsForSpace) {
+    const sIdx = TIME_SLOTS.indexOf(b.startTime);
+    const eIdx = TIME_SLOTS.indexOf(b.endTime);
+    if (sIdx === -1 || eIdx === -1) continue;
+    if (sIdx < eIdx) {
+      for (let i = sIdx; i < eIdx; i++) bookedSet.add(TIME_SLOTS[i]);
+    } else if (sIdx === 0 && eIdx === 0) {
+      for (const slot of TIME_SLOTS) bookedSet.add(slot);
+    } else if (eIdx === 0 && sIdx > 0) {
+      for (let i = sIdx; i < TIME_SLOTS.length; i++) bookedSet.add(TIME_SLOTS[i]);
+    }
+  }
+
+  return requestedSlots.every((slot) => !bookedSet.has(slot));
+}
 
 export function spaceToResponse(space) {
   if (!space) return null;
@@ -294,24 +442,7 @@ router.get('/featured-this-week', async (req, res, next) => {
 router.get('/', async (req, res, next) => {
   try {
     const { q, location, category, date, minPrice, maxPrice, minCapacity, amenities: amenitiesParam, limit = 50, offset = 0, featured } = req.query;
-    const where = { status: 'active' };
-    if (location) {
-      where.location = { contains: String(location), mode: 'insensitive' };
-    } else if (q) {
-      where.OR = [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-        { location: { contains: q, mode: 'insensitive' } },
-        { category: { contains: q, mode: 'insensitive' } },
-      ];
-    }
-    if (category) {
-      const cats = String(category).split(',').map((c) => c.trim()).filter(Boolean);
-      where.category = cats.length === 1 ? cats[0] : { in: cats };
-    }
-    if (minPrice != null) where.pricePerHour = { ...where.pricePerHour, gte: parseFloat(minPrice) };
-    if (maxPrice != null) where.pricePerHour = { ...where.pricePerHour, lte: parseFloat(maxPrice) };
-    if (minCapacity != null) where.capacity = { gte: parseInt(minCapacity, 10) };
+    const where = buildSpaceWhereClause({ q, location, category, minPrice, maxPrice, minCapacity });
 
     const skip = parseInt(offset, 10) || 0;
     const requestedTake = Math.min(parseInt(limit, 10) || 50, 100);
@@ -337,84 +468,9 @@ router.get('/', async (req, res, next) => {
       }
     }
 
-    const DAY_SLOTS = [
-      '12:00 AM', '01:00 AM', '02:00 AM', '03:00 AM', '04:00 AM', '05:00 AM', '06:00 AM', '07:00 AM',
-      '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-      '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM',
-      '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM',
-    ];
-
-    function parseTimeToMinutes(t) {
-      const match = String(t).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-      if (!match) return null;
-      let h = parseInt(match[1], 10);
-      const m = parseInt(match[2], 10);
-      if (match[3].toUpperCase() === 'PM' && h !== 12) h += 12;
-      if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
-      return h * 60 + m;
-    }
-
-    function computeIsSpaceAvailableOnDate(space, bookingsForSpace) {
-      if (!dateStrFilter || !dateStart || !dateEnd) return true;
-
-      // Banned day
-      if (dayName && space.bannedDaysJson) {
-        try {
-          const banned = JSON.parse(space.bannedDaysJson);
-          if (Array.isArray(banned) && banned.includes(dayName)) return false;
-        } catch {}
-      }
-
-      // Blocked date ranges
-      const yyyyMmDd = dateStart.toISOString().slice(0, 10);
-      if (space.blockedDatesJson) {
-        try {
-          const blocked = JSON.parse(space.blockedDatesJson);
-          if (Array.isArray(blocked)) {
-            for (const block of blocked) {
-              const start = block?.startDate;
-              const end = block?.endDate || block?.startDate;
-              if (start && end && yyyyMmDd >= start && yyyyMmDd <= end) return false;
-            }
-          }
-        } catch {}
-      }
-
-      // Outside availability window -> unavailable
-      const windowStart = space.availabilityStartTime ?? null;
-      const windowEnd = space.availabilityEndTime ?? null;
-      const wStartM = windowStart ? parseTimeToMinutes(windowStart) : null;
-      let wEndM = windowEnd ? parseTimeToMinutes(windowEnd) : null;
-      if (wEndM === 0) wEndM = 24 * 60;
-
-      const unavailableSet = new Set();
-      if (wStartM != null && wEndM != null) {
-        for (const s of DAY_SLOTS) {
-          const m = parseTimeToMinutes(s);
-          if (m == null) continue;
-          const inWindow = m >= wStartM && m <= wEndM;
-          if (!inWindow) unavailableSet.add(s);
-        }
-      }
-
-      // Booked set from bookings
-      const bookedSet = new Set();
-      for (const b of bookingsForSpace) {
-        const sIdx = DAY_SLOTS.indexOf(b.startTime);
-        const eIdx = DAY_SLOTS.indexOf(b.endTime);
-        if (sIdx === -1 || eIdx === -1) continue;
-        if (sIdx < eIdx) {
-          for (let i = sIdx; i < eIdx; i++) bookedSet.add(DAY_SLOTS[i]);
-        } else if (sIdx === 0 && eIdx === 0) {
-          for (const slot of DAY_SLOTS) bookedSet.add(slot);
-        } else if (eIdx === 0 && sIdx > 0) {
-          for (let i = sIdx; i < DAY_SLOTS.length; i++) bookedSet.add(DAY_SLOTS[i]);
-        }
-      }
-
-      // If any slot is not booked and not unavailable, space is available.
-      return DAY_SLOTS.some((s) => !bookedSet.has(s) && !unavailableSet.has(s));
-    }
+    const dateCtx = dateStrFilter ? { dateStr: dateStart.toISOString().slice(0, 10), dayName } : null;
+    const isAvailableOnDate = (space, bookings) =>
+      dateCtx ? computeIsSpaceAvailableOnDate(space, bookings, dateCtx) : true;
 
     if (amenityIds.length > 0) {
       const takePool = 500;
@@ -453,7 +509,7 @@ router.get('/', async (req, res, next) => {
           if (!bySpaceId.has(b.spaceId)) bySpaceId.set(b.spaceId, []);
           bySpaceId.get(b.spaceId).push(b);
         }
-        const dateFiltered = filtered.filter((s) => computeIsSpaceAvailableOnDate(s, bySpaceId.get(s.id) ?? []));
+        const dateFiltered = filtered.filter((s) => isAvailableOnDate(s, bySpaceId.get(s.id) ?? []));
         const total = dateFiltered.length;
         const paginated = dateFiltered.slice(skip, skip + requestedTake);
         res.json({ spaces: paginated.map(spaceToResponse), total });
@@ -495,7 +551,7 @@ router.get('/', async (req, res, next) => {
         bySpaceId.get(b.spaceId).push(b);
       }
 
-      const dateFiltered = spacesPool.filter((s) => computeIsSpaceAvailableOnDate(s, bySpaceId.get(s.id) ?? []));
+      const dateFiltered = spacesPool.filter((s) => isAvailableOnDate(s, bySpaceId.get(s.id) ?? []));
       const total = dateFiltered.length;
       const paginated = dateFiltered.slice(skip, skip + requestedTake);
       res.json({ spaces: paginated.map(spaceToResponse), total });
