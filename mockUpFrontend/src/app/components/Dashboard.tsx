@@ -2124,7 +2124,6 @@ const NotificationsTab = () => {
 const SettingsTab = () => {
   const { user, setUser } = useAuth();
   const [activeSecurityAction, setActiveSecurityAction] = useState<string | null>(null);
-  const [selected2FAMethod, setSelected2FAMethod] = useState<string>('app');
   const [passwordForm, setPasswordForm] = useState<[string, string, string]>(['', '', '']);
   const [passwordFormSubmitting, setPasswordFormSubmitting] = useState(false);
 
@@ -2256,20 +2255,6 @@ const SettingsTab = () => {
         { label: 'Confirm New Password', type: 'password', placeholder: '••••••••' }
       ]
     },
-    'Two-factor Authentication': {
-      title: 'Two-factor Authentication',
-      desc: 'Enhance your account security by adding an extra layer of protection.',
-      fields: [
-        { 
-          label: 'Authentication Method', 
-          type: 'custom_selection', 
-          options: [
-            { id: 'app', label: 'Authenticator App', desc: 'Use an app like Google Authenticator or Authy to get codes.', icon: Shield },
-            { id: 'sms', label: 'SMS Verification', desc: 'Receive a text message with a one-time code on your phone.', icon: Smartphone }
-          ]
-        }
-      ]
-    }
   };
 
   return (
@@ -2308,57 +2293,17 @@ const SettingsTab = () => {
                   {securityActions[activeSecurityAction as keyof typeof securityActions].fields.map((field, idx) => (
                     <div key={idx} className="space-y-2">
                       <label className="text-sm font-black text-brand-400 uppercase tracking-widest">{field.label}</label>
-                      {field.type === 'custom_selection' ? (
-                        <div className="grid grid-cols-1 gap-4 mt-2">
-                          {field.options?.map((opt: any) => (
-                            <button 
-                              key={opt.id}
-                              onClick={() => setSelected2FAMethod(opt.id)}
-                              className={`flex items-center gap-4 p-5 rounded-2xl border-2 transition-all text-left group cursor-pointer ${
-                                selected2FAMethod === opt.id 
-                                  ? 'bg-white border-brand-700 shadow-lg shadow-brand-700/5' 
-                                  : 'bg-brand-50 border-transparent hover:border-brand-200'
-                              }`}
-                            >
-                              <div className={`p-3 rounded-xl shadow-sm transition-colors ${
-                                selected2FAMethod === opt.id ? 'bg-brand-700 text-white' : 'bg-white text-brand-500 group-hover:text-brand-700'
-                              }`}>
-                                <opt.icon className="w-6 h-6" />
-                              </div>
-                              <div>
-                                <p className={`font-black transition-colors ${selected2FAMethod === opt.id ? 'text-brand-700' : 'text-brand-700'}`}>{opt.label}</p>
-                                <p className="text-xs text-brand-400 font-medium leading-relaxed">{opt.desc}</p>
-                              </div>
-                              {selected2FAMethod === opt.id && (
-                                <div className="ml-auto">
-                                  <div className="w-5 h-5 rounded-full bg-brand-700 flex items-center justify-center">
-                                    <div className="w-2 h-2 rounded-full bg-white" />
-                                  </div>
-                                </div>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      ) : field.type === 'select' ? (
-                        <div className="relative group/select">
-                          <select className="w-full px-6 py-4 bg-brand-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 appearance-none cursor-pointer">
-                            {field.options?.map(opt => <option key={opt}>{opt}</option>)}
-                          </select>
-                          <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-400 pointer-events-none group-hover/select:text-brand-700 transition-colors" />
-                        </div>
-                      ) : (
-                        <input 
-                          type={field.type}
-                          placeholder={field.placeholder}
-                          value={activeSecurityAction === 'Password' ? passwordForm[idx] : undefined}
-                          onChange={(e) => activeSecurityAction === 'Password' && setPasswordForm(prev => {
-                            const p = [...prev];
-                            p[idx] = e.target.value;
-                            return p as [string, string, string];
-                          })}
-                          className="w-full px-6 py-4 bg-brand-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 placeholder:text-brand-200"
-                        />
-                      )}
+                    <input
+                      type={field.type}
+                      placeholder={field.placeholder}
+                      value={passwordForm[idx]}
+                      onChange={(e) => setPasswordForm(prev => {
+                        const p = [...prev];
+                        p[idx] = e.target.value;
+                        return p as [string, string, string];
+                      })}
+                      className="w-full px-6 py-4 bg-brand-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 placeholder:text-brand-200"
+                    />
                     </div>
                   ))}
                 </div>
@@ -2551,24 +2496,6 @@ const SettingsTab = () => {
               <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
             </button>
           </div>
-
-          <div className="flex items-center justify-between p-4 md:p-6 bg-brand-50 rounded-xl md:rounded-2xl">
-            <div className="flex items-center gap-3 md:gap-4">
-              <div className="p-2 md:p-3 bg-white rounded-lg md:rounded-xl shadow-sm text-brand-500">
-                <Smartphone className="w-5 h-5 md:w-6 md:h-6" />
-              </div>
-              <div>
-                <p className="font-black text-brand-700 text-sm md:text-base">Two-factor Authentication</p>
-                <p className="text-[10px] md:text-sm text-green-500 font-bold">Enabled</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setActiveSecurityAction('Two-factor Authentication')}
-              className="px-3 md:px-4 py-1.5 md:py-2 bg-white text-brand-700 font-black text-[10px] md:text-xs rounded-lg shadow-sm cursor-pointer hover:bg-brand-50 transition-colors"
-            >
-              Manage
-            </button>
-          </div>
         </div>
       </div>
 
@@ -2583,8 +2510,6 @@ const SettingsTab = () => {
           {[
             { label: 'Booking Updates', desc: 'Get notified when a booking is confirmed or changed.', checked: true },
             { label: 'Message Alerts', desc: 'Instant notifications when you receive a message from a host.', checked: true },
-            { label: 'Promotions', desc: 'Receive exclusive deals and news about new spaces.', checked: false },
-            { label: 'Security Alerts', desc: 'Get notified about important account security changes.', checked: true },
           ].map((item, idx) => (
             <div key={idx} className="flex items-center justify-between gap-4 md:gap-8 pb-4 md:pb-6 border-b border-brand-100 last:border-0 last:pb-0">
               <div className="min-w-0">
