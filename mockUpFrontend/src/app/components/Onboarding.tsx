@@ -138,7 +138,7 @@ export const Onboarding = () => {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-center gap-3 pl-12 pr-4 py-8 bg-brand-50 border-2 border-dashed border-brand-200 rounded-2xl hover:border-brand-400 hover:bg-brand-100 transition-all cursor-pointer"
+                className="w-full flex items-center justify-center gap-3 px-4 py-8 bg-brand-50 border-2 border-dashed border-brand-200 rounded-2xl hover:border-brand-400 hover:bg-brand-100 transition-all cursor-pointer"
               >
                 <ImageIcon className="w-8 h-8 text-brand-400" />
                 <span className="font-bold text-brand-600">Upload from computer</span>
