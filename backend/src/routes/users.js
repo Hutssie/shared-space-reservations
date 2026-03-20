@@ -5,6 +5,49 @@ import { authMiddleware } from '../middleware/auth.js';
 const router = Router();
 const prisma = new PrismaClient();
 
+const DEFAULT_NOTIFICATION_PREFS = {
+  bookingUpdatesEnabled: true,
+  hostBookingUpdatesEnabled: true,
+  messageAlertsEnabled: true,
+  systemNotificationsEnabled: true,
+};
+
+async function fetchNotificationPrefsRaw(prismaClient, userId) {
+  try {
+    const rows = await prismaClient.$queryRaw`
+      SELECT
+        booking_updates_enabled AS "bookingUpdatesEnabled",
+        host_booking_updates_enabled AS "hostBookingUpdatesEnabled",
+        message_alerts_enabled AS "messageAlertsEnabled",
+        system_notifications_enabled AS "systemNotificationsEnabled"
+      FROM "User"
+      WHERE id = ${userId}
+      LIMIT 1
+    `;
+    const row = Array.isArray(rows) ? rows[0] : null;
+    return {
+      bookingUpdatesEnabled: row?.bookingUpdatesEnabled ?? DEFAULT_NOTIFICATION_PREFS.bookingUpdatesEnabled,
+      hostBookingUpdatesEnabled: row?.hostBookingUpdatesEnabled ?? DEFAULT_NOTIFICATION_PREFS.hostBookingUpdatesEnabled,
+      messageAlertsEnabled: row?.messageAlertsEnabled ?? DEFAULT_NOTIFICATION_PREFS.messageAlertsEnabled,
+      systemNotificationsEnabled: row?.systemNotificationsEnabled ?? DEFAULT_NOTIFICATION_PREFS.systemNotificationsEnabled,
+    };
+  } catch {
+    return DEFAULT_NOTIFICATION_PREFS;
+  }
+}
+
+async function updateNotificationPrefsRaw(prismaClient, userId, prefs) {
+  await prismaClient.$executeRaw`
+    UPDATE "User"
+    SET
+      booking_updates_enabled = ${prefs.bookingUpdatesEnabled},
+      host_booking_updates_enabled = ${prefs.hostBookingUpdatesEnabled},
+      message_alerts_enabled = ${prefs.messageAlertsEnabled},
+      system_notifications_enabled = ${prefs.systemNotificationsEnabled}
+    WHERE id = ${userId}
+  `;
+}
+
 router.get('/search', authMiddleware, async (req, res, next) => {
   try {
     const q = String(req.query.q ?? '').trim();
@@ -84,6 +127,41 @@ router.patch('/me', authMiddleware, async (req, res, next) => {
       select: { id: true, email: true, name: true, avatarUrl: true, professionalTitle: true, bio: true, role: true },
     });
     res.json(user);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// GET /api/users/me/notification-preferences
+router.get('/me/notification-preferences', authMiddleware, async (req, res, next) => {
+  try {
+    const prefs = await fetchNotificationPrefsRaw(prisma, req.userId);
+    res.json(prefs);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// PATCH /api/users/me/notification-preferences
+router.patch('/me/notification-preferences', authMiddleware, async (req, res, next) => {
+  try {
+    const current = await fetchNotificationPrefsRaw(prisma, req.userId);
+    const {
+      bookingUpdatesEnabled,
+      hostBookingUpdatesEnabled,
+      messageAlertsEnabled,
+      systemNotificationsEnabled,
+    } = req.body ?? {};
+
+    const next = {
+      bookingUpdatesEnabled: typeof bookingUpdatesEnabled === 'boolean' ? bookingUpdatesEnabled : current.bookingUpdatesEnabled,
+      hostBookingUpdatesEnabled: typeof hostBookingUpdatesEnabled === 'boolean' ? hostBookingUpdatesEnabled : current.hostBookingUpdatesEnabled,
+      messageAlertsEnabled: typeof messageAlertsEnabled === 'boolean' ? messageAlertsEnabled : current.messageAlertsEnabled,
+      systemNotificationsEnabled: typeof systemNotificationsEnabled === 'boolean' ? systemNotificationsEnabled : current.systemNotificationsEnabled,
+    };
+
+    await updateNotificationPrefsRaw(prisma, req.userId, next);
+    res.json(next);
   } catch (e) {
     next(e);
   }

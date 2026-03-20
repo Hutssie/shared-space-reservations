@@ -52,6 +52,7 @@ import { useUnreadBookings } from '../contexts/UnreadBookingsContext';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { UnreadBadge } from './ui/UnreadBadge';
 import { getNotificationPresentation, formatNotificationTime, getNotificationLink } from '../utils/notificationPresentation';
+import { fetchNotificationPreferences, updateNotificationPreferences, type NotificationPreferences } from '../api/notifications';
 import {
   createOrGetConversation,
   deleteConversationForMe,
@@ -517,7 +518,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
                       }`}
                     >
                       <span className="relative z-10 flex items-center gap-3">
-                        {!filter === option && (
+                        {filter !== option && (
                           <div className="w-1.5 h-1.5 rounded-full bg-brand-400 opacity-0 group-hover/item:opacity-100 transition-all absolute -left-4" />
                         )}
                         {option}
@@ -2123,9 +2124,21 @@ const NotificationsTab = () => {
 
 const SettingsTab = () => {
   const { user, setUser } = useAuth();
+  const { refresh } = useNotifications();
   const [activeSecurityAction, setActiveSecurityAction] = useState<string | null>(null);
   const [passwordForm, setPasswordForm] = useState<[string, string, string]>(['', '', '']);
   const [passwordFormSubmitting, setPasswordFormSubmitting] = useState(false);
+
+  const defaultNotificationPrefs: NotificationPreferences = {
+    bookingUpdatesEnabled: true,
+    hostBookingUpdatesEnabled: true,
+    messageAlertsEnabled: true,
+    systemNotificationsEnabled: true,
+  };
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPreferences>(defaultNotificationPrefs);
+  const [notificationPrefsLoading, setNotificationPrefsLoading] = useState(true);
+  const [notificationPrefsUpdatingKey, setNotificationPrefsUpdatingKey] = useState<keyof NotificationPreferences | null>(null);
+  const notificationPrefsAnyBusy = notificationPrefsLoading || notificationPrefsUpdatingKey !== null;
 
   const [profileName, setProfileName] = useState(user?.name ?? '');
   const [profileTitle, setProfileTitle] = useState(user?.professionalTitle ?? '');
@@ -2142,6 +2155,43 @@ const SettingsTab = () => {
   useEffect(() => {
     if (!activeSecurityAction) setPasswordForm(['', '', '']);
   }, [activeSecurityAction]);
+
+  useEffect(() => {
+    let mounted = true;
+    setNotificationPrefsLoading(true);
+    fetchNotificationPreferences()
+      .then((prefs) => {
+        if (!mounted) return;
+        setNotificationPrefs(prefs);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setNotificationPrefs(defaultNotificationPrefs);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setNotificationPrefsLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  const handleNotificationToggle = async (key: keyof NotificationPreferences) => {
+    const nextValue = !notificationPrefs[key];
+    const prevValue = notificationPrefs[key];
+    setNotificationPrefsUpdatingKey(key);
+    setNotificationPrefs((prev) => ({ ...prev, [key]: nextValue }));
+    try {
+      await updateNotificationPreferences({ [key]: nextValue });
+      await refresh();
+    } catch {
+      setNotificationPrefs((prev) => ({ ...prev, [key]: prevValue }));
+      toast.error('Failed to update notification preferences');
+    } finally {
+      setNotificationPrefsUpdatingKey(null);
+    }
+  };
 
   const hasProfileChanges =
     profileName !== (user?.name ?? '') ||
@@ -2187,7 +2237,8 @@ const SettingsTab = () => {
     try {
       await changePassword(current, newPw);
       setActiveSecurityAction(null);
-      toast.success('Password updated successfully');
+      await refresh();
+      toast.success('Your password has changed successfully');
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Failed to update password');
     } finally {
@@ -2233,7 +2284,7 @@ const SettingsTab = () => {
     setAvatarUploading(true);
     setAvatarError(null);
     try {
-      const updated = await updateMe({ avatarUrl: null });
+      const updated = await updateMe({ avatarUrl: null as any });
       setUser(updated);
       setDisplayAvatarUrl(null);
       const token = getStoredToken();
@@ -2508,16 +2559,30 @@ const SettingsTab = () => {
         </div>
         <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 space-y-4 md:space-y-6">
           {[
-            { label: 'Booking Updates', desc: 'Get notified when a booking is confirmed or changed.', checked: true },
-            { label: 'Message Alerts', desc: 'Instant notifications when you receive a message from a host.', checked: true },
+            { key: 'bookingUpdatesEnabled' as const, label: 'Booking Updates', desc: 'Get notified when one of your bookings is confirmed or changed.' },
+            { key: 'hostBookingUpdatesEnabled' as const, label: 'Host Booking Updates', desc: 'Get notified about booking confirmations and changes for spaces you host.' },
+            { key: 'messageAlertsEnabled' as const, label: 'Message Alerts', desc: 'Instant notifications when you receive a message from a host.' },
+            { key: 'systemNotificationsEnabled' as const, label: 'System Notifications', desc: 'Get notified about important system updates and security changes.' },
           ].map((item, idx) => (
             <div key={idx} className="flex items-center justify-between gap-4 md:gap-8 pb-4 md:pb-6 border-b border-brand-100 last:border-0 last:pb-0">
               <div className="min-w-0">
                 <p className="font-black text-brand-700 text-sm md:text-base truncate">{item.label}</p>
                 <p className="text-xs md:text-sm text-brand-400 font-medium mt-0.5 md:mt-1 line-clamp-2">{item.desc}</p>
               </div>
-              <button className={`w-14 md:w-16 h-8 md:h-9 rounded-full transition-all relative shrink-0 ${item.checked ? 'bg-brand-700' : 'bg-brand-200'} cursor-pointer scale-110 md:scale-100`}>
-                <div className={`absolute top-1 w-6 h-6 md:w-7 md:h-7 bg-white rounded-full transition-all ${item.checked ? 'right-1' : 'left-1'}`} />
+              <button
+                type="button"
+                role="switch"
+                aria-checked={notificationPrefs[item.key]}
+                aria-disabled={notificationPrefsAnyBusy}
+                onClick={() => {
+                  if (notificationPrefsAnyBusy) return;
+                  handleNotificationToggle(item.key);
+                }}
+                className={`w-14 md:w-16 h-8 md:h-9 rounded-full transition-all relative shrink-0 ${notificationPrefs[item.key] ? 'bg-brand-700' : 'bg-brand-200'} cursor-pointer scale-110 md:scale-100 ${notificationPrefsAnyBusy ? 'opacity-60' : ''}`}
+              >
+                <div
+                  className={`absolute top-1 w-6 h-6 md:w-7 md:h-7 bg-white rounded-full transition-all ${notificationPrefs[item.key] ? 'right-1' : 'left-1'}`}
+                />
               </button>
             </div>
           ))}

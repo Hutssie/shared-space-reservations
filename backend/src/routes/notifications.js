@@ -11,6 +11,57 @@ const prisma = new PrismaClient();
  * @param {{ userId: string, type: string, title: string, message: string, data?: object }} params
  */
 export async function createNotification(prismaClient, { userId, type, title, message, data }) {
+  const DEFAULT_NOTIFICATION_PREFS = {
+    bookingUpdatesEnabled: true,
+    hostBookingUpdatesEnabled: true,
+    messageAlertsEnabled: true,
+    systemNotificationsEnabled: true,
+  };
+
+  async function fetchNotificationPrefsRaw() {
+    try {
+      const rows = await prismaClient.$queryRaw`
+        SELECT
+          booking_updates_enabled AS "bookingUpdatesEnabled",
+          host_booking_updates_enabled AS "hostBookingUpdatesEnabled",
+          message_alerts_enabled AS "messageAlertsEnabled",
+          system_notifications_enabled AS "systemNotificationsEnabled"
+        FROM "User"
+        WHERE id = ${userId}
+        LIMIT 1
+      `;
+      const row = Array.isArray(rows) ? rows[0] : null;
+      return {
+        bookingUpdatesEnabled: row?.bookingUpdatesEnabled ?? DEFAULT_NOTIFICATION_PREFS.bookingUpdatesEnabled,
+        hostBookingUpdatesEnabled: row?.hostBookingUpdatesEnabled ?? DEFAULT_NOTIFICATION_PREFS.hostBookingUpdatesEnabled,
+        messageAlertsEnabled: row?.messageAlertsEnabled ?? DEFAULT_NOTIFICATION_PREFS.messageAlertsEnabled,
+        systemNotificationsEnabled: row?.systemNotificationsEnabled ?? DEFAULT_NOTIFICATION_PREFS.systemNotificationsEnabled,
+      };
+    } catch {
+      return DEFAULT_NOTIFICATION_PREFS;
+    }
+  }
+
+  const prefs = await fetchNotificationPrefsRaw();
+  const destination = data?.destination;
+
+  // Decide which user toggle controls this notification type.
+  let enabled = true;
+  if (type?.startsWith('booking_')) {
+    enabled = destination === 'host_space_bookings' ? prefs.hostBookingUpdatesEnabled : prefs.bookingUpdatesEnabled;
+  } else if (type === 'message_received' || type?.startsWith('message_')) {
+    enabled = prefs.messageAlertsEnabled;
+  } else if (type === 'system' || type?.startsWith('security')) {
+    // Your password reset/change flows use notification type `security_password_changed`,
+    // and the plan says it should be controlled by System Notifications toggle only.
+    enabled = prefs.systemNotificationsEnabled;
+  } else {
+    // Default unknown notification types to System Notifications.
+    enabled = prefs.systemNotificationsEnabled;
+  }
+
+  if (!enabled) return { skipped: true };
+
   const dataJson = data != null ? JSON.stringify(data) : null;
   return prismaClient.notification.create({
     data: { userId, type, title, message, dataJson },

@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { JWT_SECRET, authMiddleware } from '../middleware/auth.js';
+import { createNotification } from './notifications.js';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -120,6 +121,19 @@ router.post('/reset-password', async (req, res, next) => {
       }),
       prisma.passwordResetToken.delete({ where: { id: resetToken.id } }),
     ]);
+
+    // Create an in-app system notification for the user.
+    try {
+      await createNotification(prisma, {
+        userId: resetToken.userId,
+        type: 'security_password_changed',
+        title: 'Password changed',
+        message: 'Your password has changed successfully.',
+      });
+    } catch {
+      // Password reset should not fail if notification creation has issues.
+    }
+
     res.json({ success: true });
   } catch (e) {
     next(e);
@@ -150,6 +164,19 @@ router.post('/change-password', authMiddleware, async (req, res, next) => {
       where: { id: user.id },
       data: { passwordHash },
     });
+
+    // Create an in-app system notification for the user.
+    try {
+      await createNotification(prisma, {
+        userId: user.id,
+        type: 'security_password_changed',
+        title: 'Password changed',
+        message: 'Your password has changed successfully.',
+      });
+    } catch {
+      // Password change should not fail if notification creation has issues.
+    }
+
     res.json({ success: true });
   } catch (e) {
     next(e);

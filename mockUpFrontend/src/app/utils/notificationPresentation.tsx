@@ -120,14 +120,24 @@ export function getNotificationPresentation(type: string): NotificationPresentat
 
 export function getNotificationLink(notif: {
   type: string;
-  data?: { bookingId?: string; threadId?: string; spaceId?: string; destination?: 'host_space_bookings' } | null;
+  data?: {
+    bookingId?: string;
+    threadId?: string;
+    spaceId?: string;
+    senderId?: string;
+    destination?: 'host_space_bookings';
+  } | null;
 }): string {
   const data = notif.data;
   if (data?.destination === 'host_space_bookings' && data?.spaceId) {
     return `/host/manage-listings/${data.spaceId}/bookings`;
   }
   if (data?.bookingId) return '/dashboard?tab=My%20Bookings';
-  if (notif.type === 'message_received' && data?.threadId) return '/dashboard?tab=Messages';
+  if (notif.type === 'message_received' && data?.threadId) {
+    // Messages tab uses `with=<otherUserId>` deep link to open the correct conversation.
+    if (data.senderId) return `/dashboard?tab=Messages&with=${encodeURIComponent(data.senderId)}`;
+    return '/dashboard?tab=Messages';
+  }
   return '/dashboard?tab=Notifications';
 }
 

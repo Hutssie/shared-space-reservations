@@ -30,7 +30,7 @@ export const ResetPassword = () => {
     setSubmitting(true);
     try {
       await resetPassword(token, newPassword);
-      toast.success('Password reset successfully. You can now sign in.');
+      toast.success('Your password has changed successfully.');
       navigate('/auth/login', { replace: true });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong');

@@ -16,6 +16,10 @@ model User {
   avatarUrl              String?   @map("avatar_url")
   professionalTitle      String?   @map("professional_title")
   bio                    String?   @db.Text
+  bookingUpdatesEnabled Boolean   @default(true) @map("booking_updates_enabled")
+  hostBookingUpdatesEnabled Boolean @default(true) @map("host_booking_updates_enabled")
+  messageAlertsEnabled   Boolean  @default(true) @map("message_alerts_enabled")
+  systemNotificationsEnabled Boolean @default(true) @map("system_notifications_enabled")
   availabilityStartTime  String?   @map("availability_start_time")
   availabilityEndTime    String?   @map("availability_end_time")
   bannedAt               DateTime? @map("banned_at")

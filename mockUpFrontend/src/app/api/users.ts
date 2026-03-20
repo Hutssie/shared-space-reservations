@@ -18,7 +18,7 @@ export function fetchMyReviews(): Promise<MyReview[]> {
   return apiGet<MyReview[]>('/api/users/me/reviews');
 }
 
-export function updateMe(data: { name?: string; avatarUrl?: string; professionalTitle?: string; bio?: string }): Promise<{ id: string; email: string; name: string; avatarUrl: string | null; professionalTitle?: string | null; bio?: string | null }> {
+export function updateMe(data: { name?: string; avatarUrl?: string | null; professionalTitle?: string; bio?: string }): Promise<{ id: string; email: string; name: string; avatarUrl: string | null; professionalTitle?: string | null; bio?: string | null }> {
   return apiPatch('/api/users/me', data);
 }
 

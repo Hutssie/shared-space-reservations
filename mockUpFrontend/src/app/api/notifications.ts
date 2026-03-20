@@ -41,3 +41,20 @@ export function markNotificationRead(id: string): Promise<{ id: string; readAt: 
 export function markAllNotificationsRead(): Promise<{ ok: boolean }> {
   return apiPatch<{ ok: boolean }>('/api/notifications/read-all', {});
 }
+
+export type NotificationPreferences = {
+  bookingUpdatesEnabled: boolean;
+  hostBookingUpdatesEnabled: boolean;
+  messageAlertsEnabled: boolean;
+  systemNotificationsEnabled: boolean;
+};
+
+export function fetchNotificationPreferences(): Promise<NotificationPreferences> {
+  return apiGet<NotificationPreferences>('/api/users/me/notification-preferences');
+}
+
+export function updateNotificationPreferences(
+  prefs: Partial<NotificationPreferences>
+): Promise<NotificationPreferences> {
+  return apiPatch<NotificationPreferences>('/api/users/me/notification-preferences', prefs);
+}
