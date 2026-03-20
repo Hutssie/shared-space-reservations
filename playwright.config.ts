@@ -16,7 +16,7 @@ export default defineConfig({
   webServer: [
     {
       command: 'npm run dev',
-      cwd: 'mockUpFrontend',
+      cwd: 'frontend',
       url: 'http://localhost:5173',
       reuseExistingServer: !process.env.CI,
       timeout: 120000,

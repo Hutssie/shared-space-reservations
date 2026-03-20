@@ -2,7 +2,7 @@
 
 University project: **Web Application for Intelligent Management of Shared Space Reservations**.
 
-- **Frontend**: React (Vite) in `mockUpFrontend/` – design from Figma Make AI.
+- **Frontend**: React (Vite) in `frontend/` – design from Figma Make AI.
 - **Backend**: Node.js + Express + Prisma + PostgreSQL in `backend/`.
 
 ## Running the project from GitHub (for reviewers)
@@ -20,7 +20,7 @@ To run this project locally (e.g. after cloning from GitHub):
    - In `backend/`: copy `.env.example` to `.env`, set `DATABASE_URL` (e.g. `postgresql://postgres:password@localhost:5432/space_reservations`), `JWT_SECRET` (any string), and `CORS_ORIGIN=http://localhost:5173`.
    - Run: `npm install` → `npx prisma generate` → `npx prisma db push` → `npx prisma db seed` → `npm run dev`.
    - API will be at `http://localhost:3000`.
-4. **Frontend**: In `mockUpFrontend/`: copy `.env.example` to `.env` with `VITE_API_URL=http://localhost:3000`, then run `npm install` and `npm run dev`. App at `http://localhost:5173`.
+4. **Frontend**: In `frontend/`: copy `.env.example` to `.env` with `VITE_API_URL=http://localhost:3000`, then run `npm install` and `npm run dev`. App at `http://localhost:5173`.
 5. **Seed accounts**: `host@example.com` / `Password123`, `guest@example.com` / `Password123`. The seed also creates sample listings so you can browse and test bookings.
 
 ---
@@ -47,7 +47,7 @@ To run this project locally (e.g. after cloning from GitHub):
 
 ### 2. Frontend
 
-1. In `mockUpFrontend/`:
+1. In `frontend/`:
    - Copy `.env.example` to `.env` and set `VITE_API_URL=http://localhost:3000` (if different).
    - Run:
      ```bash
@@ -73,7 +73,7 @@ Use this whenever you want a clean run (e.g. after pulling code, changing env, o
 
 - **Backend**: In the terminal where the API is running, press `Ctrl+C` (or close that terminal).
 - **Frontend**: Same in the terminal where Vite is running – `Ctrl+C`.
-- If you're not sure which terminals: close any terminal that ran `npm run dev` or `npm run start` in `backend/` or `mockUpFrontend/`.
+- If you're not sure which terminals: close any terminal that ran `npm run dev` or `npm run start` in `backend/` or `frontend/`.
 
 ### Step 2: Start the backend
 
@@ -101,7 +101,7 @@ Use this whenever you want a clean run (e.g. after pulling code, changing env, o
 2. Go to the frontend folder and start the app:
 
    ```bash
-   cd mockUpFrontend
+   cd frontend
    npm run dev
    ```
 
@@ -127,7 +127,7 @@ After that, repeat **Step 1 → Step 2 → Step 3** to restart cleanly.
 
 ### Running E2E tests
 
-From the **project root** (not inside `backend` or `mockUpFrontend`):
+From the **project root** (not inside `backend` or `frontend`):
 
 ```bash
 npm run e2e
@@ -138,7 +138,7 @@ Playwright will start both backend and frontend if they aren't already running. 
 ## Project layout
 
 - `backend/` – Express app, Prisma schema, auth (JWT), routes: auth, users, spaces, bookings, reviews, favorites, host.
-- `mockUpFrontend/` – React app, Tailwind + Radix UI, API client and auth context, pages wired to the backend.
+- `frontend/` – React app, Tailwind + Radix UI, API client and auth context, pages wired to the backend.
 
 ---
 
