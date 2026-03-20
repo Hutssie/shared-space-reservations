@@ -249,6 +249,18 @@ export const SpaceDetails = () => {
     const et = searchParams.get('endTime');
     return et && allTimeSlots.includes(et) ? et : '';
   });
+  useEffect(() => {
+    const dp = searchParams.get('date');
+    if (dp) {
+      const parsed = new Date(dp);
+      if (!isNaN(parsed.getTime())) setSelectedDate(parsed);
+    }
+    const st = searchParams.get('startTime');
+    setStartTime(st && allTimeSlots.includes(st) ? st : '');
+    const et = searchParams.get('endTime');
+    setEndTime(et && allTimeSlots.includes(et) ? et : '');
+  }, [searchParams]);
+
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
   const [bookingConflict, setBookingConflict] = useState(false);
   const [bookingStep, setBookingStep] = useState<'viewing' | 'requesting' | 'confirmed'>('viewing');

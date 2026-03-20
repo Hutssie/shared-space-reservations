@@ -35,8 +35,14 @@ Guidelines:
 - Only include fields you can confidently infer from the conversation. Omit fields you are unsure about.
 - When the user specifies a capacity (e.g. "fit 2000 people", "more than 100"), you MUST include "minCapacity" in the search block. Never suggest spaces without including every criterion the user gave; if the search returns no results, the system will tell the user.
 - The "category" field MUST be one of the exact category names listed above.
-- The "location" field should be the city or area the user mentioned.
+- The "location" field can be a city, neighborhood, region/county/state, or country — use whatever geographic scope the user provided.
 - The "q" field is a freeform text search across titles and descriptions — use it for specific keywords the user mentioned that don't fit neatly into category/location.
+
+Location scope (city ask-once rule):
+- If the user explicitly says "anywhere in <country/region>", "any city inside <country/region>", or similar broad phrasing, set "location" to that country/region string immediately and proceed with the search. Do NOT ask for a specific city.
+- If the user mentions only a country or region without "anywhere/any city" (e.g. "in Romania"), you may ask ONCE whether they want a specific city or anywhere in that country/region. Example: "Do you have a specific city in mind, or should I look anywhere in **Romania**?"
+- After you have already asked once for a city, NEVER ask again. If the user still hasn't provided a specific city, proceed with the broader country/region as the "location" value.
+- NEVER replace a country/region with a capital city or any specific city on your own. Use exactly what the user gave you.
 
 Size filtering:
 - "minSquareMeters" / "maxSquareMeters" (numbers) — use when the user mentions space size (e.g. "at least 50 m²", "not bigger than 100 square meters").
@@ -300,6 +306,39 @@ router.post('/chat', async (req, res, next) => {
           orderBy: { createdAt: 'desc' },
         });
         spaces = broadResults.map(spaceToResponse);
+      }
+
+      if (spaces.length === 0 && searchParams.location) {
+        const tokens = String(searchParams.location)
+          .split(',')
+          .map((t) => t.trim())
+          .filter(Boolean);
+        if (tokens.length > 0) {
+          const tokenWhere = {
+            status: 'active',
+            OR: tokens.map((tok) => ({ location: { contains: tok, mode: 'insensitive' } })),
+          };
+          if (searchParams.category) {
+            const cats = String(searchParams.category).split(',').map((c) => c.trim()).filter(Boolean);
+            tokenWhere.category = cats.length === 1 ? cats[0] : { in: cats };
+          }
+          if (searchParams.minPrice != null) tokenWhere.pricePerHour = { ...tokenWhere.pricePerHour, gte: parseFloat(searchParams.minPrice) };
+          if (searchParams.maxPrice != null) tokenWhere.pricePerHour = { ...tokenWhere.pricePerHour, lte: parseFloat(searchParams.maxPrice) };
+          if (searchParams.minCapacity != null) tokenWhere.capacity = { gte: parseInt(searchParams.minCapacity, 10) };
+          if (searchParams.minSquareMeters != null) tokenWhere.squareMeters = { ...tokenWhere.squareMeters, gte: parseInt(searchParams.minSquareMeters, 10) };
+          if (searchParams.maxSquareMeters != null) tokenWhere.squareMeters = { ...tokenWhere.squareMeters, lte: parseInt(searchParams.maxSquareMeters, 10) };
+
+          const tokenResults = await prisma.space.findMany({
+            where: tokenWhere,
+            include: {
+              host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
+              reviews: { select: { rating: true } },
+            },
+            take: 6,
+            orderBy: { createdAt: 'desc' },
+          });
+          spaces = tokenResults.map(spaceToResponse);
+        }
       }
 
       if (spaces.length === 0) {

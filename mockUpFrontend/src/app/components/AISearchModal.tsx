@@ -330,7 +330,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                             >
                               {bookingPromptPhase === 'pick' && (
                                 <div className="space-y-3">
-                                  <p className="text-sm md:text-base font-bold text-brand-700">Which one should I book?</p>
+                                  <p className="text-sm md:text-base font-bold text-brand-700">Which one is your favorite?</p>
                                   <div className="flex flex-wrap gap-2">
                                     {msg.results!.map((space) => (
                                       <button
