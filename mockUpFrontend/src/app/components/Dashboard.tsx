@@ -1955,25 +1955,19 @@ const BillingTab = () => (
 </div>
 );
 
-const ITEMS_PER_PAGE = 10;
-
 const NotificationsTab = () => {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const { notifications, isLoading, nextCursor, markRead, markAllRead, loadMore } = useNotifications();
-
-  const totalPages = Math.max(1, Math.ceil(notifications.length / ITEMS_PER_PAGE));
-  const currentNotifications = notifications.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
 
   const handleLoadMore = async () => {
     if (!nextCursor || loadingMore) return;
     setLoadingMore(true);
-    await loadMore(nextCursor);
-    setLoadingMore(false);
+    try {
+      await loadMore(nextCursor);
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   const handleViewDetails = (notif: (typeof notifications)[0]) => {
@@ -2002,7 +1996,7 @@ const NotificationsTab = () => {
       <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-2 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 divide-y divide-brand-50">
         {isLoading && notifications.length === 0 ? (
           <div className="py-12 text-center text-brand-400 font-medium">Loading notifications…</div>
-        ) : currentNotifications.length === 0 ? (
+        ) : notifications.length === 0 ? (
           <div className="py-20 text-center">
             <div className="w-20 h-20 bg-brand-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
               <BellIcon className="w-10 h-10 text-brand-300" />
@@ -2011,7 +2005,7 @@ const NotificationsTab = () => {
             <p className="text-brand-400 font-medium mt-2">We&apos;ll let you know when something important happens.</p>
           </div>
         ) : (
-          currentNotifications.map((notif) => {
+          notifications.map((notif) => {
             const { icon: Icon, color, bg, typeLabel } = getNotificationPresentation(notif.type);
             const unread = !notif.readAt;
             return (
@@ -2019,14 +2013,18 @@ const NotificationsTab = () => {
                 key={notif.id}
                 className={`p-4 md:p-6 flex gap-4 md:gap-6 transition-all hover:bg-brand-50/50 rounded-2xl md:rounded-3xl group ${unread ? 'bg-brand-50/30' : ''}`}
               >
-                <div className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-sm`}>
+                <div
+                  className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-sm`}
+                >
                   <Icon className={`w-6 h-6 md:w-8 md:h-8 ${color}`} />
                 </div>
                 <div className="flex-1 space-y-1 md:space-y-2 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 md:gap-2">
                     <div className="flex items-center gap-2 md:gap-3">
                       <span className="text-[10px] md:text-sm font-black text-brand-400 uppercase tracking-widest leading-none">{typeLabel}</span>
-                      {unread && <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-brand-500 shadow-[0_0_12px_rgba(180,131,106,0.6)] animate-pulse" />}
+                      {unread && (
+                        <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-brand-500 shadow-[0_0_12px_rgba(180,131,106,0.6)] animate-pulse" />
+                      )}
                     </div>
                     <span className="text-[10px] md:text-sm font-bold text-brand-300">{formatNotificationTime(notif.createdAt)}</span>
                   </div>
@@ -2060,52 +2058,7 @@ const NotificationsTab = () => {
         )}
       </div>
 
-      {/* Pagination: page numbers */}
-      {totalPages > 1 && (
-        <div className="flex flex-wrap items-center justify-center gap-2 pt-4">
-          <button
-            type="button"
-            onClick={() => {
-              setCurrentPage((prev) => Math.max(1, prev - 1));
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            disabled={currentPage === 1}
-            className="p-3 bg-white border border-brand-100 rounded-2xl text-brand-700 hover:bg-brand-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md group cursor-pointer"
-          >
-            <ChevronDown className="w-6 h-6 rotate-90 group-hover:-translate-x-1 transition-transform" />
-          </button>
-          <div className="flex items-center gap-2">
-            {Array.from({ length: totalPages }).map((_, i) => (
-              <button
-                type="button"
-                key={i + 1}
-                onClick={() => {
-                  setCurrentPage(i + 1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
-                className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl font-black transition-all cursor-pointer ${
-                  currentPage === i + 1 ? 'bg-brand-700 text-white shadow-lg' : 'bg-white border border-brand-100 text-brand-700 hover:bg-brand-50 shadow-sm'
-                }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-              window.scrollTo({ top: 0, behavior: 'smooth' });
-            }}
-            disabled={currentPage === totalPages}
-            className="p-3 bg-white border border-brand-100 rounded-2xl text-brand-700 hover:bg-brand-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md group cursor-pointer"
-          >
-            <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
-          </button>
-        </div>
-      )}
-
-      {/* Load more (fetch next page from API) */}
+      {/* Load more */}
       {nextCursor && (
         <div className="flex justify-center pt-4">
           <button
