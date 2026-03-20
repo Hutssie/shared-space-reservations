@@ -109,6 +109,10 @@ router.post('/', authMiddleware, async (req, res, next) => {
     if (space.status !== 'active') {
       return res.status(400).json({ error: 'This space is not currently available for booking' });
     }
+    // Prevent hosts from booking their own listings.
+    if (space.hostId && space.hostId === req.userId) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
 
     const d = new Date(date);
     if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid date' });

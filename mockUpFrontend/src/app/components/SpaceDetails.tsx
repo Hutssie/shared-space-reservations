@@ -204,7 +204,7 @@ export const SpaceDetails = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const location = useLocation();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const { addNewBooking } = useUnreadBookings();
 
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -599,9 +599,15 @@ export const SpaceDetails = () => {
           : null)
     : null;
 
+  const isHostOfSpace = Boolean(user?.id && spaceDetails?.host?.id && user.id === spaceDetails?.host?.id);
+
   const handleBook = async () => {
     if (!spaceDetails || !id || !startTime || !endTime || duration <= 0 || !durationValid) return;
     if ((spaceDetails?.status ?? 'active') !== 'active') return;
+    if (isHostOfSpace) {
+      toast.error('You cannot book your own space.');
+      return;
+    }
     if (!token) {
       navigate('/auth/login', { state: { from: { pathname: window.location.pathname } } });
       return;
@@ -1938,15 +1944,21 @@ export const SpaceDetails = () => {
 
                 <button 
                   onClick={handleBook}
-                  disabled={bookingSubmitting || !startTime || !endTime || !durationValid || (spaceDetails?.status ?? 'active') !== 'active'}
+                  disabled={bookingSubmitting || !startTime || !endTime || !durationValid || (spaceDetails?.status ?? 'active') !== 'active' || isHostOfSpace}
                   className="w-full py-5 bg-brand-700 text-white font-black text-xl rounded-[1.5rem] shadow-2xl shadow-brand-700/30 hover:bg-brand-600 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 cursor-pointer mt-4"
                 >
                   {bookingStep === 'requesting' ? (
                     <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
                   ) : (
-                    spaceDetails.isInstantBookable ? 'Instant Book' : 'Request to Book'
+                    isHostOfSpace ? 'Your Space' : (spaceDetails.isInstantBookable ? 'Instant Book' : 'Request to Book')
                   )}
                 </button>
+
+                {isHostOfSpace && (
+                  <p className="text-center text-brand-400 text-[11px] font-bold mt-4">
+                    You can manage this booking from your host portal, but you cannot book your own space.
+                  </p>
+                )}
 
                 <p className="text-center text-brand-400 text-[11px] font-bold mt-6">
                   Maximum capacity: <span className="text-brand-700">{spaceDetails.capacity} people</span>

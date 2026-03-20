@@ -147,7 +147,26 @@ describe('Bookings', () => {
     expect(res.status).toBe(404);
   });
 
-  it('B9: PATCH /api/bookings/:id to cancel returns 200', async () => {
+  it('B9: POST /api/bookings as host for own space returns 403', async () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 16);
+    const dateStr = date.toISOString().slice(0, 10);
+
+    const res = await request(app)
+      .post('/api/bookings')
+      .set('Authorization', `Bearer ${hostToken}`)
+      .send({
+        space_id: spaceId,
+        date: dateStr,
+        start_time: '10:00 AM',
+        end_time: '12:00 PM',
+      });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBeDefined();
+  });
+
+  it('B10: PATCH /api/bookings/:id to cancel returns 200', async () => {
     const date = new Date();
     date.setDate(date.getDate() + 30);
     const createRes = await request(app)
@@ -168,7 +187,7 @@ describe('Bookings', () => {
     expect(res.body.status).toBe('cancelled');
   });
 
-  it('B10: PATCH /api/bookings/:id as another user returns 403', async () => {
+  it('B11: PATCH /api/bookings/:id as another user returns 403', async () => {
     const other = await request(app)
       .post('/api/auth/register')
       .send({ email: `${unique()}@other.com`, password: 'Password123', name: 'Other' });
