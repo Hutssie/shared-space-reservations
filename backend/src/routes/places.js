@@ -5,9 +5,9 @@ const router = Router();
 const PHOTON_HOST = 'photon.komoot.io';
 
 /**
- * Photon (Komoot) is used for place search. The public Nominatim API
- * forbids autocomplete use ("you must not implement such a service on the client side").
- * Photon is OSM-based and supports search-as-you-type.
+ * Photon (Komoot) e folosit pentru cautarea de locuri. API-ul public Nominatim
+ * nu permite autocomplete
+ * Photon e bazat pe OSM si suporta search-as-you-type.
  */
 function buildSuggestionsFromPhoton(features) {
   if (!Array.isArray(features)) return [];
@@ -21,7 +21,7 @@ function buildSuggestionsFromPhoton(features) {
     if (p.country) parts.push(p.country);
     const secondary = parts.join(', ') || '';
     const label = secondary ? `${name}, ${secondary}` : name;
-    // For city-level results, primary/name is the city; for country/state, use name as-is
+    // pentru rezultate la nivel de oras, primary/name e orasul; pentru tara/stat, las name asa cum e
     const city = p.city || (p.type === 'city' || p.osm_value === 'city' || p.osm_value === 'town' || p.osm_value === 'village' ? name : '');
     const state = p.state || p.county || '';
     const country = p.country || '';

@@ -122,7 +122,7 @@ router.post('/reset-password', async (req, res, next) => {
       prisma.passwordResetToken.delete({ where: { id: resetToken.id } }),
     ]);
 
-    // Create an in-app system notification for the user.
+    // notificare system in aplicatie pentru user.
     try {
       await createNotification(prisma, {
         userId: resetToken.userId,
@@ -131,7 +131,7 @@ router.post('/reset-password', async (req, res, next) => {
         message: 'Your password has changed successfully.',
       });
     } catch {
-      // Password reset should not fail if notification creation has issues.
+      // resetarea parolei nu trebuie sa pice daca e problema la notificare.
     }
 
     res.json({ success: true });
@@ -165,7 +165,7 @@ router.post('/change-password', authMiddleware, async (req, res, next) => {
       data: { passwordHash },
     });
 
-    // Create an in-app system notification for the user.
+    // notificare system in aplicatie pentru user.
     try {
       await createNotification(prisma, {
         userId: user.id,
@@ -174,7 +174,7 @@ router.post('/change-password', authMiddleware, async (req, res, next) => {
         message: 'Your password has changed successfully.',
       });
     } catch {
-      // Password change should not fail if notification creation has issues.
+      // schimbarea parolei nu trebuie sa pice daca e problema la notificare.
     }
 
     res.json({ success: true });

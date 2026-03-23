@@ -293,7 +293,7 @@ export const FindSpace = () => {
 
   return (
     <div className="pt-24 md:pt-32 pb-24 min-h-screen bg-white">
-      {/* Search & Filter Header */}
+      {/* header pentru cautare si filtre */}
       <div className="sticky top-20 z-40 bg-white border-b border-brand-100 px-2 md:px-12 py-3 md:py-4 shadow-sm">
         <div className="max-w-[1600px] mx-auto flex flex-col lg:flex-row gap-3 md:gap-4 items-center justify-between">
           <div className="w-full lg:max-w-xl relative" ref={locationInputRef}>
@@ -422,7 +422,7 @@ export const FindSpace = () => {
 
       <div className="max-w-[1600px] mx-auto px-4 md:px-12 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-16">
-          {/* Sidebar Filters */}
+          {/* filtrele din sidebar */}
           <aside className="hidden lg:block">
             <div className="sticky top-48 flex flex-col max-h-[calc(100vh-260px)]">
               <h3 className="text-xl font-black text-brand-700 mb-8 flex items-center gap-2 shrink-0">
@@ -454,9 +454,9 @@ export const FindSpace = () => {
             </div>
           </aside>
 
-          {/* Main Content */}
+          {/* continut principal */}
           <div>
-            {/* Results Info & View Toggle */}
+            {/* informatii despre rezultate & schimbare view */}
             <div className="flex items-center justify-between mb-8">
               <div>
                 <h1 className="text-2xl font-black text-brand-700">
@@ -524,7 +524,7 @@ export const FindSpace = () => {
               </div>
             )}
 
-            {/* Pagination */}
+            {/* paginatie */}
             {totalSpaces > 0 && (
               <div className="mt-16 flex items-center justify-center gap-2 flex-wrap">
                 <button

@@ -10,7 +10,7 @@ import {
 import { NotificationBadge } from './NotificationBadge';
 import { motion } from 'motion/react';
 import { Link } from 'react-router';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { fetchHostSpaces } from '../api/host';
 import type { HostListing } from '../api/host';
 
@@ -58,7 +58,7 @@ export const ManageListings = () => {
   return (
     <div className="pt-32 pb-24 min-h-screen bg-brand-50">
       <div className="max-w-[1600px] mx-auto px-4 md:px-12">
-        {/* Header */}
+        {/* Header-ul */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
           <div className="space-y-2">
             <Link 
@@ -73,7 +73,7 @@ export const ManageListings = () => {
           </div>
         </div>
 
-        {/* Filters and Search */}
+        {/* Filtrele si cautarea */}
         <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-6 border border-brand-200 shadow-xl shadow-brand-700/5 mb-10 flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-300" />
@@ -87,7 +87,7 @@ export const ManageListings = () => {
           </div>
         </div>
 
-        {/* Content Area */}
+        {/* Zona de continut */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

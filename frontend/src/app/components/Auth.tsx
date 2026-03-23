@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Mail, Lock, User, ArrowRight, Github, Chrome, Eye, EyeOff, CheckCircle2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { useNavigate, useLocation, Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
 import { login, register as registerApi, saveAuth, requestPasswordReset, fetchPublicStats } from '../api/auth';
@@ -68,7 +68,7 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
 
   return (
     <div className="min-h-screen bg-white flex flex-col lg:flex-row">
-      {/* Left Side: Branding & Image */}
+      {/* Partea stanga: branding si imagine */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-brand-700 overflow-hidden p-16 flex-col justify-between">
         <div className="absolute inset-0 z-0 opacity-50">
           <ImageWithFallback 
@@ -119,7 +119,7 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
         </div>
       </div>
 
-      {/* Right Side: Form */}
+      {/* Partea dreapta: formularul */}
       <div className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-24 py-12 bg-white">
         <div className="max-w-md w-full mx-auto">
           <div className="lg:hidden mb-12">
@@ -252,7 +252,7 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
         </div>
       </div>
 
-      {/* Forgot Password Modal */}
+      {/* Modalul pentru parola uitata */}
       <AnimatePresence>
         {showForgotModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

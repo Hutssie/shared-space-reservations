@@ -140,7 +140,7 @@ async function main() {
       });
     }
   } else {
-    // Backfill lat/lng for existing spaces that don't have coords
+    // Completez lat/lng pentru spatiile existente care n-au coordonate
     const locationCoords = {
       'Brooklyn, NY': { latitude: 40.6782, longitude: -73.9442 },
       'Nashville, TN': { latitude: 36.1627, longitude: -86.7816 },

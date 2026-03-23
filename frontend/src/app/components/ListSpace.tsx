@@ -48,10 +48,11 @@ import {
   Palette
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { AmenitiesList } from './FilterDropdowns';
 import { createSpace } from '../api/spaces';
 import { apiUploadFile } from '../api/client';
+import { fetchPublicStats } from '../api/auth';
 import { fetchPlaceSuggestions, type PlaceSuggestion } from '../api/places';
 import { geocodeAddress } from '../utils/geocode';
 import { toast } from 'sonner';
@@ -75,6 +76,7 @@ export const ListSpace = () => {
   const [step, setStep] = useState(1);
   const [isStarted, setIsStarted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [stats, setStats] = useState<{ spaces: number; users: number; cities: number } | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     country: '',
@@ -112,6 +114,18 @@ export const ListSpace = () => {
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [step]);
+
+  useEffect(() => {
+    fetchPublicStats()
+      .then(setStats)
+      .catch(() => {});
+  }, []);
+
+  const formatCount = (n: number): string => {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
+    return String(n);
+  };
 
   useEffect(() => {
     if (step !== 3) return;
@@ -198,7 +212,7 @@ export const ListSpace = () => {
   if (!isStarted) {
     return (
       <div className="bg-white min-h-screen">
-        {/* Landing Hero */}
+        {/* Hero-ul de inceput */}
         <section className="relative min-h-[85vh] flex items-center overflow-hidden pt-32 pb-24">
           <div className="absolute inset-0 z-0">
             <ImageWithFallback 
@@ -221,7 +235,7 @@ export const ListSpace = () => {
                 <span className="text-brand-200">their next masterpiece.</span>
               </h1>
               <p className="text-brand-100 text-lg md:text-xl font-medium mb-10 leading-relaxed">
-                Turn your creative studio, meeting room, or vacant office into a thriving business. Join 10,000+ hosts worldwide.
+                Turn your creative studio, meeting room, or vacant office into a thriving business. Join {stats ? `${formatCount(stats.users)}+` : '—+'} hosts worldwide.
               </p>
               <button 
                 onClick={() => setIsStarted(true)}
@@ -234,7 +248,7 @@ export const ListSpace = () => {
           </div>
         </section>
 
-        {/* Value Props */}
+        {/* Punctele forte */}
         <section className="py-24 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
@@ -267,7 +281,7 @@ export const ListSpace = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
+        {/* Sectiunea CTA */}
         <section className="pb-24 px-4">
           <div className="max-w-7xl mx-auto bg-brand-700 rounded-[4rem] p-12 lg:p-24 text-center overflow-hidden relative">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--brand-200)_1px,_transparent_1px)] [background-size:30px_30px]" />
@@ -297,9 +311,9 @@ export const ListSpace = () => {
   };
 
   return (
-    <div className="pt-32 pb-12 min-h-screen bg-brand-100/30 flex flex-col items-center justify-center p-4">
+        <div className="pt-32 pb-12 min-h-screen bg-brand-100/30 flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl border border-brand-100 overflow-hidden">
-        {/* Progress Bar */}
+        {/* Bara de progres */}
         <div className="h-2 bg-brand-100 w-full flex">
           {[1, 2, 3, 4, 5, 6].map((s) => (
             <div 
@@ -719,7 +733,7 @@ export const ListSpace = () => {
                   onClick={() => {
                     setIsStarted(false);
                     setStep(1);
-                    // Standard navigation handle
+                    // Handler standard de navigare
                     window.location.href = '/dashboard';
                   }}
                   className="px-12 py-5 bg-brand-700 text-white font-black text-xl rounded-2xl hover:bg-brand-600 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-brand-700/20 cursor-pointer"

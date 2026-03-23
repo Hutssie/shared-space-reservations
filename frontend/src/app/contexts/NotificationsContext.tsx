@@ -42,7 +42,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       setNextCursor(listRes.nextCursor);
       setUnreadCount(countRes.count);
     } catch {
-      // ignore auth/network errors
+      // ignor erorile de auth/network
     } finally {
       setIsLoading(false);
     }
@@ -58,7 +58,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         );
         setUnreadCount((c) => Math.max(0, c - 1));
       } catch {
-        // ignore
+        // ignor
       }
     },
     [token]
@@ -71,7 +71,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       setNotifications((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
       setUnreadCount(0);
     } catch {
-      // ignore
+      // ignoram eroarea; facem update optimistic si atat
     }
   }, [token]);
 

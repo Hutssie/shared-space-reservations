@@ -52,9 +52,9 @@ model ConversationParticipant {
   userId         String   @map("user_id")
   joinedAt       DateTime @default(now()) @map("joined_at")
   lastReadAt     DateTime? @map("last_read_at")
-  // Per-user deletion behavior:
-  // - hiddenAt: conversation is hidden from this user’s list
-  // - clearedAt: messages before this timestamp are hidden for this user
+  // Comportament de stergere per user:
+  // - hiddenAt: conversatia e ascunsa in lista userului respectiv
+  // - clearedAt: mesajele dinainte de momentul respectiv sunt ascunse pentru userul curent
   hiddenAt       DateTime? @map("hidden_at")
   clearedAt      DateTime? @map("cleared_at")
 

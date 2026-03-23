@@ -75,7 +75,7 @@ export const SpaceTypeDropdown = ({ trigger, selected = [], onApply }: any) => {
   const [localSelected, setLocalSelected] = useState<string[]>(selected);
   const [isOpen, setIsOpen] = useState(false);
 
-  // Sync local state when dropdown opens
+  // tinem in sync starea locala cand se deschide dropdown-ul
   React.useEffect(() => {
     if (isOpen) {
       setLocalSelected(selected);

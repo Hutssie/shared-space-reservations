@@ -153,8 +153,7 @@
   }
 
   /**
-  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
-  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  * setarile de text de html sunt in layer base, deci clasele de tailwind le vor da overwrite
   */
 
   html {
@@ -204,7 +203,6 @@
   }
 }
 
-/* Google Maps InfoWindow: remove default padding and outer frame so only our card is visible */
 .gm-style-iw {
   padding: 0 !important;
   background: transparent !important;
@@ -223,7 +221,7 @@
   padding: 0 !important;
   background: transparent !important;
 }
-/* Hide default InfoWindow close button and its top bar – we use the close button on the image */
+
 .gm-style-iw-chr {
   display: none !important;
 }

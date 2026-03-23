@@ -6,9 +6,14 @@ const prisma = new PrismaClient();
 
 router.get('/', async (req, res, next) => {
   try {
-    const [spacesCount, usersCount, locationsGroup] = await Promise.all([
+    // "users" here represents hosts: distinct users who have at least one active space.
+    const [spacesCount, hostsGroup, locationsGroup] = await Promise.all([
       prisma.space.count({ where: { status: 'active' } }),
-      prisma.user.count(),
+      prisma.space.groupBy({
+        by: ['hostId'],
+        where: { status: 'active' },
+        _count: { id: true },
+      }),
       prisma.space.groupBy({
         by: ['location'],
         where: { status: 'active' },
@@ -17,6 +22,7 @@ router.get('/', async (req, res, next) => {
     ]);
 
     const cities = locationsGroup.length;
+    const usersCount = hostsGroup.length;
 
     res.json({ spaces: spacesCount, users: usersCount, cities });
   } catch (e) {

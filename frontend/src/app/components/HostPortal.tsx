@@ -11,7 +11,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { NotificationBadge } from './NotificationBadge';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { Link } from 'react-router';
 import {
   XAxis,
@@ -126,7 +126,7 @@ export const HostPortal = () => {
           </Link>
         </div>
 
-        {/* Stats Grid */}
+        {/* Grila de statistici */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-12">
           {stats.map((stat, idx) => (
             <div key={idx} className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 hover:shadow-2xl transition-all">
@@ -142,7 +142,7 @@ export const HostPortal = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] gap-8 md:gap-12 lg:h-[600px] xl:h-[700px]">
-          {/* Chart Section */}
+          {/* Sectiunea cu grafic */}
           <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 border border-brand-200 shadow-xl shadow-brand-700/5 flex flex-col min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 md:mb-10 gap-4">
               <div>
@@ -196,7 +196,7 @@ export const HostPortal = () => {
             </div>
           </div>
 
-          {/* Listing Performance */}
+          {/* Performanta listarilor */}
           <div className="min-w-0 min-h-0 flex flex-col">
             <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 border border-brand-200 shadow-xl shadow-brand-700/5 flex flex-col flex-1 min-h-0">
               <h3 className="text-xl md:text-2xl font-black text-brand-700 mb-6 md:mb-8 shrink-0">My Listings</h3>

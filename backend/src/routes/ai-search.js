@@ -151,7 +151,7 @@ router.post('/chat', async (req, res, next) => {
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: String(m.content || '') }],
     }));
-    // Gemini requires the first message in history to be from the user, not the model.
+    // primul mesaj din istoric sa fie de la user, nu de la model.
     const history = rawHistory.slice(
       rawHistory.findIndex((m) => m.role === 'user')
     );

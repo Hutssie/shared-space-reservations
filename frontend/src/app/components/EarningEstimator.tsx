@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calculator, TrendingUp, Calendar, Info, ArrowRight, CheckCircle2, DollarSign } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { fetchCategoryPricing, type CategoryPricingResponse } from '../api/spaces';
 
 const CATEGORY_NAMES = [
@@ -75,7 +75,7 @@ export const EarningEstimator = () => {
 
   return (
     <div className="bg-white min-h-screen">
-      {/* Hero Section */}
+      {/* Sectiunea hero */}
       <section className="relative pt-48 pb-32 bg-brand-700 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-20">
           <ImageWithFallback 
@@ -112,11 +112,11 @@ export const EarningEstimator = () => {
         </div>
       </section>
 
-      {/* Calculator Section */}
+      {/* Sectiunea calculator */}
       <section className="relative -mt-20 pb-24 px-4">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            {/* Controls */}
+            {/* Controale */}
             <div className="lg:col-span-7 bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl border border-brand-100">
               <h2 className="text-2xl font-black text-brand-700 mb-8 flex items-center gap-3">
                 <Calculator className="w-6 h-6 text-brand-500" />
@@ -124,7 +124,7 @@ export const EarningEstimator = () => {
               </h2>
 
               <div className="space-y-10">
-                {/* Space Type */}
+                {/* Tipul de spatiu */}
                 <div>
                   <label className="block text-xs font-black text-brand-400 uppercase tracking-widest mb-4">Space Category</label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -158,7 +158,7 @@ export const EarningEstimator = () => {
                   })()}
                 </div>
 
-                {/* Hourly Rate Slider */}
+                {/* Slider pentru tarif pe ora */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <label className="block text-xs font-black text-brand-400 uppercase tracking-widest">Hourly Rate</label>
@@ -179,7 +179,7 @@ export const EarningEstimator = () => {
                   </div>
                 </div>
 
-                {/* Hours per Week Slider */}
+                {/* Slider pentru ore pe saptamana */}
                 <div>
                   <div className="flex justify-between items-center mb-4">
                     <label className="block text-xs font-black text-brand-400 uppercase tracking-widest">Booked Hours per Week</label>
@@ -201,7 +201,7 @@ export const EarningEstimator = () => {
               </div>
             </div>
 
-            {/* Results Card */}
+            {/* Cardul cu rezultate */}
             <div className="lg:col-span-5 flex flex-col gap-6">
               <div className="bg-brand-500 rounded-[3rem] p-8 md:p-12 text-white shadow-2xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-8 opacity-10">
@@ -242,7 +242,7 @@ export const EarningEstimator = () => {
                 </button>
               </div>
 
-              {/* Tips Card */}
+              {/* Cardul cu sfaturi */}
               <div className="bg-brand-100 rounded-[2.5rem] p-8">
                 <div className="flex items-center gap-3 mb-4 text-brand-700">
                   <Info className="w-5 h-5" />
@@ -257,7 +257,7 @@ export const EarningEstimator = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* Beneficii */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -285,7 +285,7 @@ export const EarningEstimator = () => {
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* CTA-ul final */}
       <section className="pb-24 px-4">
         <div className="max-w-7xl mx-auto bg-brand-100 rounded-[4rem] p-12 lg:p-20 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-64 h-64 bg-brand-200/50 rounded-full blur-[80px] -translate-x-1/2 -translate-y-1/2" />

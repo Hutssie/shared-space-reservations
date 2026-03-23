@@ -33,7 +33,7 @@ describe('Messages', () => {
   });
 
   afterAll(async () => {
-    // Clean up conversations/messages created by these users.
+    // curatam conversatiile/mesajele create de userii respectivi.
     const users = await prisma.user.findMany({
       where: { email: { in: [aEmail, bEmail, cEmail] } },
       select: { id: true },
@@ -152,7 +152,7 @@ describe('Messages', () => {
       .send({ text: 'Seen test' });
     expect(sendRes.status).toBe(201);
 
-    // Before B reads, A should see null/empty otherParticipantLastReadAt (B hasn't opened the thread)
+    // inainte sa citeasca B, A ar trebui sa vada null/gol la otherParticipantLastReadAt (B n-a deschis inca firul conversatiei)
     const before = await request(app)
       .get(`/api/messages/conversations/${conversationId}/messages?limit=10`)
       .set('Authorization', `Bearer ${aToken}`);

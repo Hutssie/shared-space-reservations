@@ -24,8 +24,8 @@ describe('Bookings', () => {
       .send({ email: `${unique()}@host.com`, password: 'Password123', name: 'Host' });
     hostToken = host.body.token;
 
-    // Always create a fresh non-instant-bookable space so the first booking is a *request* (pending),
-    // and overlapping requests should be allowed.
+    // Creez mereu un spatiu nou (care nu e instant-bookable) ca prima rezervare sa fie o *cerere* (in asteptare),
+    // iar cererile suprapuse sa fie permise.
     const create = await request(app)
       .post('/api/spaces')
       .set('Authorization', `Bearer ${hostToken}`)

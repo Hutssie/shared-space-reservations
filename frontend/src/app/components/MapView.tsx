@@ -4,7 +4,7 @@ import { useJsApiLoader, GoogleMap, Marker, useGoogleMap, InfoWindow } from '@re
 import { Star, X, Users, Square } from 'lucide-react';
 import type { Space } from '../api/spaces';
 import { formatRatingScore } from '../utils/formatRating';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
 const DEFAULT_CENTER = { lat: 40.7128, lng: -74.006 };
@@ -15,7 +15,7 @@ type LatLng = { lat: number; lng: number };
 const BUBBLE_WIDTH = 72;
 const BUBBLE_HEIGHT = 36;
 
-/** Pin icon for the space location map (brown teardrop). */
+/** Iconul pin pentru harta locatiei spatiului (picatura maro). */
 function getLocationPinIcon(): google.maps.Icon {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
@@ -29,7 +29,7 @@ function getLocationPinIcon(): google.maps.Icon {
   };
 }
 
-/** Desaturated, muted map style so price pins stand out (Airbnb-like). */
+/** Stil map dezaturat/„sters”, ca sa iasa in evidenta pin-urile de pret (gen Airbnb). */
 const MAP_STYLE_MUTED: google.maps.MapTypeStyle[] = [
   { featureType: 'water', stylers: [{ color: '#c5d4e0' }, { saturation: 35 }] },
   { featureType: 'landscape.natural', stylers: [{ saturation: -15 }, { lightness: 5 }] },
@@ -45,7 +45,7 @@ const MAP_STYLE_MUTED: google.maps.MapTypeStyle[] = [
   { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#5a5a5a' }, { lightness: 8 }] },
 ];
 
-/** Returns a Google Maps icon for a price bubble; hover uses darker brown fill. */
+/** Returneaza iconul pentru un bubble de pret; la hover foloseste umplutura maro mai inchis. */
 function getPriceMarkerIcon(price: number, hovered = false): google.maps.Icon {
   const text = `$${Number.isInteger(price) ? price : Math.round(price)}`;
   const fill = hovered ? '#5f4731' : 'white';
@@ -155,7 +155,7 @@ export function ListingMap({
   );
 }
 
-/** Static map centered on a single point for the space detail "Where you'll be" section. */
+/** Harta statica centrata pe un singur punct pentru sectiunea de detalii „Where you'll be”. */
 export function SpaceLocationMap({
   latitude,
   longitude,
@@ -212,7 +212,7 @@ export function SpaceLocationMap({
   );
 }
 
-/** Renders a single pin on the map using the imperative API so it always shows. */
+/** Deseneaza un singur pin pe harta folosind API-ul imperativ, ca sa fie mereu afisat. */
 function SpaceLocationMapMarker({ position }: { position: LatLng }) {
   const map = useGoogleMap();
   useEffect(() => {
@@ -227,7 +227,7 @@ function SpaceLocationMapMarker({ position }: { position: LatLng }) {
   return null;
 }
 
-/** Renders markers as a child of GoogleMap so it receives the map from context. */
+/** Deseneaza markerii ca copii ai `GoogleMap`, ca sa primeasca harta din context. */
 function SpacesMapMarkers({
   spaces,
   onMarkerClick,

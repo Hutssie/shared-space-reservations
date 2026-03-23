@@ -128,7 +128,7 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
                 )}
               </div>
 
-              {/* Mobile Menu Button */}
+              {/* buton pentru meniul mobil */}
               <button 
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="p-2 text-brand-700 hover:bg-brand-100 rounded-xl transition-colors cursor-pointer md:hidden"
@@ -140,7 +140,7 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
         </div>
       </nav>
 
-      {/* Mobile Menu Drawer */}
+      {/* sertarul meniului mobil */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>

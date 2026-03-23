@@ -109,7 +109,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
     if (space.status !== 'active') {
       return res.status(400).json({ error: 'This space is not currently available for booking' });
     }
-    // Prevent hosts from booking their own listings.
+    // hosts nu pot sa si rezerve propriile listari.
     if (space.hostId && space.hostId === req.userId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
@@ -171,7 +171,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid time range' });
     }
     if (endM <= startM) {
-      // Treat midnight as next-day when it would otherwise wrap (including full-day 12 AM -> 12 AM).
+      // tratam 12am ca ziua urmatoare cand altfel ar da wrap (inclusiv full-day 12 AM -> 12 AM).
       if (endTime === '12:00 AM') {
         endM = 24 * 60;
       } else {
@@ -207,7 +207,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
     const totalPrice = Number(space.pricePerHour) * hours + cleaningCents / 100 + equipmentCents / 100;
 
     const existing = await prisma.booking.findMany({
-      // Allow overlapping *requests* (pending). Only confirmed bookings block a slot.
+      // permitem suprapuneri la requests. booking-urile confirmate blocheaza un slot.
       where: { spaceId, date: d, status: 'confirmed' },
     });
     const overlaps = existing.some((b) => {

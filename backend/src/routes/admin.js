@@ -21,7 +21,7 @@ function pagination(req) {
   return { limit, offset };
 }
 
-// GET /api/admin/users - list users (paginated, optional search)
+// GET /api/admin/users - listam utilizatorii (paginat, cautare optionala)
 router.get('/users', async (req, res, next) => {
   try {
     const { limit, offset } = pagination(req);
@@ -49,7 +49,7 @@ router.get('/users', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/users/:id - one user with counts
+// GET /api/admin/users/:id - un user + numarari
 router.get('/users/:id', async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
@@ -83,7 +83,7 @@ router.get('/users/:id', async (req, res, next) => {
   }
 });
 
-// POST /api/admin/users/:id/ban
+// POST /api/admin/users/:id/ban - ban user
 router.post('/users/:id/ban', async (req, res, next) => {
   try {
     const cancelledStatus = 'cancelled';
@@ -173,7 +173,7 @@ router.post('/users/:id/ban', async (req, res, next) => {
   }
 });
 
-// POST /api/admin/users/:id/unban
+// POST /api/admin/users/:id/unban - scoate ban ul
 router.post('/users/:id/unban', async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
@@ -196,7 +196,7 @@ router.post('/users/:id/unban', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/spaces - list all spaces (any status), optional filters
+// GET /api/admin/spaces - listam toate spatiiile (orice status), filtre optionale
 router.get('/spaces', async (req, res, next) => {
   try {
     const { limit, offset } = pagination(req);
@@ -234,7 +234,7 @@ router.get('/spaces', async (req, res, next) => {
   }
 });
 
-// PATCH /api/admin/spaces/:id - update space status only
+// PATCH /api/admin/spaces/:id - schimb doar statusul spatiului
 router.patch('/spaces/:id', async (req, res, next) => {
   try {
     const { status } = req.body;
@@ -266,7 +266,7 @@ router.patch('/spaces/:id', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/bookings - list all bookings (paginated)
+// GET /api/admin/bookings - listam toate rezervarile (paginat)
 router.get('/bookings', async (req, res, next) => {
   try {
     const { limit, offset } = pagination(req);
@@ -310,7 +310,7 @@ router.get('/bookings', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/reviews - list recent reviews (paginated)
+// GET /api/admin/reviews - listam recenzii recente (paginat)
 router.get('/reviews', async (req, res, next) => {
   try {
     const { limit, offset } = pagination(req);
@@ -353,7 +353,7 @@ router.get('/reviews', async (req, res, next) => {
   }
 });
 
-// DELETE /api/admin/reviews/:id
+// DELETE /api/admin/reviews/:id - sterge recenzie
 router.delete('/reviews/:id', async (req, res, next) => {
   try {
     await prisma.review.delete({
@@ -366,7 +366,7 @@ router.delete('/reviews/:id', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/stats - extended platform stats
+// GET /api/admin/stats - statistici extinse ale platformei
 router.get('/stats', async (req, res, next) => {
   try {
     const [

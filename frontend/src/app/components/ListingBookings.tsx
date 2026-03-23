@@ -16,7 +16,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { Link, useParams, useNavigate } from 'react-router';
 import { format, parseISO } from 'date-fns';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { toast } from 'sonner';
 import { fetchSpace } from '../api/spaces';
 import type { Space } from '../api/spaces';

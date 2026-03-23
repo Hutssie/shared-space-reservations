@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-// Run booking tests serially so E11's localStorage.clear() doesn't race with E10/E12 (shared context).
+// Rulez testele de booking pe rand (serial) ca `localStorage.clear()` din E11 sa nu se calce cu E10/E12 (context comun).
 test.describe.serial('Booking flow', () => {
   test.beforeEach(async ({ page }) => {
-    // Start from a clean auth state every run so the second run doesn't use stale tokens (fixes "first run passes, second fails").
+    // Porneste dintr-o stare de auth curata la fiecare rulare, ca a doua rulare sa nu foloseasca tokenuri vechi (rezolva "prima trece, a doua pica”).
     await page.goto('/auth/login');
     await page.context().clearCookies();
     await page.evaluate(() => localStorage.clear());
@@ -12,7 +12,7 @@ test.describe.serial('Booking flow', () => {
     await page.getByPlaceholder(/••••••••/i).fill('password123');
     await page.getByRole('button', { name: /sign in/i }).click();
     await expect(page).toHaveURL(/\/(dashboard|$)/);
-    // Wait for auth to be stored so E10/E12 have a token (app may set it after /users/me).
+    // Asteptam sa se salveze auth-ul ca E10/E12 sa aiba token (app-ul il poate seta dupa /users/me).
     await expect(async () => {
       const token = await page.evaluate(() => localStorage.getItem('token'));
       if (!token) throw new Error('Token not in localStorage');
@@ -38,7 +38,7 @@ test.describe.serial('Booking flow', () => {
     const timeSlots = page.locator('div').filter({ has: page.getByText(/daily availability/i) }).locator('button:not([disabled])').filter({ hasText: /\d{1,2}(:\d{2})? (AM|PM)/ });
     await timeSlots.nth(0).click();
     await timeSlots.nth(1).click();
-    // Ensure we're still on the space page and book button is visible (avoid waiting for response if we were redirected to login).
+    // Verificam ca suntem inca pe pagina spatiului si butonul de rezervare e vizibil (evitam sa asteptam raspuns daca am fost redirectati la login).
     await expect(page).toHaveURL(/\/space\//);
     const bookBtn = page.getByRole('button', { name: /instant book|request to book/i }).first();
     await expect(bookBtn).toBeVisible();
@@ -113,16 +113,16 @@ test.describe.serial('Booking flow', () => {
       const body = await createRes.text();
       throw new Error(`Create booking failed ${createRes.status()}: ${body}`);
     }
-    // 201 = we created it; 409 = slot already booked (e.g. seed or prior run). In both cases the slot should show as disabled.
+    // 201 = l-am creat noi; 409 = slotul era deja ocupat (ex. seed sau o rulare anterioara). In ambele cazuri slotul ar trebui sa apara dezactivat.
 
-    // Open the space with the booked date so the calendar shows it; assert the booked slot is disabled.
+    // Deschid spatiul cu data rezervata ca sa apara in calendar; verificam ca slotul rezervat e dezactivat.
     await page.goto((href || '/find') + (href?.includes('?') ? '&' : '?') + 'date=' + dateStr);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 10000 });
     await page.keyboard.press('Escape');
     await page.waitForTimeout(500);
     await page.getByTestId('booking-date-trigger').scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
-    // Date is already set via URL; wait for availability to load and the booked slot to appear disabled.
+    // Data e setata deja prin URL; asteptam sa se incarce disponibilitatea si sa apara slotul rezervat ca „dezactivat”.
     const disabledSlots = page.locator('div').filter({ has: page.getByText(/daily availability/i) }).locator('button[disabled]').filter({ hasText: /\d{1,2}(:\d{2})? (AM|PM)/ });
     await expect(disabledSlots.first()).toBeVisible({ timeout: 15000 });
   });

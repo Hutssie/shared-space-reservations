@@ -7,8 +7,8 @@ const FILLED = '#5f4731'; // brand-500
 const EMPTY = '#f2ddce';  // brand-100
 
 /**
- * Renders 5 stars with fractional fill states (0%, 25%, 50%, 75%, 100%).
- * The rating is snapped to the nearest 0.25 before rendering.
+ * deseneaza 5 stele cu umplere fractionata (0%, 25%, 50%, 75%, 100%).
+ * rating-ul se rotunjeste la cea mai apropiata treapta de 0.25 inainte sa-l desenez.
  */
 export function FractionalStars({ rating, className }: { rating: number; className?: string }) {
   const id = useId();

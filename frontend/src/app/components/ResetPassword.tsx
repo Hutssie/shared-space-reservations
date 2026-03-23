@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { useNavigate, useSearchParams, Link } from 'react-router';
 import { resetPassword } from '../api/auth';
 import { validatePassword, PASSWORD_MIN_LENGTH } from '../utils/passwordValidation';

@@ -1,8 +1,4 @@
-/**
- * Shared password validation rules:
- * - 8 characters or more
- * - At least one uppercase character
- */
+// validare parola min 8 caractere si un caracter mare
 export const PASSWORD_MIN_LENGTH = 8;
 
 export function validatePassword(password: string): { valid: boolean; error?: string } {

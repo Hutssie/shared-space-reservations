@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, MapPin, Calendar, ChevronDown, X } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { DateDropdown } from './FilterDropdowns';

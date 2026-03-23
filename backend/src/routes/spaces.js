@@ -13,7 +13,7 @@ export const TIME_SLOTS = [
   '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM',
 ];
 
-// Maps frontend amenity ids to possible labels (so seed/DB can use labels and still match).
+// mapez id-urile de amenity din frontend la label-urile posibile (ca seed/DB sa poata folosi label-uri si sa se potriveasca).
 export const AMENITY_ID_TO_LABELS = {
   wifi: ['High-speed WiFi'],
   light: ['Natural Light'],
@@ -329,7 +329,7 @@ router.get('/locations', async (req, res, next) => {
   }
 });
 
-// Normalize category to full display name for "Popular this week" (handles slugs like "photo" -> "Photo Studio")
+// normalizez categoria la numele complet afisat pentru "Popular this week" (gen slug "photo" -> "Photo Studio").
 const CATEGORY_DISPLAY_NAMES = {
   photo: 'Photo Studio',
   recording: 'Recording Studio',
@@ -411,7 +411,7 @@ router.get('/featured-this-week', async (req, res, next) => {
       countBySpaceId[sid] = (countBySpaceId[sid] || 0) + 1;
     }
 
-    // Use a larger candidate set so we can fill up to 6 when some top spaces are inactive
+    // aleg candidati mai multi ca sa pot completa pana la 6 cand unele spatii top sunt inactive
     const CANDIDATE_SIZE = 15;
     const candidateIds = Object.entries(countBySpaceId)
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
@@ -431,7 +431,7 @@ router.get('/featured-this-week', async (req, res, next) => {
     });
 
     const byId = new Map(spacesRaw.map((s) => [s.id, s]));
-    // Preserve booking-count order: take first 6 active from the candidate list
+    // pastrez ordinea dupa numarul de rezervari: ia primele 6 active din lista de candidati
     const spaces = candidateIds.map((id) => byId.get(id)).filter(Boolean).slice(0, 6);
     res.json({ spaces: spaces.map(spaceToResponse), total: spaces.length });
   } catch (e) {
@@ -450,8 +450,8 @@ router.get('/', async (req, res, next) => {
       ? String(amenitiesParam).split(',').map((a) => a.trim()).filter(Boolean)
       : [];
 
-    // If a date filter is provided, exclude spaces that have no available hourly slots on that date.
-    // This matches the Space page semantics (12 AM -> 11 PM) and treats 12 AM -> 12 AM as full-day.
+    // daca exista filtru pe data, scot spatiiile care n-au niciun slot orar disponibil in ziua aia.
+    // asta e la fel ca pe pagina "Space" (12 AM -> 11 PM) si tratez 12 AM -> 12 AM ca "toata ziua".
     const dateStrFilter = date ? String(date) : null;
     let dateStart = null;
     let dateEnd = null;
@@ -523,7 +523,7 @@ router.get('/', async (req, res, next) => {
     }
 
     if (dateStrFilter && dateStart && dateEnd) {
-      // Overfetch a pool, filter by date availability, then paginate.
+      // ia mai multe elemente dintr un pool, filtreaza dupa disponibilitate, apoi pagineaza.
       const takePool = Math.max(skip + requestedTake, 200);
       const spacesPool = await prisma.space.findMany({
         where,
@@ -687,7 +687,7 @@ router.post('/:id/share', async (req, res, next) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: 'Space id is required' });
 
-    // Mirror forgot-password behavior: generate and log a frontend link in backend console.
+    // generez un link de frontend si l loghez in consola backend-ului.
     const baseUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:5173';
     const shareLink = `${baseUrl}/space/${id}`;
     console.log('[Share] Space link for', id, ':', shareLink);
@@ -766,7 +766,7 @@ router.get('/:id/availability', async (req, res, next) => {
       if (startIdx < endIdx) {
         for (let i = startIdx; i < endIdx; i++) booked.add(slots[i]);
       } else if (startIdx === 0 && endIdx === 0) {
-        // Full-day booking: 12:00 AM -> 12:00 AM (next day)
+        // 12:00 AM -> 12:00 AM => toata ziua
         for (let i = 0; i < slots.length; i++) booked.add(slots[i]);
       } else if (endIdx === 0 && startIdx > 0) {
         for (let i = startIdx; i < slots.length; i++) booked.add(slots[i]);

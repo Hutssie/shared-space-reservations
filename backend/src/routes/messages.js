@@ -123,8 +123,8 @@ router.post('/conversations', authMiddleware, async (req, res, next) => {
           },
         });
 
-    // If the requester previously deleted/hidden this conversation, restore it
-    // but clear their view of history (other user keeps theirs).
+    // daca cel care a cerut a sters/ascuns conversatia inainte, o readuc la loc
+    // dar ii sterg istoricul din vedere (celalalt user il pastreaza).
     if (existing) {
       const me = await prisma.conversationParticipant.findUnique({
         where: { conversationId_userId: { conversationId: conversation.id, userId: req.userId } },
@@ -222,7 +222,7 @@ router.post('/conversations/:id/messages', authMiddleware, async (req, res, next
       select: { id: true },
     });
 
-    // Don’t mark as read for receiver; only update sender’s lastReadAt.
+    // nu marchez ca 'read' pentru receiver; actualizez doar lastReadAt-ul senderului.
     await prisma.conversationParticipant.update({
       where: { conversationId_userId: { conversationId, userId: req.userId } },
       data: { lastReadAt: message.createdAt },
@@ -232,7 +232,7 @@ router.post('/conversations/:id/messages', authMiddleware, async (req, res, next
       where: { conversationId },
       select: { userId: true, hiddenAt: true },
     });
-    // Unhide conversation for recipients (but keep their clearedAt).
+    // redau conversatia la vedere pentru destinatari (dar pastrez clearedAt).
     const hiddenUserIds = participants.filter((p) => p.hiddenAt).map((p) => p.userId);
     if (hiddenUserIds.length > 0) {
       await prisma.conversationParticipant.updateMany({
@@ -328,7 +328,7 @@ router.get('/stream', authMiddleware, async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-transform');
   res.setHeader('Connection', 'keep-alive');
 
-  // Some proxies buffer without an initial write.
+  // unele proxy uri buffer uiesc pana apare o scriere initiala.
   res.write(`event: ready\ndata: ${JSON.stringify({ ok: true })}\n\n`);
 
   attachStream(req.userId, res);
@@ -337,7 +337,7 @@ router.get('/stream', authMiddleware, async (req, res) => {
     try {
       res.write(`event: ping\ndata: ${JSON.stringify({ t: Date.now() })}\n\n`);
     } catch {
-      // ignore
+      // ignor
     }
   }, 25_000);
 

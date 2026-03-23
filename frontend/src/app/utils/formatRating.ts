@@ -1,7 +1,4 @@
-/**
- * Format a rating for display: integer → "3", one decimal → "3.5", else "3.37".
- * Returns "—" for null/undefined/NaN.
- */
+// format rating 2 decimale dupa virgula
 export function formatRatingScore(value: number | null | undefined): string {
   if (value == null) return '—';
   const n = Number(value);

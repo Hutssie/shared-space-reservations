@@ -7,9 +7,9 @@ export type GeocodeResult = {
 };
 
 /**
- * Geocode an address string using Google Geocoding API.
- * Returns { lat, lng, zoom } or null on failure/empty query.
- * zoom: ~5 for country, ~12 for locality/city.
+ * Geocode cu Google Geocoding API.
+ * returneaza { lat, lng, zoom } sau `null` daca failuieste sau query gol.
+ * zoom: ~5 pentru tara, ~12 pentru localitate/oras.
  */
 export async function geocodeAddress(query: string): Promise<GeocodeResult | null> {
   const trimmed = query.trim();
@@ -31,7 +31,7 @@ export async function geocodeAddress(query: string): Promise<GeocodeResult | nul
     if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
 
     const types: string[] = result.types || [];
-    // Order matters: check city/locality first so "Craiova" zooms in; country last.
+    // verificare oras -> tara si zoom in
     const zoom =
       types.some((t: string) => t === 'locality' || t === 'administrative_area_level_2' || t === 'administrative_area_level_3') ? 13 :
       types.some((t: string) => t === 'administrative_area_level_1') ? 8 :

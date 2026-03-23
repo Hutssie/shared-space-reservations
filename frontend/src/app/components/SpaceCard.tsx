@@ -1,6 +1,6 @@
 import React from 'react';
 import { Star, MapPin, Users, Heart, Zap } from 'lucide-react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './ImageWithFallback';
 import { formatRatingScore } from '../utils/formatRating';
 import { Link, useSearchParams } from 'react-router';
 

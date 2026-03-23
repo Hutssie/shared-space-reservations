@@ -5,19 +5,17 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
     react(),
     tailwindcss(),
   ],
   resolve: {
     alias: {
-      // Alias @ to the src directory
+      // alias-ul `@` catre folderul `src`
       '@': path.resolve(__dirname, './src'),
     },
   },
 
-  // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
+  // Tipurile de fisiere pentru importuri raw. Nu adauga `.css`, `.tsx` sau `.ts` aici.
   assetsInclude: ['**/*.svg', '**/*.csv'],
   test: {
     environment: 'jsdom',
