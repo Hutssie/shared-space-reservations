@@ -17,7 +17,7 @@ To run this project locally:
 3. **Backend**:
    Either create your own database and env values OR direct transfer everything:
    
-      Direct transfer everything path:
+      Direct transfer everything path:(commands are powershell)
          - Create local DB `& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h localhost -p 5432 -U postgres -c "CREATE DATABASE space_reservations;"`
          - Restore the DB: directly transfer the .dump file and run:
             - $env:PGPASSWORD = '<local_db_password>'
