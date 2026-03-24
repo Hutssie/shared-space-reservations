@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.js';
 import { attachStream, isUserOnline, publishToUser } from '../realtime/messagesHub.js';
 import { createNotification } from './notifications.js';
+import { prisma } from '../lib/prisma.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 async function requireParticipant(conversationId, userId) {
   const participant = await prisma.conversationParticipant.findUnique({

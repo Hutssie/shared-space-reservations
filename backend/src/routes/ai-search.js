@@ -1,10 +1,9 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { buildSpaceWhereClause, spaceToResponse, AMENITY_ID_TO_LABELS, computeIsSpaceAvailableOnDate, computeIsSpaceAvailableInRange } from './spaces.js';
+import { prisma } from '../lib/prisma.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const SYSTEM_PROMPT = `You are SpaceBook's AI Space Assistant — a friendly, knowledgeable booking advisor who helps users find the perfect creative or professional space to rent.
 

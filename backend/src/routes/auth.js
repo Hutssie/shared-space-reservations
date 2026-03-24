@@ -2,12 +2,11 @@ import { Router } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { JWT_SECRET, authMiddleware } from '../middleware/auth.js';
 import { createNotification } from './notifications.js';
+import { prisma } from '../lib/prisma.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const PASSWORD_MIN_LENGTH = 8;
 

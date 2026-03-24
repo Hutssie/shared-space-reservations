@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authMiddleware, requireAdmin } from '../middleware/auth.js';
 import { spaceToResponse } from './spaces.js';
 import { createNotification } from './notifications.js';
+import { prisma } from '../lib/prisma.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const startOfToday = () => new Date(new Date().toISOString().slice(0, 10));
 

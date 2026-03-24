@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from '../middleware/auth.js';
 import { Decimal } from '@prisma/client/runtime/library';
 import { createNotification } from './notifications.js';
+import { prisma } from '../lib/prisma.js';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 const CANCELLATION_NOTICE_HOURS = { flexible: 24, moderate: 48, strict: 168 };
 
