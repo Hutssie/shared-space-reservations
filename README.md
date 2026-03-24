@@ -21,7 +21,7 @@ To run this project locally:
          - Create local DB `& "C:\Program Files\PostgreSQL\18\bin\psql.exe" -h localhost -p 5432 -U postgres -c "CREATE DATABASE space_reservations;"`
          - Restore the DB: directly transfer the .dump file and run:
             - $env:PGPASSWORD = '<local_db_password>'
-& "C:\Program Files\PostgreSQL\18\bin\pg_restore.exe" --no-owner --no-privileges -h localhost -p 5432 -U postgres -d space_reservations "$HOME\Desktop\space_reservations.dump"
+& "C:\Program Files\PostgreSQL\18\bin\pg_restore.exe" --no-owner --no-privileges -h localhost -p 5432 -U postgres -d space_reservations "[PATH to space_reservations.dump]"
 Remove-Item Env:PGPASSWORD
          - Directly transfer .env files
 
