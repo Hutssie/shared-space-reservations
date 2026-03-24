@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, ArrowRight, Github, Chrome, Eye, EyeOff, CheckCircle2, X } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Chrome, Eye, EyeOff, CheckCircle2, X } from 'lucide-react';
+import AppleIcon from '@mui/icons-material/Apple';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { ImageWithFallback } from './ImageWithFallback';
@@ -241,8 +242,8 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
               Google
             </button>
             <button className="flex items-center justify-center gap-3 py-4 border-2 border-brand-100 rounded-2xl hover:bg-brand-50 hover:border-brand-200 transition-all font-bold text-brand-700 group cursor-pointer">
-              <Github className="w-5 h-5 text-brand-700" />
-              GitHub
+              <AppleIcon className="w-5 h-5 text-brand-700" />
+              Apple
             </button>
           </div>
 

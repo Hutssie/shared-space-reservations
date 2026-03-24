@@ -353,7 +353,7 @@ export function SpacesMap({
               disableAutoPan: false,
             }}
           >
-            <div className="w-[400px] max-w-[95vw] bg-white rounded-2xl border-2 border-[#f2ddce] shadow-2xl overflow-hidden">
+            <div className="w-[400px] max-w-[95vw] bg-white rounded-[3rem] border-2 border-[#f2ddce] shadow-2xl overflow-hidden">
               <Link
                 to={`/space/${selectedSpace.id}${dateParam ? `?date=${dateParam}` : ''}`}
                 className="block hover:opacity-95 transition-opacity"
@@ -407,7 +407,7 @@ export function SpacesMap({
                 </div>
                 <Link
                   to={`/space/${selectedSpace.id}${dateParam ? `?date=${dateParam}` : ''}#booking`}
-                  className="inline-block w-full px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-brand-500/20 active:translate-y-0.5 text-center"
+                  className="inline-block w-full px-5 py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-brand-500/20 active:translate-y-0.5 text-center"
                 >
                   Book Now
                 </Link>
