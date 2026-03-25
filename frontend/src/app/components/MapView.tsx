@@ -86,7 +86,9 @@ export function ListingMap({
     googleMapsApiKey: API_KEY,
   });
 
-  const mapCenter = useMemo(() => center || DEFAULT_CENTER, [center]);
+  // If parent doesn't control `center` yet, keep the camera on the placed pin
+  // instead of snapping back to the default location on re-render.
+  const mapCenter = useMemo(() => center ?? pin ?? DEFAULT_CENTER, [center, pin]);
   const zoom = useMemo(() => zoomProp ?? (pin ? 15 : DEFAULT_ZOOM), [zoomProp, pin]);
   const onMapClick = useCallback(
     (e: google.maps.MapMouseEvent) => {
@@ -137,6 +139,8 @@ export function ListingMap({
         options={{
           disableDefaultUI: false,
           zoomControl: true,
+          streetViewControl: false,
+          clickableIcons: false,
           zoomControlOptions: {
             position: google.maps.ControlPosition.RIGHT_CENTER,
           },
@@ -201,6 +205,8 @@ export function SpaceLocationMap({
         options={{
           disableDefaultUI: false,
           zoomControl: true,
+          streetViewControl: false,
+          clickableIcons: false,
           zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
           styles: MAP_STYLE_MUTED,
           gestureHandling: 'cooperative',
@@ -336,6 +342,8 @@ export function SpacesMap({
         options={{
           disableDefaultUI: false,
           zoomControl: true,
+          streetViewControl: false,
+          clickableIcons: false,
           zoomControlOptions: {
             position: google.maps.ControlPosition.RIGHT_CENTER,
           },

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import { 
   CheckCircle2, 
   Plus, 
@@ -54,7 +55,7 @@ import { createSpace } from '../api/spaces';
 import { apiUploadFile } from '../api/client';
 import { fetchPublicStats } from '../api/auth';
 import { fetchPlaceSuggestions, type PlaceSuggestion } from '../api/places';
-import { geocodeAddress } from '../utils/geocode';
+import { geocodeAddress, reverseGeocodeLatLng } from '../utils/geocode';
 import { toast } from 'sonner';
 import { ListingMap } from './MapView';
 import { DescriptionEditor } from './DescriptionEditor';
@@ -73,19 +74,31 @@ const categories = [
 ];
 
 export const ListSpace = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [isStarted, setIsStarted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [stats, setStats] = useState<{ spaces: number; users: number; cities: number } | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string;
+    country: string;
+    region: string;
+    city: string;
+    address: string;
+    zip: string;
+    sqm: string;
+    capacity: number;
+    price: number | '';
+    description: string;
+    pinPlaced: boolean;
+    latitude: number | null;
+    longitude: number | null;
+  }>({
     title: '',
     country: '',
     region: '',
     city: '',
     address: '',
-    apt: '',
-    floor: '',
-    building: '',
     zip: '',
     sqm: '',
     capacity: 10,
@@ -100,14 +113,49 @@ export const ListSpace = () => {
   const [submitting, setSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const DEFAULT_MAP_CENTER = { lat: 40.7128, lng: -74.006 };
   const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number } | null>(null);
   const [mapZoom, setMapZoom] = useState(12);
+
+  const capacityHoldTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const capacityHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopCapacityHold = useCallback(() => {
+    if (capacityHoldTimeoutRef.current) {
+      clearTimeout(capacityHoldTimeoutRef.current);
+      capacityHoldTimeoutRef.current = null;
+    }
+    if (capacityHoldIntervalRef.current) {
+      clearInterval(capacityHoldIntervalRef.current);
+      capacityHoldIntervalRef.current = null;
+    }
+  }, []);
+
+  const adjustCapacity = useCallback((delta: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      capacity: Math.max(1, prev.capacity + delta),
+    }));
+  }, []);
+
+  const startCapacityHold = useCallback(
+    (delta: number) => {
+      stopCapacityHold();
+      adjustCapacity(delta);
+
+      capacityHoldTimeoutRef.current = setTimeout(() => {
+        capacityHoldIntervalRef.current = setInterval(() => {
+          adjustCapacity(delta);
+        }, 90);
+      }, 250);
+    },
+    [adjustCapacity, stopCapacityHold]
+  );
 
   const [locationSearch, setLocationSearch] = useState('');
   const [placeSuggestions, setPlaceSuggestions] = useState<PlaceSuggestion[]>([]);
   const [placeSuggestionsLoading, setPlaceSuggestionsLoading] = useState(false);
   const [showPlaceSuggestions, setShowPlaceSuggestions] = useState(false);
+  const lastReverseGeocodeRef = useRef<{ lat: number; lng: number } | null>(null);
   const placeSuggestionsDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const locationInputRef = useRef<HTMLDivElement>(null);
 
@@ -121,6 +169,10 @@ export const ListSpace = () => {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    return () => stopCapacityHold();
+  }, [stopCapacityHold]);
+
   const formatCount = (n: number): string => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`;
     if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace(/\.0$/, '')}K`;
@@ -129,6 +181,9 @@ export const ListSpace = () => {
 
   useEffect(() => {
     if (step !== 3) return;
+    // Once a pin is placed, keep the map stable. (Reverse-geocoding may auto-fill
+    // city/region/country, which would otherwise trigger the geocode+recenter flow.)
+    if (formData.pinPlaced && formData.latitude != null && formData.longitude != null) return;
     const country = formData.country.trim();
     const city = formData.city.trim();
     const query = city ? (country ? `${city}, ${country}` : city) : country;
@@ -145,7 +200,7 @@ export const ListSpace = () => {
       });
     }, 450);
     return () => clearTimeout(t);
-  }, [step, formData.country, formData.city]);
+  }, [step, formData.country, formData.city, formData.pinPlaced, formData.latitude, formData.longitude]);
 
   useEffect(() => {
     if (step !== 3 || locationSearch.trim().length < 2) {
@@ -185,6 +240,27 @@ export const ListSpace = () => {
     setShowPlaceSuggestions(true);
   }, []);
 
+  const handlePositionChange = useCallback((lat: number, lng: number) => {
+    setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng, pinPlaced: true }));
+
+    // Keep it simple: reverse-geocode and fill City/Region/Country from the pin.
+    // Also avoid spamming the API if the user is dragging and events fire rapidly.
+    const last = lastReverseGeocodeRef.current;
+    if (last && Math.abs(last.lat - lat) < 1e-6 && Math.abs(last.lng - lng) < 1e-6) return;
+    lastReverseGeocodeRef.current = { lat, lng };
+
+    reverseGeocodeLatLng(lat, lng).then((r) => {
+      if (!r) return;
+      setFormData((prev) => ({
+        ...prev,
+        // Don't overwrite user input once it's present.
+        country: prev.country ? prev.country : r.country,
+        region: prev.region ? prev.region : r.region,
+        city: prev.city ? prev.city : r.city,
+      }));
+    }).catch(() => {});
+  }, []);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newEntries = Array.from(e.target.files).map((file) => ({
@@ -208,6 +284,88 @@ export const ListSpace = () => {
       prev.includes(id) ? prev.filter(a => a !== id) : [...prev, id]
     );
   };
+
+  const nextDisabled = (() => {
+    if (step === 1) return !formData.title.trim();
+    if (step === 2) return !selectedCategory;
+    if (step === 3) return !formData.country || !formData.address || !formData.zip || !formData.pinPlaced;
+    if (step === 4) return images.length === 0;
+    if (step === 5) {
+      const priceOk = formData.price !== '' && Number.isFinite(Number(formData.price));
+      return !formData.sqm || !formData.description || !priceOk;
+    }
+    return false;
+  })();
+
+  const handleNextStep = useCallback(async () => {
+    if (nextDisabled || submitting) return;
+
+    if (step === 5) {
+      const categoryLabel = categories.find((c) => c.id === selectedCategory)?.label ?? selectedCategory;
+      if (!categoryLabel) return;
+      setSubmitting(true);
+      try {
+        const uploadedUrls: string[] = [];
+        for (const item of images) {
+          const { url } = await apiUploadFile(item.file);
+          uploadedUrls.push(url);
+        }
+        await createSpace({
+          category: categoryLabel,
+          title: formData.title.trim() || (formData.address ? `${formData.address}, ${formData.city}` : `${categoryLabel} - ${formData.city}`),
+          location: [formData.city, formData.region, formData.country].filter(Boolean).join(', '),
+          capacity: formData.capacity,
+          pricePerHour: formData.price === '' ? 0 : Number(formData.price),
+          description: formData.description,
+          imageUrl: uploadedUrls[0] || undefined,
+          imagesJson: uploadedUrls,
+          amenitiesJson: selectedAmenities,
+          latitude: formData.latitude ?? undefined,
+          longitude: formData.longitude ?? undefined,
+          squareMeters: formData.sqm !== '' && formData.sqm != null ? Number(formData.sqm) : undefined,
+        });
+        setStep(6);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Failed to create listing');
+      } finally {
+        setSubmitting(false);
+      }
+    } else {
+      setStep(step + 1);
+    }
+  }, [
+    nextDisabled,
+    step,
+    submitting,
+    selectedCategory,
+    images,
+    formData,
+    selectedAmenities,
+  ]);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!isStarted) return;
+      if (e.key !== 'Enter') return;
+      if (e.isComposing) return;
+      if (e.defaultPrevented) return;
+      if (submitting || nextDisabled) return;
+
+      const t = e.target as HTMLElement | null;
+      if (t) {
+        const tag = t.tagName?.toLowerCase();
+        // Allow newlines / IME behavior in multiline editors.
+        if (tag === 'textarea') return;
+        if (t.isContentEditable) return;
+      }
+
+      e.preventDefault();
+      void handleNextStep();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isStarted, submitting, nextDisabled, handleNextStep]);
 
   if (!isStarted) {
     return (
@@ -301,17 +459,30 @@ export const ListSpace = () => {
     );
   }
 
-  const isNextDisabled = () => {
-    if (step === 1) return !formData.title.trim();
-    if (step === 2) return !selectedCategory;
-    if (step === 3) return !formData.country || !formData.address || !formData.zip || !formData.pinPlaced;
-    if (step === 4) return images.length === 0;
-    if (step === 5) return !formData.sqm || !formData.description;
-    return false;
-  };
-
   return (
-        <div className="pt-32 pb-12 min-h-screen bg-brand-100/30 flex flex-col items-center justify-center p-4">
+        <div
+          className="pt-32 pb-12 min-h-screen bg-brand-100/30 flex flex-col items-center justify-center p-4"
+          onKeyDownCapture={(e) => {
+            if (e.key !== 'Enter') return;
+            if (e.isComposing) return;
+            if (e.defaultPrevented) return;
+
+            const t = e.target as HTMLElement | null;
+            if (!t) return;
+
+            // Don't hijack Enter from multiline editors / contenteditable areas.
+            const tag = t.tagName?.toLowerCase();
+            if (tag === 'textarea') return;
+            if (t.isContentEditable) return;
+
+            // Let native "Enter on a button" clicks behave normally.
+            if (tag === 'button') return;
+
+            if (nextDisabled || submitting) return;
+            e.preventDefault();
+            void handleNextStep();
+          }}
+        >
       <div className="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl border border-brand-100 overflow-hidden">
         {/* Bara de progres */}
         <div className="h-2 bg-brand-100 w-full flex">
@@ -396,15 +567,15 @@ export const ListSpace = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-8"
+                className="space-y-6"
               >
                 <div>
                   <h2 className="text-3xl font-black text-brand-700 mb-2">Where's it located?</h2>
                   <p className="text-brand-400 font-medium">Be precise so guests can find your space easily.</p>
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                  <div className="space-y-5">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className="space-y-7">
                     <div ref={locationInputRef} className="relative">
                       <label className="block text-xs font-black text-brand-400 mb-2 uppercase tracking-widest">City or area</label>
                       {formData.country || formData.city ? (
@@ -463,8 +634,8 @@ export const ListSpace = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
+                      <div className="sm:col-span-2">
                         <label className="block text-xs font-black text-brand-400 mb-2 uppercase tracking-widest">Postal Code</label>
                         <input
                           type="text"
@@ -489,47 +660,14 @@ export const ListSpace = () => {
                         />
                       </div>
                     </div>
-
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-[10px] font-black text-brand-400 mb-1.5 uppercase tracking-widest">Apt/Unit</label>
-                        <input 
-                          type="text" 
-                          value={formData.apt}
-                          onChange={(e) => setFormData({...formData, apt: e.target.value})}
-                          placeholder="4B" 
-                          className="w-full px-4 py-3.5 bg-brand-50 border-2 border-transparent rounded-xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700" 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-brand-400 mb-1.5 uppercase tracking-widest">Floor</label>
-                        <input 
-                          type="text" 
-                          value={formData.floor}
-                          onChange={(e) => setFormData({...formData, floor: e.target.value})}
-                          placeholder="2nd" 
-                          className="w-full px-4 py-3.5 bg-brand-50 border-2 border-transparent rounded-xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700" 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-[10px] font-black text-brand-400 mb-1.5 uppercase tracking-widest">Building</label>
-                        <input 
-                          type="text" 
-                          value={formData.building}
-                          onChange={(e) => setFormData({...formData, building: e.target.value})}
-                          placeholder="The Warehouse" 
-                          className="w-full px-4 py-3.5 bg-brand-50 border-2 border-transparent rounded-xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700" 
-                        />
-                      </div>
-                    </div>
                   </div>
 
                   <div className="relative h-full min-h-[400px] flex flex-col">
                     <ListingMap
-                      center={mapCenter ?? DEFAULT_MAP_CENTER}
+                      center={mapCenter}
                       zoom={mapZoom}
                       pin={formData.pinPlaced && formData.latitude != null && formData.longitude != null ? { lat: formData.latitude, lng: formData.longitude } : null}
-                      onPositionChange={(lat, lng) => setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng, pinPlaced: true }))}
+                      onPositionChange={handlePositionChange}
                       className="flex-1 min-h-[400px]"
                     />
                     <p className="text-[10px] text-brand-400 font-bold mt-2 text-center">Click on the map to place your pin.</p>
@@ -642,12 +780,28 @@ export const ListSpace = () => {
                     </div>
                     <div className="flex items-center justify-between">
                       <button 
-                        onClick={() => setFormData({...formData, capacity: Math.max(1, formData.capacity - 1)})}
+                        type="button"
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          (e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId);
+                          startCapacityHold(-1);
+                        }}
+                        onPointerUp={stopCapacityHold}
+                        onPointerCancel={stopCapacityHold}
+                        onPointerLeave={stopCapacityHold}
                         className="w-10 h-10 rounded-xl bg-white border border-brand-200 flex items-center justify-center font-black text-xl text-brand-700 hover:bg-brand-700 hover:text-white transition-colors cursor-pointer"
                       >-</button>
                       <span className="font-black text-3xl text-brand-700">{formData.capacity}</span>
                       <button 
-                        onClick={() => setFormData({...formData, capacity: formData.capacity + 1})}
+                        type="button"
+                        onPointerDown={(e) => {
+                          e.preventDefault();
+                          (e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId);
+                          startCapacityHold(1);
+                        }}
+                        onPointerUp={stopCapacityHold}
+                        onPointerCancel={stopCapacityHold}
+                        onPointerLeave={stopCapacityHold}
                         className="w-10 h-10 rounded-xl bg-white border border-brand-200 flex items-center justify-center font-black text-xl text-brand-700 hover:bg-brand-700 hover:text-white transition-colors cursor-pointer"
                       >+</button>
                     </div>
@@ -662,8 +816,12 @@ export const ListSpace = () => {
                       <span className="text-brand-300 font-black text-xl">$</span>
                       <input 
                         type="number" 
-                        value={formData.price}
-                        onChange={(e) => setFormData({...formData, price: parseInt(e.target.value) || 0})}
+                        value={formData.price === '' ? '' : formData.price}
+                        placeholder="0"
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFormData({ ...formData, price: v === '' ? '' : parseInt(v, 10) });
+                        }}
                         className="w-full bg-transparent border-none focus:ring-0 text-3xl font-black text-brand-700 p-0 outline-none" 
                       />
                     </div>
@@ -731,10 +889,7 @@ export const ListSpace = () => {
                 </p>
                 <button 
                   onClick={() => {
-                    setIsStarted(false);
-                    setStep(1);
-                    // Handler standard de navigare
-                    window.location.href = '/dashboard';
+                    navigate('/host', { replace: true });
                   }}
                   className="px-12 py-5 bg-brand-700 text-white font-black text-xl rounded-2xl hover:bg-brand-600 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-brand-700/20 cursor-pointer"
                 >
@@ -753,44 +908,10 @@ export const ListSpace = () => {
                 {step === 1 ? 'Cancel' : 'Back'}
               </button>
               <button 
-                disabled={isNextDisabled() || submitting}
-                onClick={async () => {
-                  if (step === 5) {
-                    const categoryLabel = categories.find((c) => c.id === selectedCategory)?.label ?? selectedCategory;
-                    if (!categoryLabel) return;
-                    setSubmitting(true);
-                    try {
-                      const uploadedUrls: string[] = [];
-                      for (const item of images) {
-                        const { url } = await apiUploadFile(item.file);
-                        uploadedUrls.push(url);
-                      }
-                      await createSpace({
-                        category: categoryLabel,
-                        title: formData.title.trim() || (formData.address ? `${formData.address}, ${formData.city}` : `${categoryLabel} - ${formData.city}`),
-                        location: [formData.city, formData.region, formData.country].filter(Boolean).join(', '),
-                        capacity: formData.capacity,
-                        pricePerHour: formData.price,
-                        description: formData.description,
-                        imageUrl: uploadedUrls[0] || undefined,
-                        imagesJson: uploadedUrls,
-                        amenitiesJson: selectedAmenities,
-                        latitude: formData.latitude ?? undefined,
-                        longitude: formData.longitude ?? undefined,
-                        squareMeters: formData.sqm !== '' && formData.sqm != null ? Number(formData.sqm) : undefined,
-                      });
-                      setStep(6);
-                    } catch (err) {
-                      toast.error(err instanceof Error ? err.message : 'Failed to create listing');
-                    } finally {
-                      setSubmitting(false);
-                    }
-                  } else {
-                    setStep(step + 1);
-                  }
-                }}
+                disabled={nextDisabled || submitting}
+                onClick={handleNextStep}
                 className={`px-12 py-4 font-black rounded-2xl transition-all flex items-center gap-3 shadow-xl active:scale-95 cursor-pointer ${
-                  isNextDisabled() || submitting
+                  nextDisabled || submitting
                     ? 'bg-brand-100 text-brand-300 cursor-not-allowed shadow-none' 
                     : 'bg-brand-700 text-white hover:bg-brand-600 shadow-brand-700/20'
                 }`}

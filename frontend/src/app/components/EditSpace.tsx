@@ -221,10 +221,16 @@ export const EditSpace = () => {
     if (!id || !listing) return;
     setIsSaving(true);
     try {
+      const cleaningFee = Number(listing.bookingSettings?.cleaningFee);
+      const equipmentFee = Number(listing.bookingSettings?.equipmentFee);
+
       await updateSpace(id, {
         title: listing.title,
         category: listing.category,
-        pricePerHour: listing.price,
+        pricePerHour:
+          listing.price === '' || listing.price == null || Number.isNaN(Number(listing.price))
+            ? 0
+            : Number(listing.price),
         location: listing.address,
         capacity: listing.capacity,
         squareMeters: (listing.sqm !== '' && listing.sqm != null && !Number.isNaN(Number(listing.sqm)))
@@ -242,8 +248,8 @@ export const EditSpace = () => {
         maxDurationHours: hasCustomDuration && listing.bookingSettings?.maxDuration != null ? listing.bookingSettings.maxDuration : null,
         maxAdvanceBookingDays: listing.bookingSettings?.advanceBookingDays ?? null,
         cancellationPolicy: listing.bookingSettings?.cancellationPolicy ?? null,
-        cleaningFeeCents: Math.round((listing.bookingSettings?.cleaningFee ?? 0) * 100),
-        equipmentFeeCents: Math.round((listing.bookingSettings?.equipmentFee ?? 0) * 100),
+        cleaningFeeCents: Math.round((Number.isFinite(cleaningFee) ? cleaningFee : 0) * 100),
+        equipmentFeeCents: Math.round((Number.isFinite(equipmentFee) ? equipmentFee : 0) * 100),
         bannedDaysJson: hasWeeklySchedule ? JSON.stringify(bannedDays) : null,
         blockedDatesJson: blockedDates.length > 0 ? blockedDates : null,
         status: STATUS_UI_TO_API[listing.status ?? 'Active'] ?? 'active',
@@ -519,8 +525,12 @@ export const EditSpace = () => {
                       <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-lg md:text-xl">$</span>
                       <input 
                         type="number" 
-                        value={listing.price}
-                        onChange={(e) => setListing({...listing, price: parseInt(e.target.value)})}
+                        value={listing.price === '' || listing.price == null ? '' : listing.price}
+                        placeholder="0"
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setListing({ ...listing, price: v === '' ? '' : parseInt(v, 10) });
+                        }}
                         className="w-full pl-12 md:pl-14 pr-24 md:pr-32 py-4 md:py-5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-lg md:text-xl shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <span className="absolute right-6 md:right-8 top-1/2 -translate-y-1/2 text-[9px] md:text-[10px] font-black text-brand-200 uppercase tracking-widest pointer-events-none">Per Hour</span>
@@ -1205,10 +1215,16 @@ export const EditSpace = () => {
                       <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-lg md:text-xl">$</span>
                       <input 
                         type="number" 
-                        value={listing.bookingSettings?.cleaningFee ?? 0}
+                        value={listing.bookingSettings?.cleaningFee ?? ''}
                         onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                          setListing({ ...listing, bookingSettings: { ...(listing.bookingSettings || {}), cleaningFee: parseInt(val) || 0 } });
+                          const raw = e.target.value;
+                          setListing({
+                            ...listing,
+                            bookingSettings: {
+                              ...(listing.bookingSettings || {}),
+                              cleaningFee: raw === '' ? '' : Number(raw),
+                            },
+                          });
                         }}
                         className="w-full pl-12 md:pl-14 pr-6 py-4 md:py-5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-lg md:text-xl shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
@@ -1220,10 +1236,16 @@ export const EditSpace = () => {
                       <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-lg md:text-xl">$</span>
                       <input 
                         type="number" 
-                        value={listing.bookingSettings?.equipmentFee ?? 0}
+                        value={listing.bookingSettings?.equipmentFee ?? ''}
                         onChange={(e) => {
-                          const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                          setListing({ ...listing, bookingSettings: { ...(listing.bookingSettings || {}), equipmentFee: parseInt(val) || 0 } });
+                          const raw = e.target.value;
+                          setListing({
+                            ...listing,
+                            bookingSettings: {
+                              ...(listing.bookingSettings || {}),
+                              equipmentFee: raw === '' ? '' : Number(raw),
+                            },
+                          });
                         }}
                         className="w-full pl-12 md:pl-14 pr-6 py-4 md:py-5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-lg md:text-xl shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
