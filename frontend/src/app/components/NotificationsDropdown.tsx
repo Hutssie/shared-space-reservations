@@ -12,7 +12,7 @@ export const hasUnreadNotifications = (unreadCount: number) => unreadCount > 0;
 export const NotificationsDropdown = ({ trigger }: { trigger: React.ReactNode }) => {
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const navigate = useNavigate();
-  const displayList = notifications.slice(0, 5);
+  const displayList = notifications.slice(0, 4);
   const [open, setOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
 
@@ -41,11 +41,11 @@ export const NotificationsDropdown = ({ trigger }: { trigger: React.ReactNode })
           <motion.div
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            className="bg-white rounded-[2.5rem] shadow-[0_30px_60px_-15px_rgba(23,15,8,0.2)] border border-brand-100 overflow-hidden w-[420px] max-w-[95vw]"
+            className="bg-white rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(23,15,8,0.2)] border border-brand-100 overflow-hidden w-[400px] max-w-[95vw]"
           >
-            <div className="p-8 pb-4 flex items-center justify-between border-b border-brand-50">
-              <div className="flex items-center gap-3">
-                <h3 className="text-xl font-black text-brand-700">Notifications</h3>
+            <div className="p-6 pb-3.5 flex items-center justify-between border-b border-brand-50">
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-lg font-black text-brand-700">Notifications</h3>
                 {unreadCount > 0 && (
                   <span className="bg-brand-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
                     {unreadCount} NEW
@@ -63,7 +63,7 @@ export const NotificationsDropdown = ({ trigger }: { trigger: React.ReactNode })
                 </button>
                 {actionsOpen && (
                   <div
-                    className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-2xl border border-brand-100 overflow-hidden z-[120]"
+                    className="absolute right-0 mt-2.5 w-52 bg-white rounded-xl shadow-2xl border border-brand-100 overflow-hidden z-[120]"
                     role="menu"
                   >
                     <button
@@ -73,7 +73,7 @@ export const NotificationsDropdown = ({ trigger }: { trigger: React.ReactNode })
                         setActionsOpen(false);
                       }}
                       disabled={!hasUnread}
-                      className="w-full px-5 py-4 text-left font-black text-sm text-brand-700 hover:bg-brand-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-3.5 text-left font-black text-sm text-brand-700 hover:bg-brand-50 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       role="menuitem"
                     >
                       Mark all as read
@@ -83,10 +83,10 @@ export const NotificationsDropdown = ({ trigger }: { trigger: React.ReactNode })
               </div>
             </div>
 
-            <div className="max-h-[480px] overflow-y-auto custom-scrollbar">
+            <div className="overflow-hidden">
               <div className="divide-y divide-brand-50">
                 {displayList.length === 0 ? (
-                  <div className="p-8 text-center text-brand-500 font-medium text-sm">
+                  <div className="p-7 text-center text-brand-500 font-medium text-sm">
                     No notifications yet.
                   </div>
                 ) : (
@@ -98,13 +98,13 @@ export const NotificationsDropdown = ({ trigger }: { trigger: React.ReactNode })
                         key={notif.id}
                         type="button"
                         onClick={() => handleNotificationClick(notif)}
-                        className={`w-full p-6 text-left hover:bg-brand-50 transition-all flex gap-5 group relative ${unread ? 'bg-brand-50/30' : ''}`}
+                        className={`w-full p-5 text-left hover:bg-brand-50 transition-all flex gap-4 group relative ${unread ? 'bg-brand-50/30' : ''}`}
                       >
                         {unread && (
-                          <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-brand-500 rounded-full" />
+                          <div className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1 h-9 bg-brand-500 rounded-full" />
                         )}
-                        <div className={`w-14 h-14 rounded-2xl ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
-                          <Icon className={`w-7 h-7 ${color}`} />
+                        <div className={`w-12 h-12 rounded-xl ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform`}>
+                          <Icon className={`w-6 h-6 ${color}`} />
                         </div>
                         <div className="space-y-1 flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
@@ -124,7 +124,7 @@ export const NotificationsDropdown = ({ trigger }: { trigger: React.ReactNode })
               </div>
             </div>
 
-            <div className="p-6 bg-brand-50/50 flex items-center justify-center border-t border-brand-50">
+            <div className="p-5 bg-brand-50/50 flex items-center justify-center border-t border-brand-50">
               <Link
                 to="/dashboard?tab=Notifications"
                 onClick={() => { setActionsOpen(false); setOpen(false); }}
