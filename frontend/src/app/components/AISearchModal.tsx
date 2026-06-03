@@ -221,11 +221,11 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-            className="fixed right-0 top-0 bottom-0 w-full md:max-w-[800px] bg-white shadow-[-40px_0_100px_rgba(0,0,0,0.2)] flex flex-col z-[101] h-full"
+            className="fixed right-0 top-0 bottom-0 w-full md:max-w-[740px] bg-white shadow-[-40px_0_100px_rgba(0,0,0,0.2)] flex flex-col z-[101] h-full"
           >
             {/* Header-ul */}
-            <div className="p-4 md:p-10 border-b border-brand-100 flex items-center justify-between bg-white/90 backdrop-blur-xl sticky top-0 z-20 shrink-0">
-              <div className="flex items-center gap-3 md:gap-6">
+            <div className="p-4 md:p-7 border-b border-brand-100 flex items-center justify-between bg-white/90 backdrop-blur-xl sticky top-0 z-20 shrink-0">
+              <div className="flex items-center gap-3 md:gap-5">
                 <div
                   role="button"
                   tabIndex={0}
@@ -233,53 +233,53 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') resetConversation();
                   }}
-                  className="relative w-10 h-10 md:w-16 md:h-16 bg-brand-700 rounded-xl md:rounded-[2rem] flex items-center justify-center text-white shadow-2xl shadow-brand-700/20 rotate-3 shrink-0 ring-2 ring-transparent hover:ring-brand-300/60 transition-all cursor-pointer group"
+                  className="relative w-10 h-10 md:w-14 md:h-14 bg-brand-700 rounded-xl md:rounded-2xl flex items-center justify-center text-white shadow-2xl shadow-brand-700/20 rotate-3 shrink-0 ring-2 ring-transparent hover:ring-brand-300/60 transition-all cursor-pointer group"
                   aria-label="New Chat"
                 >
-                  <Sparkles className="w-5 h-5 md:w-8 md:h-8" />
-                  <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity bg-brand-700 text-white text-[10px] md:text-xs font-black px-2.5 md:px-3 py-1 rounded-lg shadow-lg shadow-brand-700/20 whitespace-nowrap">
+                  <Sparkles className="w-5 h-5 md:w-7 md:h-7" />
+                  <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full opacity-0 group-hover:opacity-100 transition-opacity bg-brand-700 text-white text-[10px] font-black px-2.5 py-1 rounded-lg shadow-lg shadow-brand-700/20 whitespace-nowrap">
                     New Chat
                   </span>
                 </div>
                 <div>
-                  <h2 className="text-lg md:text-3xl font-black text-brand-700 leading-tight tracking-tight">AI Space Assistant</h2>
-                  <div className="flex items-center gap-2 mt-0.5 md:mt-1">
-                    <span className="w-1.5 h-1.5 md:w-2.5 md:h-2.5 bg-green-500 rounded-full animate-pulse" />
-                    <p className="text-brand-400 font-black text-[9px] md:text-xs uppercase tracking-[0.2em]">Powered by Gemini</p>
+                  <h2 className="text-lg md:text-2xl font-black text-brand-700 leading-tight tracking-tight">AI Space Assistant</h2>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full animate-pulse" />
+                    <p className="text-brand-400 font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em]">Powered by Gemini</p>
                   </div>
                 </div>
               </div>
               <button 
                 onClick={handleClose}
-                className="p-2 md:p-4 hover:bg-brand-50 rounded-lg md:rounded-[1.5rem] transition-all text-brand-400 hover:text-brand-700 cursor-pointer group shrink-0"
+                className="p-2 md:p-3 hover:bg-brand-50 rounded-lg md:rounded-xl transition-all text-brand-400 hover:text-brand-700 cursor-pointer group shrink-0"
               >
-                <X className="w-5 h-5 md:w-8 md:h-8 group-hover:rotate-90 transition-transform" />
+                <X className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform" />
               </button>
             </div>
 
             {/* Corpul chat-ului */}
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-12 bg-gradient-to-b from-brand-50/30 to-white scroll-smooth"
+              className="flex-1 overflow-y-auto p-4 md:p-7 space-y-5 md:space-y-9 bg-gradient-to-b from-brand-50/30 to-white scroll-smooth"
             >
               {messages.map((msg) => (
                 <motion.div 
                   key={msg.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex gap-3 md:gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
+                  className={`flex gap-3 md:gap-5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                 >
-                  <div className={`w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl flex items-center justify-center shrink-0 shadow-md border border-brand-100/50 ${msg.role === 'assistant' ? 'bg-brand-700 text-white' : 'bg-white text-brand-700'}`}>
-                    {msg.role === 'assistant' ? <Bot className="w-4 h-4 md:w-6 md:h-6" /> : <User className="w-4 h-4 md:w-6 md:h-6" />}
+                  <div className={`w-8 h-8 md:w-11 md:h-11 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 shadow-md border border-brand-100/50 ${msg.role === 'assistant' ? 'bg-brand-700 text-white' : 'bg-white text-brand-700'}`}>
+                    {msg.role === 'assistant' ? <Bot className="w-4 h-4 md:w-5 md:h-5" /> : <User className="w-4 h-4 md:w-5 md:h-5" />}
                   </div>
-                  <div className={`flex flex-col gap-3 md:gap-6 max-w-[85%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
-                    <div className={`p-4 md:p-8 rounded-[1.2rem] md:rounded-[2.5rem] shadow-sm relative text-sm md:text-lg ${msg.role === 'assistant' ? 'bg-white rounded-tl-none border border-brand-100 text-brand-700' : 'bg-brand-700 text-white rounded-tr-none'}`}>
+                  <div className={`flex flex-col gap-2.5 md:gap-4 max-w-[85%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                    <div className={`p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm relative text-sm md:text-[15px] md:leading-relaxed ${msg.role === 'assistant' ? 'bg-white rounded-tl-none border border-brand-100 text-brand-700' : 'bg-brand-700 text-white rounded-tr-none'}`}>
                       <p className="font-medium leading-relaxed whitespace-pre-line">{formatMessage(msg.content)}</p>
                     </div>
 
                     {msg.results && msg.results.length > 0 && (
                       <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 w-full mt-1">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full mt-1">
                           {msg.results.map((space) => (
                             <motion.div
                               key={space.id}
@@ -290,27 +290,25 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                               <Link 
                                 to={`/space/${space.id}`}
                                 onClick={handleClose}
-                                className="group flex flex-col bg-white rounded-[1.5rem] md:rounded-[2.5rem] overflow-hidden border border-brand-100 shadow-md hover:shadow-2xl hover:border-brand-400 transition-all p-2 md:p-4"
+                                className="group flex flex-col bg-white rounded-[1.25rem] md:rounded-2xl overflow-hidden border border-brand-100 shadow-md hover:shadow-2xl hover:border-brand-400 transition-all p-2 md:p-3.5"
                               >
-                                <div className="h-32 md:h-48 rounded-[1rem] md:rounded-[2rem] overflow-hidden mb-2 md:mb-4 relative">
+                                <div className="h-31 md:h-35 rounded-xl md:rounded-2xl overflow-hidden mb-2 md:mb-2.5 relative">
                                   <ImageWithFallback src={space.image ?? space.images?.[0] ?? ''} alt={space.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                                   {space.rating != null && (
-                                    <div className="absolute top-2 right-2 md:top-4 md:right-4 bg-white/95 backdrop-blur-md px-2 py-1 md:px-4 md:py-2 rounded-lg md:rounded-2xl flex items-center gap-1.5 shadow-lg">
-                                      <Star className="w-2.5 h-2.5 md:w-4 md:h-4 text-brand-500 fill-brand-500" />
-                                      <span className="text-[10px] md:text-sm font-black text-brand-700">{space.rating}</span>
+                                    <div className="absolute top-2 right-2 md:top-2.5 md:right-2.5 bg-white/95 backdrop-blur-md px-2 py-1 md:px-2.5 md:py-1 rounded-lg flex items-center gap-1 shadow-lg">
+                                      <Star className="w-2.5 h-2.5 md:w-3 md:h-3 text-brand-500 fill-brand-500" />
+                                      <span className="text-[10px] md:text-xs font-black text-brand-700">{space.rating}</span>
                                     </div>
                                   )}
                                 </div>
-                                <div className="px-1 md:px-2 pb-1 md:pb-2">
-                                  <div className="flex justify-between items-start mb-0.5 md:mb-2">
-                                    <p className="text-[8px] md:text-xs font-black uppercase tracking-[0.2em] text-brand-400">{space.category}</p>
-                                  </div>
-                                  <h4 className="font-black text-brand-700 text-sm md:text-xl mb-1.5 md:mb-3 line-clamp-1">{space.title}</h4>
-                                  <div className="flex items-center justify-between pt-1.5 md:pt-3 border-t border-brand-50">
-                                    <span className="text-sm md:text-xl font-black text-brand-700">${space.price}<span className="text-[10px] md:text-sm font-bold text-brand-400">/hr</span></span>
-                                    <div className="flex items-center gap-1.5 text-[8px] md:text-xs font-black text-brand-400 uppercase tracking-widest group-hover:text-brand-700 transition-colors">
+                                <div className="px-1 md:px-2 pb-1">
+                                  <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.2em] text-brand-400 mb-0.5 line-clamp-1">{space.category}</p>
+                                  <h4 className="font-black text-brand-700 text-sm md:text-base mb-1.5 line-clamp-1 leading-tight">{space.title}</h4>
+                                  <div className="flex items-center justify-between pt-1.5 md:pt-2 border-t border-brand-50">
+                                    <span className="text-sm md:text-base font-black text-brand-700">${space.price}<span className="text-[10px] md:text-xs font-bold text-brand-400">/hr</span></span>
+                                    <div className="flex items-center gap-1.5 text-[8px] md:text-[10px] font-black text-brand-400 uppercase tracking-widest group-hover:text-brand-700 transition-colors">
                                       Details
-                                      <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
+                                      <ArrowRight className="w-3 h-3 md:w-3.5 md:h-3.5" />
                                     </div>
                                   </div>
                                 </div>
@@ -326,7 +324,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
-                              className="w-full bg-brand-50 border border-brand-200 rounded-2xl md:rounded-[2rem] p-4 md:p-6"
+                              className="w-full bg-brand-50 border border-brand-200 rounded-xl md:rounded-2xl p-4 md:p-5"
                             >
                               {bookingPromptPhase === 'pick' && (
                                 <div className="space-y-3">
@@ -339,7 +337,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                           setSelectedSpaceId(space.id);
                                           setBookingPromptPhase('confirm');
                                         }}
-                                        className="px-4 py-2 bg-white border border-brand-200 rounded-xl text-xs md:text-sm font-bold text-brand-700 hover:bg-brand-700 hover:text-white hover:border-brand-700 transition-all cursor-pointer shadow-sm"
+                                        className="px-3.5 py-1.5 bg-white border border-brand-200 rounded-lg text-xs font-bold text-brand-700 hover:bg-brand-700 hover:text-white hover:border-brand-700 transition-all cursor-pointer shadow-sm"
                                       >
                                         {space.title}
                                       </button>
@@ -356,7 +354,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                     <p className="text-sm md:text-base font-bold text-brand-700">
                                       Book <strong>{space.title}</strong>?
                                     </p>
-                                    <div className="flex gap-3">
+                                    <div className="flex gap-2.5">
                                       <button
                                         onClick={() => {
                                           const prefill = msg.bookingPrefill;
@@ -368,7 +366,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                           navigate(`/space/${space.id}${qs ? `?${qs}` : ''}#booking`);
                                           handleClose();
                                         }}
-                                        className="px-5 py-2.5 bg-brand-700 text-white font-black text-xs md:text-sm rounded-xl hover:bg-brand-600 transition-all cursor-pointer shadow-lg shadow-brand-700/20 active:scale-95"
+                                        className="px-4 py-2 bg-brand-700 text-white font-black text-xs rounded-lg hover:bg-brand-600 transition-all cursor-pointer shadow-lg shadow-brand-700/20 active:scale-95"
                                       >
                                         Yes
                                       </button>
@@ -378,7 +376,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                           setBookingPromptPhase(null);
                                           setSelectedSpaceId(null);
                                         }}
-                                        className="px-5 py-2.5 bg-white border border-brand-200 text-brand-700 font-black text-xs md:text-sm rounded-xl hover:bg-brand-50 transition-all cursor-pointer"
+                                        className="px-4 py-2 bg-white border border-brand-200 text-brand-700 font-black text-xs rounded-lg hover:bg-brand-50 transition-all cursor-pointer"
                                       >
                                         No
                                       </button>
@@ -395,31 +393,31 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                 </motion.div>
               ))}
               {isTyping && (
-                <div className="flex gap-3 md:gap-6">
-                  <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl bg-brand-700 text-white flex items-center justify-center shrink-0 shadow-lg">
-                    <Bot className="w-4 h-4 md:w-6 md:h-6" />
+                <div className="flex gap-3 md:gap-5">
+                  <div className="w-8 h-8 md:w-11 md:h-11 rounded-lg md:rounded-xl bg-brand-700 text-white flex items-center justify-center shrink-0 shadow-lg">
+                    <Bot className="w-4 h-4 md:w-5 md:h-5" />
                   </div>
-                  <div className="bg-white p-4 md:p-8 rounded-[1.2rem] md:rounded-[2.5rem] rounded-tl-none border border-brand-100 shadow-sm flex items-center gap-2 md:gap-4">
+                  <div className="bg-white p-4 md:p-6 rounded-xl md:rounded-2xl rounded-tl-none border border-brand-100 shadow-sm flex items-center gap-2 md:gap-3">
                     <div className="flex gap-1 md:gap-1.5">
-                      <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.2, times: [0, 0.5, 1] }} className="w-1 md:w-2 h-1 md:h-2 bg-brand-400 rounded-full" />
-                      <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.2, times: [0, 0.5, 1] }} className="w-1 md:w-2 h-1 md:h-2 bg-brand-400 rounded-full" />
-                      <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.4, times: [0, 0.5, 1] }} className="w-1 md:w-2 h-1 md:h-2 bg-brand-400 rounded-full" />
+                      <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.2, times: [0, 0.5, 1] }} className="w-1 md:w-1.5 h-1 md:h-1.5 bg-brand-400 rounded-full" />
+                      <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.2, times: [0, 0.5, 1] }} className="w-1 md:w-1.5 h-1 md:h-1.5 bg-brand-400 rounded-full" />
+                      <motion.span animate={{ opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.2, delay: 0.4, times: [0, 0.5, 1] }} className="w-1 md:w-1.5 h-1 md:h-1.5 bg-brand-400 rounded-full" />
                     </div>
-                    <span className="text-brand-400 font-black text-[9px] md:text-sm uppercase tracking-widest">Thinking</span>
+                    <span className="text-brand-400 font-black text-[9px] md:text-xs uppercase tracking-widest">Thinking</span>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Footer-ul cu input */}
-            <div className="p-4 md:p-10 bg-white border-t border-brand-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] relative z-20 shrink-0">
-              <div className="space-y-4 md:space-y-8 max-w-3xl mx-auto">
-                <div className="flex flex-wrap gap-2 md:gap-3">
+            <div className="p-4 md:p-7 bg-white border-t border-brand-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] relative z-20 shrink-0">
+              <div className="space-y-3 md:space-y-6 max-w-2xl mx-auto">
+                <div className="flex flex-wrap gap-2">
                   {SUGGESTION_CHIPS.map((suggestion) => (
                     <button 
                       key={suggestion}
                       onClick={() => setInputValue(suggestion)}
-                      className="text-[8px] md:text-xs font-black uppercase tracking-widest px-3 md:px-6 py-1.5 md:py-3 bg-brand-50 text-brand-400 rounded-lg md:rounded-2xl hover:bg-brand-700 hover:text-white hover:shadow-xl transition-all cursor-pointer border border-brand-100/50 flex-grow text-center"
+                      className="text-[8px] md:text-[11px] font-black uppercase tracking-widest px-3 md:px-5 py-1.5 md:py-2.5 bg-brand-50 text-brand-400 rounded-lg hover:bg-brand-700 hover:text-white hover:shadow-xl transition-all cursor-pointer border border-brand-100/50 flex-grow text-center"
                     >
                       {suggestion}
                     </button>
@@ -433,14 +431,14 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     placeholder="Describe what you're looking for..."
-                    className="w-full pl-4 md:pl-8 pr-12 md:pr-24 py-4 md:py-7 bg-brand-50 border-2 border-transparent rounded-xl md:rounded-[2.5rem] focus:ring-0 focus:border-brand-300 focus:bg-white transition-all font-bold text-sm md:text-xl text-brand-700 placeholder:text-brand-300 shadow-inner"
+                    className="w-full pl-4 md:pl-7 pr-12 md:pr-24 py-3.5 md:py-5 bg-brand-50 border-2 border-transparent rounded-xl md:rounded-2xl focus:ring-0 focus:border-brand-300 focus:bg-white transition-all font-bold text-sm md:text-[15px] text-brand-700 placeholder:text-brand-300 shadow-inner"
                   />
                   <button 
                     onClick={handleSend}
                     disabled={!inputValue.trim() || isTyping}
-                    className="absolute right-1.5 top-1.5 bottom-1.5 md:right-3 md:top-3 md:bottom-3 aspect-square bg-brand-700 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg md:rounded-[2rem] shadow-2xl shadow-brand-700/30 transition-all active:scale-95 flex items-center justify-center group/btn cursor-pointer"
+                    className="absolute right-1.5 top-1.5 bottom-1.5 md:right-2.5 md:top-2.5 md:bottom-2.5 aspect-square bg-brand-700 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg md:rounded-xl shadow-2xl shadow-brand-700/30 transition-all active:scale-95 flex items-center justify-center group/btn cursor-pointer"
                   >
-                    <Send className="w-4 h-4 md:w-7 md:h-7 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                    <Send className="w-4 h-4 md:w-6 md:h-6 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
                   </button>
                 </div>
               </div>
