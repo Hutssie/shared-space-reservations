@@ -541,7 +541,7 @@ export const SpaceDetails = () => {
       const tryScroll = (attemptsLeft: number) => {
         const bookingEl = document.getElementById('booking');
         if (bookingEl) {
-          const top = bookingEl.getBoundingClientRect().top + window.scrollY - 128;
+          const top = bookingEl.getBoundingClientRect().top + window.scrollY - 112;
           window.scrollTo({ top, behavior: 'smooth' });
         } else if (attemptsLeft > 0) {
           setTimeout(() => tryScroll(attemptsLeft - 1), 100);
@@ -674,14 +674,14 @@ export const SpaceDetails = () => {
 
   if (loading && !spaceDetails) {
     return (
-      <div className="pt-32 pb-24 min-h-screen flex items-center justify-center">
+      <div className="pt-24 md:pt-32 pb-12 min-h-screen flex items-center justify-center">
         <div className="text-brand-500 font-medium">Loading space...</div>
       </div>
     );
   }
   if (!spaceDetails && !loading) {
     return (
-      <div className="pt-32 pb-24 min-h-screen flex items-center justify-center">
+      <div className="pt-24 md:pt-32 pb-12 min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-black text-brand-700 mb-2">Space not found</h2>
           <Link to="/find" className="text-brand-500 font-medium hover:underline">Browse spaces</Link>
@@ -692,31 +692,31 @@ export const SpaceDetails = () => {
 
   if (bookingStep === 'confirmed' && spaceDetails) {
     return (
-      <div data-testid="booking-confirmation" className="pt-32 pb-24 min-h-screen bg-brand-50 flex items-center justify-center px-4">
+      <div data-testid="booking-confirmation" className="pt-24 md:pt-32 pb-12 min-h-screen bg-brand-50 flex items-center justify-center px-4">
         <motion.div 
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="max-w-xl w-full bg-white rounded-[3rem] p-12 text-center shadow-2xl shadow-brand-700/5 border border-brand-200"
+          className="max-w-xl w-full bg-white rounded-[1.5rem] md:rounded-[2rem] p-8 md:p-10 text-center shadow-2xl shadow-brand-700/5 border border-brand-200"
         >
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8">
-            <CheckCircle2 className="w-12 h-12 text-green-600" />
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <CheckCircle2 className="w-10 h-10 text-green-600" />
           </div>
           {spaceDetails.isInstantBookable ? (
             <>
-              <h2 className="text-4xl font-black text-brand-700 mb-4">Booking Confirmed!</h2>
-              <p className="text-brand-500 font-medium text-lg mb-10">
+              <h2 className="text-3xl md:text-4xl font-black text-brand-700 mb-3">Booking Confirmed!</h2>
+              <p className="text-brand-500 font-medium text-base md:text-lg mb-8">
                 Your spot is secured. We've sent a confirmation email to you with the receipt and access instructions.
               </p>
             </>
           ) : (
             <>
-              <h2 className="text-4xl font-black text-brand-700 mb-4">Reservation Requested!</h2>
-              <p className="text-brand-500 font-medium text-lg mb-10">
+              <h2 className="text-3xl md:text-4xl font-black text-brand-700 mb-3">Reservation Requested!</h2>
+              <p className="text-brand-500 font-medium text-base md:text-lg mb-8">
                 {spaceDetails.host?.name ?? 'The host'} has been notified. You'll receive an email confirmation once the host approves.
               </p>
             </>
           )}
-          <div className="bg-brand-50 rounded-2xl p-6 mb-10 text-left space-y-4">
+          <div className="bg-brand-50 rounded-2xl p-5 md:p-6 mb-8 text-left space-y-4">
             <div className="flex justify-between items-center border-b border-brand-100 pb-4">
               <span className="text-brand-400 font-bold uppercase tracking-wider text-xs">Space</span>
               <span className="text-brand-700 font-bold">{spaceDetails.title}</span>
@@ -736,7 +736,7 @@ export const SpaceDetails = () => {
           </div>
           <Link 
             to="/find"
-            className="block w-full py-5 bg-brand-700 text-white font-black rounded-2xl shadow-xl shadow-brand-700/20 hover:bg-brand-600 transition-all active:scale-95 cursor-pointer"
+            className="block w-full py-4 bg-brand-700 text-white font-black rounded-xl md:rounded-2xl shadow-xl shadow-brand-700/20 hover:bg-brand-600 transition-all active:scale-95 cursor-pointer"
           >
             Explore More Spaces
           </Link>
@@ -746,10 +746,10 @@ export const SpaceDetails = () => {
   }
 
   return (
-    <div className="pt-32 pb-24 min-h-screen bg-white">
-      <div className="max-w-[1600px] mx-auto px-4 md:px-12">
+    <div className="pt-24 md:pt-32 pb-12 min-h-screen bg-white">
+      <div className="max-w-7xl mx-auto px-4 md:px-8">
         {/* Breadcrumbs (calea de navigare) */}
-        <div className="flex items-center gap-2 mb-8 text-sm font-bold">
+        <div className="flex items-center gap-2 mb-6 text-sm font-bold">
           <Link to="/" className="text-brand-400 hover:text-brand-700 transition-colors">Home</Link>
           <ChevronRight className="w-4 h-4 text-brand-200" />
           <Link to="/find" className="text-brand-400 hover:text-brand-700 transition-colors">Find a Space</Link>
@@ -758,7 +758,7 @@ export const SpaceDetails = () => {
         </div>
 
         {/* Actiunile din header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <button 
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-brand-500 font-bold hover:text-brand-700 transition-colors group cursor-pointer"
@@ -782,7 +782,7 @@ export const SpaceDetails = () => {
                   toast.error(err instanceof Error ? err.message : 'Failed to share');
                 }
               }}
-              className="flex items-center gap-2 px-6 py-2.5 bg-brand-50 border border-brand-200 rounded-xl text-brand-700 font-bold hover:bg-brand-100 transition-all cursor-pointer"
+              className="flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 bg-brand-50 border border-brand-200 rounded-xl text-brand-700 font-bold text-sm hover:bg-brand-100 transition-all cursor-pointer"
             >
               <Share2 className="w-4 h-4" /> Share
             </button>
@@ -799,7 +799,7 @@ export const SpaceDetails = () => {
                   addFavorite(id).then(() => setIsFavorite(true));
                 }
               }}
-              className={`flex items-center gap-2 px-6 py-2.5 border rounded-xl font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 border rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 isFavorite 
                   ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100' 
                   : 'bg-brand-50 border-brand-200 text-brand-700 hover:bg-brand-100'
@@ -810,18 +810,18 @@ export const SpaceDetails = () => {
           </div>
         </div>
 
-        <h1 className="text-4xl md:text-5xl font-black text-brand-700 mb-6 tracking-tight leading-tight">{spaceDetails.title}</h1>
+        <h1 className="text-3xl md:text-4xl font-black text-brand-700 mb-4 md:mb-5 tracking-tight leading-tight">{spaceDetails.title}</h1>
         
-        <div className="flex flex-wrap items-center gap-6 mb-12">
+        <div className="flex flex-wrap items-center gap-4 md:gap-5 mb-8 md:mb-10">
           <div className="flex items-center gap-2">
             <Star className="w-5 h-5 text-brand-500 fill-brand-500" />
-            <span className="font-black text-brand-700 text-lg">{formatRatingScore(spaceDetails.rating)}</span>
+            <span className="font-black text-brand-700 text-base md:text-lg">{formatRatingScore(spaceDetails.rating)}</span>
             <span
               className="text-brand-400 font-bold underline cursor-pointer hover:text-brand-700 transition-colors"
               onClick={() => {
                 const el = document.getElementById('reviews-section');
                 if (el) {
-                  const top = el.getBoundingClientRect().top + window.scrollY - 128;
+                  const top = el.getBoundingClientRect().top + window.scrollY - 112;
                   window.scrollTo({ top, behavior: 'smooth' });
                 }
               }}
@@ -835,7 +835,7 @@ export const SpaceDetails = () => {
               onClick={() => {
                 const el = document.getElementById('location-map');
                 if (el) {
-                  const top = el.getBoundingClientRect().top + window.scrollY - 128;
+                  const top = el.getBoundingClientRect().top + window.scrollY - 112;
                   window.scrollTo({ top, behavior: 'smooth' });
                 }
               }}
@@ -856,7 +856,7 @@ export const SpaceDetails = () => {
 
           if (imageCount === 0) {
             return (
-              <div className="mb-16 h-[300px] md:h-[400px] rounded-[1.5rem] md:rounded-[2.5rem] bg-brand-100 flex items-center justify-center">
+              <div className="mb-10 md:mb-12 h-[240px] md:h-[320px] rounded-[1.5rem] md:rounded-[2rem] bg-brand-100 flex items-center justify-center">
                 <span className="text-brand-400 font-bold">No photos</span>
               </div>
             );
@@ -864,13 +864,13 @@ export const SpaceDetails = () => {
 
           if (imageCount === 1) {
             return (
-              <div className="mb-16">
+              <div className="mb-10 md:mb-12">
                 <div
                   role="button"
                   tabIndex={0}
                   onClick={() => openGallery(0)}
                   onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
-                  className={`aspect-[16/9] md:aspect-[21/9] relative rounded-[1.5rem] md:rounded-[2.5rem] ${cellClass}`}
+                  className={`aspect-[16/9] md:aspect-[21/9] relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
                 >
                   <ImageWithFallback src={images[0]} alt="Space" className={imgClass} />
                 </div>
@@ -880,7 +880,7 @@ export const SpaceDetails = () => {
 
           if (imageCount === 2) {
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-16">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-10 md:mb-12">
                 {images.slice(0, 2).map((img, idx) => (
                   <div
                     key={idx}
@@ -888,7 +888,7 @@ export const SpaceDetails = () => {
                     tabIndex={0}
                     onClick={() => openGallery(idx)}
                     onKeyDown={(e) => e.key === 'Enter' && openGallery(idx)}
-                    className={`aspect-[4/3] md:h-[500px] relative rounded-[1.5rem] md:rounded-[2.5rem] ${cellClass}`}
+                    className={`aspect-[4/3] md:h-[400px] relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
                   >
                     <ImageWithFallback src={img} alt={`Space ${idx + 1}`} className={imgClass} />
                   </div>
@@ -899,13 +899,13 @@ export const SpaceDetails = () => {
 
           if (imageCount === 3) {
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-16 md:h-[600px] min-h-0 overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-10 md:mb-12 md:h-[480px] min-h-0 overflow-hidden">
                 <div
                   role="button"
                   tabIndex={0}
                   onClick={() => openGallery(0)}
                   onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
-                  className={`aspect-[4/3] md:aspect-auto md:min-h-0 relative rounded-[1.5rem] md:rounded-[2.5rem] ${cellClass}`}
+                  className={`aspect-[4/3] md:aspect-auto md:min-h-0 relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
                 >
                   <ImageWithFallback src={images[0]} alt="Space 1" className={imgClass} />
                 </div>
@@ -917,7 +917,7 @@ export const SpaceDetails = () => {
                       tabIndex={0}
                       onClick={() => openGallery(idx + 1)}
                       onKeyDown={(e) => e.key === 'Enter' && openGallery(idx + 1)}
-                      className={`aspect-[4/3] md:aspect-auto md:min-h-0 relative rounded-[1.5rem] md:rounded-[2.5rem] ${cellClass}`}
+                      className={`aspect-[4/3] md:aspect-auto md:min-h-0 relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
                     >
                       <ImageWithFallback src={img} alt={`Space ${idx + 2}`} className={imgClass} />
                     </div>
@@ -928,13 +928,13 @@ export const SpaceDetails = () => {
           }
 
           return (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 mb-16 h-auto md:h-[600px]">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 mb-10 md:mb-12 h-auto md:h-[480px]">
               <div
                 role="button"
                 tabIndex={0}
                 onClick={() => openGallery(0)}
                 onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
-                className={`md:col-span-2 aspect-[4/3] md:aspect-auto relative rounded-[1.5rem] md:rounded-[2.5rem] ${cellClass}`}
+                className={`md:col-span-2 aspect-[4/3] md:aspect-auto relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
               >
                 <ImageWithFallback src={images[0] ?? ''} alt="Space 1" className={imgClass} />
               </div>
@@ -946,7 +946,7 @@ export const SpaceDetails = () => {
                     tabIndex={0}
                     onClick={() => openGallery(idx + 1)}
                     onKeyDown={(e) => e.key === 'Enter' && openGallery(idx + 1)}
-                    className={`relative rounded-[2.5rem] ${cellClass}`}
+                    className={`relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
                   >
                     <ImageWithFallback src={img} alt={`Space ${idx + 2}`} className={imgClass} />
                   </div>
@@ -957,12 +957,12 @@ export const SpaceDetails = () => {
                 tabIndex={0}
                 onClick={() => openGallery(3)}
                 onKeyDown={(e) => e.key === 'Enter' && openGallery(3)}
-                className={`hidden md:block relative rounded-[2.5rem] overflow-hidden group cursor-pointer shadow-xl shadow-brand-700/5 md:col-span-1 ${cellClass}`}
+                className={`hidden md:block relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden group cursor-pointer shadow-xl shadow-brand-700/5 md:col-span-1 ${cellClass}`}
               >
                 <ImageWithFallback src={images[3] ?? ''} alt="Space 4" className={imgClass} />
                 {imageCount > 4 && (
                   <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-100 group-hover:bg-black/60 transition-colors">
-                    <span className="px-8 py-4 bg-white text-brand-700 font-black rounded-2xl shadow-2xl hover:scale-105 transition-transform cursor-pointer">
+                    <span className="px-5 py-2.5 md:px-6 md:py-3 bg-white text-brand-700 font-black text-sm md:text-base rounded-xl md:rounded-2xl shadow-2xl hover:scale-105 transition-transform cursor-pointer">
                       View all {imageCount} photos
                     </span>
                   </div>
@@ -1080,13 +1080,13 @@ export const SpaceDetails = () => {
         })()}
 
         {/* Layout-ul continutului */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] gap-12 lg:gap-20">
-          <div className="space-y-16">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-8 lg:gap-12">
+          <div className="space-y-10 md:space-y-12">
             {/* Sectiunea cu gazda */}
-            <section className="flex items-center justify-between py-10 border-b border-brand-100">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-black text-brand-700">Space hosted by {spaceDetails.host?.name ?? 'Host'}</h2>
-                <p className="text-brand-500 font-medium text-lg">
+            <section className="flex items-center justify-between py-6 md:py-8 border-b border-brand-100">
+              <div className="space-y-1.5">
+                <h2 className="text-2xl md:text-3xl font-black text-brand-700">Space hosted by {spaceDetails.host?.name ?? 'Host'}</h2>
+                <p className="text-brand-500 font-medium text-base md:text-lg">
                   Up to {spaceDetails.capacity} guests · {spaceDetails.category} · {spaceDetails.squareMeters != null ? `${spaceDetails.squareMeters} m²` : '— m²'}
                 </p>
               </div>
@@ -1094,7 +1094,7 @@ export const SpaceDetails = () => {
                 <button
                   type="button"
                   onClick={() => spaceDetails.host && setShowHostProfile(true)}
-                  className="w-20 h-20 rounded-3xl overflow-hidden border-2 border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 cursor-pointer hover:border-brand-400 transition-colors"
+                  className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden border-2 border-brand-200 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 cursor-pointer hover:border-brand-400 transition-colors"
                   aria-label={`View ${spaceDetails.host?.name ?? 'host'}'s profile`}
                 >
                   <ImageWithFallback src={spaceDetails.host?.avatar ?? ''} alt="Host" className="w-full h-full object-cover" />
@@ -1123,7 +1123,7 @@ export const SpaceDetails = () => {
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="relative w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+                    className="relative w-full max-w-2xl bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
                   >
                     <button
                       onClick={() => setShowHostProfile(false)}
@@ -1134,9 +1134,9 @@ export const SpaceDetails = () => {
                     </button>
 
                     <div className="overflow-y-auto custom-scrollbar">
-                      <div className="p-8 md:p-12 bg-gradient-to-b from-brand-50/50 to-white">
-                        <div className="flex flex-col md:flex-row items-center gap-8">
-                          <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl shrink-0">
+                      <div className="p-6 md:p-8 bg-gradient-to-b from-brand-50/50 to-white">
+                        <div className="flex flex-col md:flex-row items-center gap-6">
+                          <div className="w-24 h-24 md:w-28 md:h-28 rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl shrink-0">
                             <ImageWithFallback
                               src={spaceDetails.host.avatar ?? ''}
                               alt={spaceDetails.host.name}
@@ -1144,7 +1144,7 @@ export const SpaceDetails = () => {
                             />
                           </div>
                           <div className="text-center md:text-left space-y-3">
-                            <h2 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">
+                            <h2 className="text-2xl md:text-3xl font-black text-brand-700 tracking-tight">
                               {spaceDetails.host.name}
                             </h2>
                             {spaceDetails.host.isSuperhost && (
@@ -1160,7 +1160,7 @@ export const SpaceDetails = () => {
                         </div>
                       </div>
 
-                      <div className="px-8 md:px-12 pb-12 space-y-8">
+                      <div className="px-6 md:px-8 pb-8 md:pb-10 space-y-6 md:space-y-8">
                         {hostProfileLoading ? (
                           <div className="py-6">
                             <div className="h-5 w-40 bg-brand-100 rounded-lg animate-pulse mb-4" />
@@ -1208,9 +1208,9 @@ export const SpaceDetails = () => {
                               setShowHostProfile(false);
                               navigate(`/dashboard?tab=Messages&with=${encodeURIComponent(spaceDetails.host.id)}`);
                             }}
-                            className="w-full py-5 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-3"
+                            className="w-full py-4 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-xl md:rounded-2xl shadow-xl shadow-brand-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-3"
                           >
-                            <MessageSquare className="w-6 h-6" />
+                            <MessageSquare className="w-5 h-5" />
                             Contact {spaceDetails.host.name.split(' ')[0]}
                           </button>
                         </div>
@@ -1222,35 +1222,35 @@ export const SpaceDetails = () => {
             </AnimatePresence>
 
             {/* Descrierea */}
-            <section className="space-y-8">
+            <section className="space-y-6 md:space-y-8">
               {spaceDetails.isInstantBookable && (
-                <div className="flex gap-6 items-start">
-                  <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center shrink-0">
-                    <Zap className="w-7 h-7 text-brand-700" />
+                <div className="flex gap-4 md:gap-5 items-start">
+                  <div className="w-12 h-12 bg-brand-50 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0">
+                    <Zap className="w-6 h-6 text-brand-700" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black text-brand-700 mb-2">Instant Booking</h3>
+                    <h3 className="text-lg font-black text-brand-700 mb-1.5">Instant Booking</h3>
                     <p className="text-brand-500 font-medium">
                       Book this space immediately without waiting for host approval.
                     </p>
                   </div>
                 </div>
               )}
-              <div className="flex gap-6 items-start">
-                <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center shrink-0">
-                  <Clock className="w-7 h-7 text-brand-700" />
+              <div className="flex gap-4 md:gap-5 items-start">
+                <div className="w-12 h-12 bg-brand-50 rounded-xl md:rounded-2xl flex items-center justify-center shrink-0">
+                  <Clock className="w-6 h-6 text-brand-700" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-brand-700 mb-2">Cancellation Policy</h3>
+                  <h3 className="text-lg font-black text-brand-700 mb-1.5">Cancellation Policy</h3>
                   <p className="text-brand-500 font-medium">
                     {CANCELLATION_POLICY_DESCRIPTIONS[(spaceDetails.cancellationPolicy ?? 'flexible').toLowerCase()] ?? CANCELLATION_POLICY_DESCRIPTIONS.flexible}
                   </p>
                 </div>
               </div>
-              <div className="pt-8 border-t border-brand-100">
+              <div className="pt-6 md:pt-8 border-t border-brand-100">
                 <div
                   ref={descriptionRef}
-                  className={`text-brand-700 font-medium text-xl leading-relaxed transition-all duration-300 ${!isDescriptionOpen ? 'line-clamp-3' : ''}`}
+                  className={`text-brand-700 font-medium text-base md:text-lg leading-relaxed transition-all duration-300 ${!isDescriptionOpen ? 'line-clamp-3' : ''}`}
                 >
                   <MarkdownContent>{spaceDetails.description}</MarkdownContent>
                 </div>
@@ -1268,20 +1268,20 @@ export const SpaceDetails = () => {
             </section>
 
             {/* Facilitati (amenities) */}
-            <section className="space-y-8 py-12 border-y border-brand-100">
-              <h2 className="text-3xl font-black text-brand-700 mb-10">What this space offers</h2>
+            <section className="space-y-6 md:space-y-8 py-8 md:py-10 border-y border-brand-100">
+              <h2 className="text-2xl md:text-3xl font-black text-brand-700 mb-6 md:mb-8">What this space offers</h2>
               <div className="relative">
-                <div className="grid grid-cols-2 gap-y-8 gap-x-12">
+                <div className="grid grid-cols-2 gap-y-6 gap-x-8 md:gap-x-10">
                   {(spaceDetails.amenities ?? []).map((amenityId, idx) => {
                     const amenity = AmenitiesList.find((a) => a.id === amenityId);
                     const amenityLabel = amenity?.label ?? amenityId;
                     const IconComponent = amenity?.icon ?? Zap;
                     return (
-                      <div key={idx} className="flex items-center gap-6 group">
-                        <div className="w-12 h-12 bg-brand-50 rounded-2xl flex items-center justify-center group-hover:bg-brand-100 transition-colors">
-                          <IconComponent className="w-6 h-6 text-brand-500" />
+                      <div key={idx} className="flex items-center gap-4 md:gap-5 group">
+                        <div className="w-10 h-10 md:w-11 md:h-11 bg-brand-50 rounded-xl md:rounded-2xl flex items-center justify-center group-hover:bg-brand-100 transition-colors">
+                          <IconComponent className="w-5 h-5 text-brand-500" />
                         </div>
-                        <span className="text-lg font-bold text-brand-700">{amenityLabel}</span>
+                        <span className="text-base font-bold text-brand-700">{amenityLabel}</span>
                       </div>
                     );
                   })}
@@ -1290,13 +1290,13 @@ export const SpaceDetails = () => {
             </section>
 
             {/* Recenzii */}
-            <section id="reviews-section" className="space-y-12">
-              <div className="flex items-center gap-4">
-                <Star className="w-8 h-8 text-brand-700 fill-brand-700 shrink-0" />
-                <h2 className="text-2xl md:text-3xl font-black text-brand-700">{formatRatingScore(spaceDetails.rating)} · {spaceDetails.reviews} reviews</h2>
+            <section id="reviews-section" className="space-y-8 md:space-y-10">
+              <div className="flex items-center gap-3 md:gap-4">
+                <Star className="w-6 h-6 md:w-7 md:h-7 text-brand-700 fill-brand-700 shrink-0" />
+                <h2 className="text-xl md:text-2xl font-black text-brand-700">{formatRatingScore(spaceDetails.rating)} · {spaceDetails.reviews} reviews</h2>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 {reviews.slice(0, 2).map((review) => (
                   <div key={review.id} className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
@@ -1330,7 +1330,7 @@ export const SpaceDetails = () => {
               </div>
               <button 
                 onClick={() => setIsReviewsOpen(true)}
-                className="px-10 py-4.5 border-2 border-brand-700 text-brand-700 font-black rounded-2xl hover:bg-brand-700 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-lg shadow-brand-700/0 hover:shadow-brand-700/10"
+                className="px-6 md:px-8 py-3 md:py-3.5 border-2 border-brand-700 text-brand-700 font-black text-sm md:text-base rounded-xl md:rounded-2xl hover:bg-brand-700 hover:text-white hover:scale-105 active:scale-95 transition-all cursor-pointer shadow-lg shadow-brand-700/0 hover:shadow-brand-700/10"
               >
                 Show all reviews
               </button>
@@ -1351,13 +1351,13 @@ export const SpaceDetails = () => {
                     initial={{ opacity: 0, y: 100, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 100, scale: 0.95 }}
-                    className="relative w-full max-w-5xl h-full bg-white rounded-[3rem] overflow-hidden flex flex-col shadow-2xl"
+                    className="relative w-full max-w-5xl h-full bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl"
                   >
                     {/* Header-ul modalului */}
-                    <div className="flex items-center justify-between p-6 md:p-10 border-b border-brand-100 shrink-0">
-                      <div className="flex items-center gap-3 md:gap-4">
-                        <Star className="w-6 h-6 md:w-8 md:h-8 text-brand-700 fill-brand-700 shrink-0" />
-                        <h2 className="text-xl md:text-3xl font-black text-brand-700">{formatRatingScore(spaceDetails.rating)} · {spaceDetails.reviews} reviews</h2>
+                    <div className="flex items-center justify-between p-5 md:p-6 border-b border-brand-100 shrink-0">
+                      <div className="flex items-center gap-3">
+                        <Star className="w-5 h-5 md:w-6 md:h-6 text-brand-700 fill-brand-700 shrink-0" />
+                        <h2 className="text-lg md:text-2xl font-black text-brand-700">{formatRatingScore(spaceDetails.rating)} · {spaceDetails.reviews} reviews</h2>
                       </div>
                       <button 
                         onClick={() => setIsReviewsOpen(false)}
@@ -1370,9 +1370,9 @@ export const SpaceDetails = () => {
                     {/* Continutul modalului */}
                     <div 
                       ref={scrollRef}
-                      className="flex-1 overflow-y-auto p-6 md:p-12"
+                      className="flex-1 overflow-y-auto p-5 md:p-8"
                     >
-                      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-10 lg:gap-16">
+                      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8 lg:gap-12">
                         {/* Descompunerea ratingului */}
                         <div className="space-y-6 md:space-y-8 lg:sticky lg:top-0 h-fit">
                           {/* Graficul cu distributia ratingului */}
@@ -1585,20 +1585,20 @@ export const SpaceDetails = () => {
             </AnimatePresence>
 
             {/* Locatia */}
-            <section id="location-map" className="space-y-8 pt-12 border-t border-brand-100">
-              <h2 className="text-3xl font-black text-brand-700">Where you'll be</h2>
+            <section id="location-map" className="space-y-6 md:space-y-8 pt-8 md:pt-10 border-t border-brand-100">
+              <h2 className="text-2xl md:text-3xl font-black text-brand-700">Where you'll be</h2>
               {spaceDetails.latitude != null && spaceDetails.longitude != null ? (
                 <>
                   <SpaceLocationMap
                     latitude={spaceDetails.latitude}
                     longitude={spaceDetails.longitude}
-                    className="h-[400px] w-full"
+                    className="h-[35.2rem] w-full"
                   />
                   <a
                     href={`https://www.google.com/maps?q=${spaceDetails.latitude},${spaceDetails.longitude}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-3 px-8 py-4 bg-brand-700 text-white font-black rounded-full hover:bg-brand-600 transition-all duration-300 shadow-lg shadow-brand-700/20 hover:shadow-xl hover:shadow-brand-700/30 hover:scale-[1.02] active:scale-[0.98]"
+                    className="inline-flex items-center gap-2.5 px-6 py-3 bg-brand-700 text-white font-black text-sm md:text-base rounded-full hover:bg-brand-600 transition-all duration-300 shadow-lg shadow-brand-700/20 hover:shadow-xl hover:shadow-brand-700/30 hover:scale-[1.02] active:scale-[0.98]"
                   >
                     <MapPin className="w-5 h-5" />
                     <span>Open in Google Maps</span>
@@ -1608,13 +1608,13 @@ export const SpaceDetails = () => {
                   </a>
                 </>
               ) : (
-                <div className="h-[400px] bg-brand-50 rounded-[3rem] relative overflow-hidden border border-brand-100 flex items-center justify-center">
+                <div className="h-[35.2rem] bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] relative overflow-hidden border border-brand-100 flex items-center justify-center">
                   <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,_var(--brand-300)_1px,_transparent_1px)] [background-size:40px_40px]" />
                   <div className="relative z-10 text-center">
-                    <div className="w-16 h-16 bg-brand-700 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl shadow-brand-700/20">
-                      <MapPin className="w-8 h-8 text-white" />
+                    <div className="w-14 h-14 bg-brand-700 rounded-full flex items-center justify-center mx-auto mb-3 shadow-xl shadow-brand-700/20">
+                      <MapPin className="w-7 h-7 text-white" />
                     </div>
-                    <p className="text-brand-700 font-black text-lg">{spaceDetails.location}</p>
+                    <p className="text-brand-700 font-black text-base md:text-lg">{spaceDetails.location}</p>
                   </div>
                 </div>
               )}
@@ -1623,7 +1623,7 @@ export const SpaceDetails = () => {
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spaceDetails.location)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-3 px-8 py-4 bg-brand-700 text-white font-black rounded-full hover:bg-brand-600 transition-all duration-300 shadow-lg shadow-brand-700/20 hover:shadow-xl hover:shadow-brand-700/30 hover:scale-[1.02] active:scale-[0.98]"
+                  className="inline-flex items-center gap-2.5 px-6 py-3 bg-brand-700 text-white font-black text-sm md:text-base rounded-full hover:bg-brand-600 transition-all duration-300 shadow-lg shadow-brand-700/20 hover:shadow-xl hover:shadow-brand-700/30 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <MapPin className="w-5 h-5" />
                   <span>Open in Google Maps</span>
@@ -1637,27 +1637,27 @@ export const SpaceDetails = () => {
 
           {/* Widget-ul de booking */}
           <div className="relative z-10" id="booking">
-            <div className="sticky top-32 bg-white border-2 border-brand-100 rounded-[3rem] p-8 shadow-2xl shadow-brand-700/5 overflow-hidden">
+            <div className="sticky top-24 md:top-32 bg-white border-2 border-brand-100 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-2xl shadow-brand-700/5 overflow-hidden flex flex-col max-h-[calc(100vh-5.5rem)] md:max-h-[calc(100vh-7.5rem)]">
               {(spaceDetails?.status ?? 'active') !== 'active' && (
-                <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl">
-                  <p className="text-amber-800 font-bold">
+                <div className="mb-4 p-3 md:p-4 bg-amber-50 border border-amber-200 rounded-xl md:rounded-2xl shrink-0">
+                  <p className="text-amber-800 font-bold text-sm">
                     {(spaceDetails?.status ?? '') === 'maintenance'
                       ? 'This space is under maintenance.'
                       : 'This space is not currently available for booking.'}
                   </p>
-                  <p className="text-amber-600 text-sm mt-1">
+                  <p className="text-amber-600 text-xs mt-1">
                     {(spaceDetails?.status ?? '') === 'maintenance'
                       ? 'The host is making improvements and it will be available again soon.'
                       : 'The host has temporarily deactivated this listing.'}
                   </p>
                 </div>
               )}
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-4 shrink-0">
                 <div>
-                  <span className="text-3xl font-black text-brand-700">${spaceDetails.price}</span>
-                  <span className="text-brand-400 font-bold tracking-tight"> / hour</span>
+                  <span className="text-2xl md:text-3xl font-black text-brand-700">${spaceDetails.price}</span>
+                  <span className="text-brand-400 font-bold tracking-tight text-sm"> / hour</span>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 text-sm">
                   <Star className="w-4 h-4 text-brand-500 fill-brand-500" />
                   <span className="font-black text-brand-700">{formatRatingScore(spaceDetails.rating)}</span>
                   <span className="text-brand-300">·</span>
@@ -1665,15 +1665,15 @@ export const SpaceDetails = () => {
                 </div>
               </div>
 
-              <div className={`space-y-8 ${(spaceDetails?.status ?? 'active') !== 'active' ? 'pointer-events-none opacity-60' : ''}`}>
+              <div className={`flex flex-col flex-1 min-h-0 ${(spaceDetails?.status ?? 'active') !== 'active' ? 'pointer-events-none opacity-60' : ''}`}>
                 {/* Alegerea datei */}
-                <div className="group relative" ref={calendarRef}>
-                  <label className="block text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] mb-3 ml-4">Selected Date</label>
+                <div className="group relative shrink-0 mb-4" ref={calendarRef}>
+                  <label className="block text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] mb-2 ml-1">Selected Date</label>
                   <div className="relative">
                     <button 
                       data-testid="booking-date-trigger"
                       onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-                      className={`w-full px-6 py-4.5 bg-brand-50 border-2 rounded-2xl text-brand-700 font-bold flex items-center justify-between transition-all cursor-pointer ${
+                      className={`w-full px-4 py-2.5 bg-brand-50 border-2 rounded-xl text-brand-700 font-bold text-sm flex items-center justify-between transition-all cursor-pointer ${
                         isCalendarOpen ? 'border-brand-700 shadow-lg' : 'border-brand-100 hover:border-brand-300'
                       }`}
                     >
@@ -1692,7 +1692,7 @@ export const SpaceDetails = () => {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute left-0 right-0 mt-3 bg-white border border-brand-100 rounded-[2.5rem] shadow-2xl z-[100] p-6"
+                        className="absolute left-0 right-0 mt-3 bg-white border border-brand-100 rounded-[1.5rem] md:rounded-[2rem] shadow-2xl z-[100] p-5"
                       >
                         <div className="flex items-center justify-between mb-6">
                           <h4 className="font-black text-brand-700">{format(currentMonth, 'MMMM yyyy')}</h4>
@@ -1779,30 +1779,30 @@ export const SpaceDetails = () => {
                 </div>
 
                 {/* Grila de disponibilitate (alegere) */}
-                <div className="space-y-4">
+                <div className="flex flex-col flex-1 min-h-[12rem] md:min-h-[14rem] space-y-2.5">
                   <AnimatePresence>
                     {bookingConflict && (
                       <motion.div
                         initial={{ opacity: 0, y: -10, height: 0 }}
                         animate={{ opacity: 1, y: 0, height: 'auto' }}
                         exit={{ opacity: 0, y: -10, height: 0 }}
-                        className="flex items-center gap-2 p-3 bg-red-50 border-2 border-red-200 rounded-xl overflow-hidden"
+                        className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl overflow-hidden shrink-0"
                       >
                         <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-                        <p className="text-xs font-bold text-red-600">
+                        <p className="text-xs font-bold text-red-600 leading-snug">
                           This time range overlaps with an existing booking. Please select a different time.
                         </p>
                       </motion.div>
                     )}
                   </AnimatePresence>
 
-                  <div className="flex items-center justify-between px-4 flex-wrap gap-2">
+                  <div className="flex items-center justify-between gap-2 shrink-0">
                     <label className="block text-[10px] font-black text-brand-400 uppercase tracking-[0.2em]">Daily Availability</label>
-                    <div className="flex gap-4 flex-wrap">
+                    <div className="flex gap-2.5 flex-wrap justify-end">
                       {unavailableForGrid.length > 0 && (
                         <div className="flex items-center gap-1.5">
                           <div className="w-2 h-2 rounded-full bg-brand-200" />
-                          <span className="text-[10px] font-bold text-brand-400">Outside availability window</span>
+                          <span className="text-[10px] font-bold text-brand-400">Outside window</span>
                         </div>
                       )}
                       <div className="flex items-center gap-1.5">
@@ -1811,7 +1811,7 @@ export const SpaceDetails = () => {
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-brand-50 border border-brand-200" />
-                        <span className="text-[10px] font-bold text-brand-400">Available</span>
+                        <span className="text-[10px] font-bold text-brand-400">Open</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <div className="w-2 h-2 rounded-full bg-brand-700" />
@@ -1820,7 +1820,8 @@ export const SpaceDetails = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-2">
+                  <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar pr-1 -mr-1">
+                  <div className="grid grid-cols-4 gap-1.5">
                     {allTimeSlots.map((time) => {
                       const isInBooked = isTimeInBookedRange(time, bookedRanges);
                       const isUnavailable = unavailableForGrid.includes(time);
@@ -1840,7 +1841,7 @@ export const SpaceDetails = () => {
                           disabled={isUnavailable || isPast}
                           onClick={() => handleTimeClick(time)}
                           className={`
-                            relative py-3 rounded-xl text-[11px] font-black transition-all cursor-pointer
+                            relative py-2 rounded-lg text-[10px] md:text-[11px] font-black transition-all cursor-pointer
                             ${isUnavailable || isPast
                               ? 'bg-brand-100 text-brand-300 cursor-not-allowed opacity-60'
                               : isInBooked && !isSelected
@@ -1873,63 +1874,61 @@ export const SpaceDetails = () => {
                     <motion.p 
                       initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="text-center text-[11px] font-bold text-brand-400 mt-2 italic"
+                      className="text-center text-[11px] font-bold text-brand-400 mt-1.5 italic"
                     >
                       Now select an end time...
                     </motion.p>
                   )}
+                  </div>
                 </div>
 
-                {/* Rezumatul duratei */}
+                {/* Rezumatul duratei + actiuni (fixat in partea de jos a cardului) */}
+                <div className="shrink-0 pt-3 mt-2.5 border-t border-brand-100 space-y-3">
                 <AnimatePresence>
                   {startTime && endTime && (
                     <motion.div 
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="space-y-4 pt-4 border-t border-brand-100"
+                      className="space-y-2.5 overflow-hidden"
                     >
-                      <div className="flex justify-between items-center bg-brand-50 p-4 rounded-2xl">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm">
-                            <Clock className="w-5 h-5 text-brand-700" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest">Selected Window</p>
-                            <p className="text-sm font-bold text-brand-700">{startTime} — {endTime}</p>
+                      <div className="flex justify-between items-center bg-brand-50 px-3.5 py-2.5 rounded-xl">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Clock className="w-4 h-4 text-brand-700 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-black text-brand-400 uppercase tracking-widest">Selected</p>
+                            <p className="text-xs md:text-sm font-bold text-brand-700 truncate">{startTime} — {endTime}</p>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-lg font-black text-brand-700">{duration}h</p>
-                          <p className="text-[10px] font-bold text-brand-400 uppercase">Duration</p>
+                        <div className="text-right shrink-0 ml-2">
+                          <p className="text-sm font-black text-brand-700">{duration}h</p>
                         </div>
                       </div>
 
-                      <div className="space-y-4 px-4">
-                        <div className="flex justify-between items-center text-brand-500 font-medium">
-                          <span className="underline decoration-dotted decoration-brand-300 underline-offset-4 text-sm">${spaceDetails.price} x {duration} hours</span>
-                          <span className="font-bold text-brand-700 text-sm">${subtotal}</span>
+                      <div className="space-y-1.5 px-1">
+                        <div className="flex justify-between items-center text-brand-500 font-medium text-xs md:text-sm">
+                          <span>${spaceDetails.price} × {duration}h</span>
+                          <span className="font-bold text-brand-700">${subtotal}</span>
                         </div>
                         {cleaningFee > 0 && (
-                          <div className="flex justify-between items-center text-brand-500 font-medium">
-                            <span className="underline decoration-dotted decoration-brand-300 underline-offset-4 text-sm">Cleaning fee</span>
-                            <span className="font-bold text-brand-700 text-sm">${cleaningFee}</span>
+                          <div className="flex justify-between items-center text-brand-500 font-medium text-xs md:text-sm">
+                            <span>Cleaning fee</span>
+                            <span className="font-bold text-brand-700">${cleaningFee}</span>
                           </div>
                         )}
                         {equipmentFee > 0 && (
-                          <div className="flex justify-between items-center text-brand-500 font-medium">
-                            <span className="underline decoration-dotted decoration-brand-300 underline-offset-4 text-sm">Equipment fee</span>
-                            <span className="font-bold text-brand-700 text-sm">${equipmentFee}</span>
+                          <div className="flex justify-between items-center text-brand-500 font-medium text-xs md:text-sm">
+                            <span>Equipment fee</span>
+                            <span className="font-bold text-brand-700">${equipmentFee}</span>
                           </div>
                         )}
-                        <div className="flex justify-between items-center text-brand-500 font-medium">
-                          <span className="underline decoration-dotted decoration-brand-300 underline-offset-4 text-sm">SpaceBook service fee</span>
-                          <span className="font-bold text-brand-700 text-sm">${serviceFee}</span>
+                        <div className="flex justify-between items-center text-brand-500 font-medium text-xs md:text-sm">
+                          <span>Service fee</span>
+                          <span className="font-bold text-brand-700">${serviceFee}</span>
                         </div>
-                        <div className="h-px bg-brand-100 my-4" />
-                        <div className="flex justify-between items-center">
-                          <span className="text-xl font-black text-brand-700">Total</span>
-                          <span className="text-2xl font-black text-brand-700">${total}</span>
+                        <div className="flex justify-between items-center pt-1.5 border-t border-brand-100">
+                          <span className="text-sm font-black text-brand-700">Total</span>
+                          <span className="text-base md:text-lg font-black text-brand-700">${total}</span>
                         </div>
                       </div>
                     </motion.div>
@@ -1937,7 +1936,7 @@ export const SpaceDetails = () => {
                 </AnimatePresence>
 
                 {durationError && (
-                  <p className="text-center text-red-600 text-sm font-bold mt-2">
+                  <p className="text-center text-red-600 text-xs md:text-sm font-bold">
                     {durationError}
                   </p>
                 )}
@@ -1945,34 +1944,35 @@ export const SpaceDetails = () => {
                 <button 
                   onClick={handleBook}
                   disabled={bookingSubmitting || !startTime || !endTime || !durationValid || (spaceDetails?.status ?? 'active') !== 'active' || isHostOfSpace}
-                  className="w-full py-5 bg-brand-700 text-white font-black text-xl rounded-[1.5rem] shadow-2xl shadow-brand-700/30 hover:bg-brand-600 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3 cursor-pointer mt-4"
+                  className="w-full py-3 bg-brand-700 text-white font-black text-sm md:text-base rounded-xl shadow-xl shadow-brand-700/30 hover:bg-brand-600 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {bookingStep === 'requesting' ? (
-                    <div className="w-6 h-6 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
                   ) : (
                     isHostOfSpace ? 'Your Space' : (spaceDetails.isInstantBookable ? 'Instant Book' : 'Request to Book')
                   )}
                 </button>
 
                 {isHostOfSpace && (
-                  <p className="text-center text-brand-400 text-[11px] font-bold mt-4">
+                  <p className="text-center text-brand-400 text-xs font-bold">
                     You can manage this booking from your host portal, but you cannot book your own space.
                   </p>
                 )}
 
-                <p className="text-center text-brand-400 text-[11px] font-bold mt-6">
-                  Maximum capacity: <span className="text-brand-700">{spaceDetails.capacity} people</span>
+                <p className="text-center text-brand-400 text-xs font-bold leading-snug">
+                  Max {spaceDetails.capacity} guests
                   {(minH != null || maxH != null) && (
                     <>
                       {' · '}
-                      Booking duration: {minH != null && maxH != null
-                        ? `min ${minH}h, max ${maxH}h`
+                      {minH != null && maxH != null
+                        ? `${minH}–${maxH}h booking`
                         : minH != null
                           ? `min ${minH}h`
                           : `max ${maxH}h`}
                     </>
                   )}
                 </p>
+                </div>
                 
               </div>
             </div>

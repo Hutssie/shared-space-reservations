@@ -177,30 +177,30 @@ export function SpaceLocationMap({
 
   if (!API_KEY) {
     return (
-      <div className={`h-[400px] bg-brand-50 rounded-[3rem] border border-brand-100 flex items-center justify-center ${className}`}>
+      <div className={`bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 flex items-center justify-center ${className || 'h-[400px] w-full'}`}>
         <p className="text-brand-500 font-medium text-center px-4">Map unavailable. Add <code className="bg-brand-100 px-1 rounded">VITE_GOOGLE_MAPS_API_KEY</code> to your .env.</p>
       </div>
     );
   }
   if (loadError) {
     return (
-      <div className={`h-[400px] bg-brand-50 rounded-[3rem] border border-brand-100 flex items-center justify-center ${className}`}>
+      <div className={`bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 flex items-center justify-center ${className || 'h-[400px] w-full'}`}>
         <p className="text-brand-500 font-medium">Failed to load map.</p>
       </div>
     );
   }
   if (!isLoaded) {
     return (
-      <div className={`h-[400px] bg-brand-50 rounded-[3rem] border border-brand-100 flex items-center justify-center ${className}`}>
+      <div className={`bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 flex items-center justify-center ${className || 'h-[400px] w-full'}`}>
         <p className="text-brand-500 font-medium">Loading map...</p>
       </div>
     );
   }
 
   return (
-    <div className={`overflow-hidden rounded-[3rem] border border-brand-100 ${className}`}>
+    <div className={`overflow-hidden rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 ${className || 'h-[400px] w-full'}`}>
       <GoogleMap
-        mapContainerStyle={{ width: '100%', height: '100%', minHeight: '400px' }}
+        mapContainerStyle={{ width: '100%', height: '100%' }}
         center={center}
         zoom={16}
         options={{
