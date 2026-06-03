@@ -321,10 +321,10 @@ export const EditSpace = () => {
   };
 
   return (
-    <div className="pt-32 pb-32 min-h-screen bg-[#fcfaf9]">
+    <div className="pt-24 pb-12 min-h-screen bg-[#fcfaf9]">
       {/* header sticky */}
       <div className="fixed top-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-brand-100/50 h-20 flex items-center shadow-sm">
-        <div className="max-w-[1600px] mx-auto w-full px-4 md:px-12 flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 md:gap-6 min-w-0">
             <button 
               onClick={handleBackClick}
@@ -334,7 +334,7 @@ export const EditSpace = () => {
             </button>
             <div className="hidden sm:block h-8 w-px bg-brand-100" />
             <div className="truncate">
-              <h2 className="text-base md:text-lg font-black text-brand-700 tracking-tight leading-none mb-1">Editing Listing</h2>
+              <h2 className="text-sm md:text-base font-black text-brand-700 tracking-tight leading-none mb-1">Editing Listing</h2>
               <div className="flex items-center gap-2">
                 <span className={`w-2 h-2 rounded-full shrink-0 ${isDirty ? 'bg-orange-400' : 'bg-green-500'} animate-pulse`} />
                 <p className="text-[9px] md:text-[10px] font-bold text-brand-400 uppercase tracking-widest truncate">
@@ -348,7 +348,7 @@ export const EditSpace = () => {
             <button 
               onClick={handleSave}
               disabled={isSaving || !isDirty}
-              className={`px-4 md:px-8 py-2.5 md:py-3 text-xs md:text-base font-black rounded-xl transition-all cursor-pointer flex items-center gap-2 md:gap-3 ${
+              className={`px-4 md:px-6 py-2.5 text-xs md:text-sm font-black rounded-xl transition-all cursor-pointer flex items-center gap-2 md:gap-2.5 ${
                 isDirty 
                   ? 'bg-brand-700 text-white shadow-xl shadow-brand-700/20 hover:bg-brand-600 active:scale-[0.98]' 
                   : 'bg-brand-50 text-brand-300 cursor-not-allowed'
@@ -388,18 +388,18 @@ export const EditSpace = () => {
         </div>
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 md:px-12 mt-20 lg:mt-12">
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 lg:mt-10">
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           
           {/* navigatie sectiuni - bara laterala pentru desktop */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-40 space-y-2">
-              <p className="text-[10px] font-black text-brand-300 uppercase tracking-[0.25em] mb-6 ml-4">Listing Editor</p>
+          <aside className="hidden lg:block w-56 shrink-0">
+            <div className="sticky top-36 space-y-2">
+              <p className="text-[10px] font-black text-brand-300 uppercase tracking-[0.25em] mb-5 ml-4">Listing Editor</p>
               {sections.map((section) => (
                 <button
                   key={section.id}
                   onClick={() => scrollToSection(section.id)}
-                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-2xl transition-all cursor-pointer group ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer group ${
                     activeSection === section.id 
                       ? 'bg-brand-700 text-white shadow-xl shadow-brand-700/10 translate-x-2' 
                       : 'text-brand-400 hover:text-brand-700 hover:bg-white'
@@ -411,7 +411,7 @@ export const EditSpace = () => {
                 </button>
               ))}
               
-              <div className="mt-12 pt-8 border-t border-brand-100 space-y-6 px-4">
+              <div className="mt-8 pt-6 border-t border-brand-100 space-y-4 px-4">
                 <button
                   type="button"
                   onClick={() => setShowDeleteModal(true)}
@@ -426,13 +426,13 @@ export const EditSpace = () => {
           </aside>
 
           {/* zona principala a formularului */}
-          <main className="flex-1 space-y-12">
+          <main className="flex-1 space-y-8">
             
             {/* 1. detalii de baza */}
-            <section id="details" className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-48 lg:scroll-mt-40 group">
-              <div className="flex items-center justify-between mb-8 md:mb-10">
+            <section id="details" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32 group">
+              <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
-                  <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">Basic Details</h3>
+                  <h3 className="text-base md:text-lg font-black text-brand-700 tracking-tight">Basic Details</h3>
                   <p className="text-brand-400 text-xs md:text-sm font-medium">Help guests find your space with accurate naming and descriptions.</p>
                 </div>
                 <div className="hidden xs:flex w-10 h-10 md:w-12 md:h-12 bg-brand-50 rounded-xl md:rounded-2xl items-center justify-center text-brand-200 group-focus-within:text-brand-700 transition-colors shrink-0">
@@ -448,7 +448,7 @@ export const EditSpace = () => {
                     value={listing.title}
                     onChange={(e) => setListing({...listing, title: e.target.value})}
                     placeholder="e.g. Modern Minimalist Studio"
-                    className="w-full px-5 md:px-8 py-4 md:py-5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-lg md:text-xl placeholder:text-brand-200 shadow-sm"
+                    className="w-full px-4 md:px-5 py-3 md:py-3.5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-base md:text-lg placeholder:text-brand-200 shadow-sm"
                   />
                 </div>
 
@@ -462,14 +462,14 @@ export const EditSpace = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] ml-1">Space Category</label>
                     <div className="relative">
                       <button 
                         type="button"
                         onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                        className="w-full px-5 md:px-8 py-4 md:py-5 bg-white border-2 border-brand-100/50 hover:border-brand-200 focus:border-brand-700 rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-left flex items-center justify-between shadow-sm cursor-pointer"
+                        className="w-full px-4 md:px-5 py-3 md:py-3.5 bg-white border-2 border-brand-100/50 hover:border-brand-200 focus:border-brand-700 rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-left flex items-center justify-between shadow-sm cursor-pointer"
                       >
                         <span className="text-base md:text-lg">{listing.category}</span>
                         <div className={`w-7 h-7 md:w-8 md:h-8 flex items-center justify-center bg-brand-50 rounded-lg transition-transform ${isCategoryOpen ? 'rotate-270' : 'rotate-90'}`}>
@@ -522,7 +522,7 @@ export const EditSpace = () => {
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] ml-1">Hourly Price ($)</label>
                     <div className="relative">
-                      <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-lg md:text-xl">$</span>
+                      <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-base md:text-lg">$</span>
                       <input 
                         type="number" 
                         value={listing.price === '' || listing.price == null ? '' : listing.price}
@@ -531,7 +531,7 @@ export const EditSpace = () => {
                           const v = e.target.value;
                           setListing({ ...listing, price: v === '' ? '' : parseInt(v, 10) });
                         }}
-                        className="w-full pl-12 md:pl-14 pr-24 md:pr-32 py-4 md:py-5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-lg md:text-xl shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full pl-12 md:pl-14 pr-24 md:pr-32 py-3 md:py-3.5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-base md:text-lg shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <span className="absolute right-6 md:right-8 top-1/2 -translate-y-1/2 text-[9px] md:text-[10px] font-black text-brand-200 uppercase tracking-widest pointer-events-none">Per Hour</span>
                     </div>
@@ -541,10 +541,10 @@ export const EditSpace = () => {
             </section>
 
             {/* 2. galerie foto */}
-            <section id="photos" className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-48 lg:scroll-mt-40">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 md:mb-10">
+            <section id="photos" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
                 <div className="space-y-1">
-                  <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">Photo Gallery</h3>
+                  <h3 className="text-base md:text-lg font-black text-brand-700 tracking-tight">Photo Gallery</h3>
                   <p className="text-brand-400 text-xs md:text-sm font-medium">Add high-resolution photos to showcase your workspace's character.</p>
                 </div>
                 <div className="flex items-center gap-3 bg-brand-50 px-4 py-2 md:px-5 md:py-2.5 rounded-xl md:rounded-2xl border border-brand-100 shrink-0">
@@ -598,16 +598,16 @@ export const EditSpace = () => {
             </section>
 
             {/* 3. capacitate & dimensiuni */}
-            <section id="capacity" className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-48 lg:scroll-mt-40">
-              <div className="flex items-center justify-between mb-8 md:mb-10">
+            <section id="capacity" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
+              <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
-                  <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">Capacity & Size</h3>
+                  <h3 className="text-base md:text-lg font-black text-brand-700 tracking-tight">Capacity & Size</h3>
                   <p className="text-brand-400 text-xs md:text-sm font-medium">Specify how many people your space can comfortably host.</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-8">
-                <div className="p-6 md:p-8 bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border-2 border-transparent focus-within:border-brand-700 focus-within:bg-white transition-all group shadow-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                <div className="p-5 md:p-6 bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border-2 border-transparent focus-within:border-brand-700 focus-within:bg-white transition-all group shadow-sm">
                   <div className="flex items-center justify-between mb-4 md:mb-6">
                     <label className="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em]">Guest Limit</label>
                     <Users className="w-5 h-5 md:w-6 md:h-6 text-brand-200 group-focus-within:text-brand-700 transition-colors" />
@@ -617,7 +617,7 @@ export const EditSpace = () => {
                       type="number" 
                       value={listing.capacity}
                       onChange={(e) => setListing({...listing, capacity: parseInt(e.target.value)})}
-                      className="bg-transparent border-none focus:ring-0 text-4xl md:text-5xl font-black text-brand-700 p-0 outline-none w-24 md:w-32 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="bg-transparent border-none focus:ring-0 text-3xl md:text-4xl font-black text-brand-700 p-0 outline-none w-24 md:w-32 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <div className="space-y-0 md:space-y-1">
                       <p className="font-black text-brand-700 leading-none text-base md:text-lg">Guests</p>
@@ -626,7 +626,7 @@ export const EditSpace = () => {
                   </div>
                 </div>
                 
-                <div className="p-6 md:p-8 bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border-2 border-transparent focus-within:border-brand-700 focus-within:bg-white transition-all group shadow-sm">
+                <div className="p-5 md:p-6 bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border-2 border-transparent focus-within:border-brand-700 focus-within:bg-white transition-all group shadow-sm">
                   <div className="flex items-center justify-between mb-4 md:mb-6">
                     <label className="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em]">Floor Area</label>
                     <Maximize2 className="w-5 h-5 md:w-6 md:h-6 text-brand-200 group-focus-within:text-brand-700 transition-colors" />
@@ -639,7 +639,7 @@ export const EditSpace = () => {
                         const v = e.target.value;
                         setListing({ ...listing, sqm: v === '' ? '' : parseInt(v, 10) });
                       }}
-                      className="bg-transparent border-none focus:ring-0 text-4xl md:text-5xl font-black text-brand-700 p-0 outline-none w-24 md:w-32 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="bg-transparent border-none focus:ring-0 text-3xl md:text-4xl font-black text-brand-700 p-0 outline-none w-24 md:w-32 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <div className="space-y-0 md:space-y-1">
                       <p className="font-black text-brand-700 leading-none text-base md:text-lg">m²</p>
@@ -651,10 +651,10 @@ export const EditSpace = () => {
             </section>
 
             {/* 4. facilitati */}
-            <section id="amenities" className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-48 lg:scroll-mt-40">
-              <div className="flex items-center justify-between mb-8 md:mb-10">
+            <section id="amenities" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
+              <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
-                  <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">Amenities</h3>
+                  <h3 className="text-base md:text-lg font-black text-brand-700 tracking-tight">Amenities</h3>
                   <p className="text-brand-400 text-xs md:text-sm font-medium">Highlight the premium features available at your space.</p>
                 </div>
                 <Sparkles className="hidden xs:block w-7 h-7 md:w-8 md:h-8 text-brand-200" />
@@ -693,17 +693,17 @@ export const EditSpace = () => {
             </section>
 
             {/* 5. setari pentru rezervare */}
-            <section id="booking" className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-48 lg:scroll-mt-40">
-              <div className="flex items-center justify-between mb-8 md:mb-10">
+            <section id="booking" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
+              <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
-                  <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">Booking Settings</h3>
+                  <h3 className="text-base md:text-lg font-black text-brand-700 tracking-tight">Booking Settings</h3>
                   <p className="text-brand-400 text-xs md:text-sm font-medium">Configure booking policies and availability for this space.</p>
                 </div>
                 <Calendar className="hidden xs:block w-7 h-7 md:w-8 md:h-8 text-brand-200" />
               </div>
 
               {/* comutatoare (toggle-uri) */}
-              <div className="space-y-4 mb-10">
+              <div className="space-y-4 mb-8">
                 <div className="p-5 md:p-6 bg-gradient-to-br from-brand-50 to-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 hover:border-brand-300 transition-all">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -798,7 +798,7 @@ export const EditSpace = () => {
                   </div>
                 </div>
                 <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6 transition-opacity ${!hasCustomDuration ? 'opacity-60 pointer-events-none' : ''}`}>
-                  <div className={`p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-2 transition-all group shadow-sm ${
+                  <div className={`p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border-2 transition-all group shadow-sm ${
                     hasCustomDuration
                       ? 'bg-brand-50 border-transparent focus-within:border-brand-700 focus-within:bg-white'
                       : 'bg-brand-100/50 border-brand-100 cursor-not-allowed'
@@ -823,7 +823,7 @@ export const EditSpace = () => {
                             bookingSettings: { ...(listing.bookingSettings || {}), minDuration: next },
                           });
                         }}
-                        className="bg-transparent border-none focus:ring-0 text-4xl md:text-5xl font-black text-brand-700 p-0 outline-none w-16 md:w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-transparent disabled:cursor-not-allowed"
+                        className="bg-transparent border-none focus:ring-0 text-3xl md:text-4xl font-black text-brand-700 p-0 outline-none w-16 md:w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-transparent disabled:cursor-not-allowed"
                       />
                       <div className="space-y-0 md:space-y-1">
                         <p className="font-black text-brand-700 leading-none text-base md:text-lg">Hours</p>
@@ -832,7 +832,7 @@ export const EditSpace = () => {
                     </div>
                   </div>
 
-                  <div className={`p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border-2 transition-all group shadow-sm ${
+                  <div className={`p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border-2 transition-all group shadow-sm ${
                     hasCustomDuration
                       ? 'bg-brand-50 border-transparent focus-within:border-brand-700 focus-within:bg-white'
                       : 'bg-brand-100/50 border-brand-100 cursor-not-allowed'
@@ -857,7 +857,7 @@ export const EditSpace = () => {
                             bookingSettings: { ...(listing.bookingSettings || {}), maxDuration: next },
                           });
                         }}
-                        className="bg-transparent border-none focus:ring-0 text-4xl md:text-5xl font-black text-brand-700 p-0 outline-none w-16 md:w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-transparent disabled:cursor-not-allowed"
+                        className="bg-transparent border-none focus:ring-0 text-3xl md:text-4xl font-black text-brand-700 p-0 outline-none w-16 md:w-20 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none disabled:bg-transparent disabled:cursor-not-allowed"
                       />
                       <div className="space-y-0 md:space-y-1">
                         <p className="font-black text-brand-700 leading-none text-base md:text-lg">Hours</p>
@@ -869,7 +869,7 @@ export const EditSpace = () => {
               </div>
 
               {/* toggle pentru ore de functionare */}
-              <div className="mb-10">
+              <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Operating Hours</h4>
                 <div className="p-5 md:p-6 bg-gradient-to-br from-brand-50 to-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 hover:border-brand-300 transition-all mb-6">
                   <div className="flex items-center justify-between">
@@ -915,7 +915,7 @@ export const EditSpace = () => {
                       disabled={!hasCustomOperatingHours}
                       value={hasCustomOperatingHours ? (listing.availabilityStartTime ?? '09:00 AM') : ''}
                       onChange={(e) => setListing({ ...listing, availabilityStartTime: e.target.value })}
-                      className={`w-full px-5 md:px-8 py-4 md:py-5 border-2 rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-lg md:text-xl shadow-sm ${
+                      className={`w-full px-4 md:px-5 py-3 md:py-3.5 border-2 rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-base md:text-lg shadow-sm ${
                         hasCustomOperatingHours
                           ? 'bg-brand-50 border-brand-100/50 focus:border-brand-700 focus:bg-white text-brand-700 cursor-pointer'
                           : 'bg-brand-100/50 border-brand-100 text-brand-400 cursor-not-allowed'
@@ -933,7 +933,7 @@ export const EditSpace = () => {
                       disabled={!hasCustomOperatingHours}
                       value={hasCustomOperatingHours ? (listing.availabilityEndTime ?? '06:00 PM') : ''}
                       onChange={(e) => setListing({ ...listing, availabilityEndTime: e.target.value })}
-                      className={`w-full px-5 md:px-8 py-4 md:py-5 border-2 rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-lg md:text-xl shadow-sm ${
+                      className={`w-full px-4 md:px-5 py-3 md:py-3.5 border-2 rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-base md:text-lg shadow-sm ${
                         hasCustomOperatingHours
                           ? 'bg-brand-50 border-brand-100/50 focus:border-brand-700 focus:bg-white text-brand-700 cursor-pointer'
                           : 'bg-brand-100/50 border-brand-100 text-brand-400 cursor-not-allowed'
@@ -949,7 +949,7 @@ export const EditSpace = () => {
               </div>
 
               {/* zile de functionare */}
-              <div className="mb-10">
+              <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Operating Days</h4>
                 <div className="p-5 md:p-6 bg-gradient-to-br from-brand-50 to-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 hover:border-brand-300 transition-all mb-6">
                   <div className="flex items-center justify-between">
@@ -1023,7 +1023,7 @@ export const EditSpace = () => {
               </div>
 
               {/* zile indisponibile */}
-              <div className="mb-10">
+              <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-2">Unavailable Dates</h4>
                 <p className="text-xs md:text-sm text-brand-400 font-medium mb-6">
                   Block specific future dates for maintenance, personal time, or other reasons
@@ -1091,7 +1091,7 @@ export const EditSpace = () => {
                         toast.success('Dates blocked successfully');
                       }}
                       disabled={!selectedRange?.from}
-                      className="w-full px-6 py-4 bg-brand-700 text-white font-black uppercase tracking-wider rounded-[1.25rem] md:rounded-[1.5rem] transition-all hover:bg-brand-800 disabled:opacity-40 disabled:cursor-not-allowed text-sm md:text-base shadow-lg shadow-brand-700/20"
+                      className="w-full px-5 py-3 md:py-3.5 bg-brand-700 text-white font-black uppercase tracking-wider rounded-[1.25rem] md:rounded-[1.5rem] transition-all hover:bg-brand-800 disabled:opacity-40 disabled:cursor-not-allowed text-sm md:text-base shadow-lg shadow-brand-700/20"
                     >
                       <Plus className="w-4 h-4 inline mr-2" />
                       Block Selected Dates
@@ -1152,9 +1152,9 @@ export const EditSpace = () => {
               </div>
 
               {/* rezervare in avans */}
-              <div className="mb-10">
+              <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Advance Booking Window</h4>
-                <div className="p-6 md:p-8 bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border-2 border-transparent focus-within:border-brand-700 focus-within:bg-white transition-all group shadow-sm max-w-sm">
+                <div className="p-5 md:p-6 bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border-2 border-transparent focus-within:border-brand-700 focus-within:bg-white transition-all group shadow-sm max-w-sm">
                   <div className="flex items-center justify-between mb-4 md:mb-6">
                     <label className="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em]">Maximum Days</label>
                     <Calendar className="w-5 h-5 md:w-6 md:h-6 text-brand-200 group-focus-within:text-brand-700 transition-colors" />
@@ -1164,7 +1164,7 @@ export const EditSpace = () => {
                       type="number" 
                       value={listing.bookingSettings?.advanceBookingDays ?? 365}
                       onChange={(e) => setListing({ ...listing, bookingSettings: { ...(listing.bookingSettings || {}), advanceBookingDays: parseInt(e.target.value) || 0 } })}
-                      className="bg-transparent border-none focus:ring-0 text-4xl md:text-5xl font-black text-brand-700 p-0 outline-none w-20 md:w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="bg-transparent border-none focus:ring-0 text-3xl md:text-4xl font-black text-brand-700 p-0 outline-none w-20 md:w-24 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                     <div className="space-y-0 md:space-y-1">
                       <p className="font-black text-brand-700 leading-none text-base md:text-lg">Days</p>
@@ -1175,7 +1175,7 @@ export const EditSpace = () => {
               </div>
 
               {/* politica de anulare */}
-              <div className="mb-10">
+              <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Cancellation Policy</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                   {cancellationPolicies.map((policy) => (
@@ -1212,7 +1212,7 @@ export const EditSpace = () => {
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] ml-1">Cleaning Fee ($)</label>
                     <div className="relative">
-                      <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-lg md:text-xl">$</span>
+                      <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-base md:text-lg">$</span>
                       <input 
                         type="number" 
                         value={listing.bookingSettings?.cleaningFee ?? ''}
@@ -1226,14 +1226,14 @@ export const EditSpace = () => {
                             },
                           });
                         }}
-                        className="w-full pl-12 md:pl-14 pr-6 py-4 md:py-5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-lg md:text-xl shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full pl-12 md:pl-14 pr-6 py-3 md:py-3.5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-base md:text-lg shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] ml-1">Equipment Fee ($)</label>
                     <div className="relative">
-                      <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-lg md:text-xl">$</span>
+                      <span className="absolute left-6 md:left-8 top-1/2 -translate-y-1/2 font-black text-brand-300 text-base md:text-lg">$</span>
                       <input 
                         type="number" 
                         value={listing.bookingSettings?.equipmentFee ?? ''}
@@ -1247,7 +1247,7 @@ export const EditSpace = () => {
                             },
                           });
                         }}
-                        className="w-full pl-12 md:pl-14 pr-6 py-4 md:py-5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-lg md:text-xl shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full pl-12 md:pl-14 pr-6 py-3 md:py-3.5 bg-brand-50 border-2 border-brand-100/50 focus:border-brand-700 focus:bg-white rounded-[1.25rem] md:rounded-[1.5rem] transition-all outline-none font-bold text-brand-700 text-base md:text-lg shadow-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
@@ -1256,10 +1256,10 @@ export const EditSpace = () => {
             </section>
 
             {/* 6. status & publicare */}
-            <section id="status" className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-48 lg:scroll-mt-40">
-              <div className="flex items-center justify-between mb-8 md:mb-10">
+            <section id="status" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
+              <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
-                  <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">Publishing Status</h3>
+                  <h3 className="text-base md:text-lg font-black text-brand-700 tracking-tight">Publishing Status</h3>
                   <p className="text-brand-400 text-xs md:text-sm font-medium">Control the visibility of your space on the platform.</p>
                 </div>
                 <Zap className="hidden xs:block w-7 h-7 md:w-8 md:h-8 text-brand-200" />
@@ -1313,13 +1313,13 @@ export const EditSpace = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 max-w-md w-full shadow-2xl border border-brand-100 space-y-6 md:space-y-8"
+              className="relative bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 max-w-md w-full shadow-2xl border border-brand-100 space-y-5 md:space-y-6"
             >
-              <div className="w-14 h-14 md:w-16 md:h-16 bg-orange-50 rounded-2xl flex items-center justify-center">
-                <AlertTriangle className="w-7 h-7 md:w-8 md:h-8 text-orange-500" />
+              <div className="w-12 h-12 md:w-14 md:h-14 bg-orange-50 rounded-xl flex items-center justify-center">
+                <AlertTriangle className="w-6 h-6 md:w-7 md:h-7 text-orange-500" />
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">Discard changes?</h3>
+                <h3 className="text-base md:text-lg font-black text-brand-700 tracking-tight">Discard changes?</h3>
                 <p className="text-sm md:text-base text-brand-500 font-medium leading-relaxed">
                   You have unsaved modifications to this listing. Leaving this page will permanently lose all changes.
                 </p>
@@ -1327,13 +1327,13 @@ export const EditSpace = () => {
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={() => navigate('/host/manage-listings')}
-                  className="w-full py-4 md:py-5 bg-red-500 text-white font-black rounded-xl md:rounded-2xl hover:bg-red-600 transition-all cursor-pointer shadow-lg shadow-red-500/20 border-none"
+                  className="w-full py-3 md:py-3.5 bg-red-500 text-white font-black rounded-xl md:rounded-2xl hover:bg-red-600 transition-all cursor-pointer shadow-lg shadow-red-500/20 border-none"
                 >
                   Discard Changes
                 </button>
                 <button 
                   onClick={() => setShowDiscardModal(false)}
-                  className="w-full py-4 md:py-5 bg-brand-50 text-brand-700 font-black rounded-xl md:rounded-2xl hover:bg-brand-100 transition-all cursor-pointer border-none"
+                  className="w-full py-3 md:py-3.5 bg-brand-50 text-brand-700 font-black rounded-xl md:rounded-2xl hover:bg-brand-100 transition-all cursor-pointer border-none"
                 >
                   Keep Editing
                 </button>
@@ -1364,24 +1364,24 @@ export const EditSpace = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-md bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl border-2 border-brand-200 p-8 sm:p-10"
+              className="relative w-full max-w-md bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl border-2 border-brand-200 p-5 sm:p-6"
             >
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 bg-red-50 rounded-2xl shrink-0">
-                    <Trash2 className="w-6 h-6 text-red-500" />
+              <div className="space-y-5">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 bg-red-50 rounded-xl shrink-0">
+                    <Trash2 className="w-5 h-5 text-red-500" />
                   </div>
                   <div className="flex-1 space-y-2">
                     {deleteBlockedByBookings == null ? (
                       <>
-                        <h3 className="text-xl sm:text-2xl font-black text-brand-700">Delete Listing</h3>
+                        <h3 className="text-lg sm:text-xl font-black text-brand-700">Delete Listing</h3>
                         <p className="text-sm sm:text-base text-brand-400 font-medium leading-relaxed">
                           Are you sure you want to delete <span className="font-black text-brand-700">{listing?.title ?? 'this listing'}</span>? This cannot be undone.
                         </p>
                       </>
                     ) : (
                       <>
-                        <h3 className="text-xl sm:text-2xl font-black text-brand-700">Cannot delete yet</h3>
+                        <h3 className="text-lg sm:text-xl font-black text-brand-700">Cannot delete yet</h3>
                         <p className="text-sm sm:text-base text-brand-400 font-medium leading-relaxed">
                           This listing has <span className="font-black text-brand-700">{deleteBlockedByBookings}</span> active booking{deleteBlockedByBookings !== 1 ? 's' : ''} that must be honored. Make the listing inactive until every booking is completed; then you can delete it.
                         </p>
@@ -1399,7 +1399,7 @@ export const EditSpace = () => {
                           setDeleteBlockedByBookings(null);
                         }}
                         disabled={deleteInProgress}
-                        className="flex-1 px-6 py-4 bg-brand-50 text-brand-700 font-black rounded-xl sm:rounded-2xl hover:bg-brand-100 transition-all cursor-pointer disabled:opacity-60"
+                        className="flex-1 px-5 py-3 md:py-3.5 bg-brand-50 text-brand-700 font-black rounded-xl sm:rounded-2xl hover:bg-brand-100 transition-all cursor-pointer disabled:opacity-60"
                       >
                         Keep Listing
                       </button>
@@ -1427,7 +1427,7 @@ export const EditSpace = () => {
                           }
                         }}
                         disabled={deleteInProgress}
-                        className="flex-1 px-6 py-4 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl sm:rounded-2xl shadow-lg shadow-red-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
+                        className="flex-1 px-5 py-3 md:py-3.5 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl sm:rounded-2xl shadow-lg shadow-red-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
                       >
                         {deleteInProgress ? (
                           <span className="flex items-center justify-center gap-2">
@@ -1447,7 +1447,7 @@ export const EditSpace = () => {
                           setShowDeleteModal(false);
                           setDeleteBlockedByBookings(null);
                         }}
-                        className="flex-1 px-6 py-4 bg-brand-50 text-brand-700 font-black rounded-xl sm:rounded-2xl hover:bg-brand-100 transition-all cursor-pointer"
+                        className="flex-1 px-5 py-3 md:py-3.5 bg-brand-50 text-brand-700 font-black rounded-xl sm:rounded-2xl hover:bg-brand-100 transition-all cursor-pointer"
                       >
                         Close
                       </button>
@@ -1469,7 +1469,7 @@ export const EditSpace = () => {
                           }
                         }}
                         disabled={deleteInProgress}
-                        className="flex-1 px-6 py-4 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-xl sm:rounded-2xl shadow-lg shadow-brand-700/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
+                        className="flex-1 px-5 py-3 md:py-3.5 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-xl sm:rounded-2xl shadow-lg shadow-brand-700/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
                       >
                         {deleteInProgress ? (
                           <span className="flex items-center justify-center gap-2">

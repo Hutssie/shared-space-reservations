@@ -167,7 +167,7 @@ export const ListingBookings = () => {
 
   if (loading || !space) {
     return (
-      <div className="pt-32 pb-24 min-h-screen bg-brand-50 flex items-center justify-center">
+      <div className="pt-24 md:pt-24 pb-12 min-h-screen bg-brand-50 flex items-center justify-center">
         {loading ? (
           <p className="text-brand-500 font-bold">Loading...</p>
         ) : null}
@@ -176,44 +176,44 @@ export const ListingBookings = () => {
   }
 
   return (
-    <div className="pt-32 pb-24 min-h-screen bg-brand-50">
-      <div className="max-w-[1600px] mx-auto px-4 md:px-12">
-        <div className="mb-12">
+    <div className="pt-24 md:pt-24 pb-12 min-h-screen bg-brand-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8">
           <Link
             to="/host/manage-listings"
-            className="flex items-center gap-2 text-brand-400 hover:text-brand-700 transition-colors font-black uppercase tracking-widest text-[10px] md:text-xs mb-6 group w-fit"
+            className="flex items-center gap-2 text-brand-400 hover:text-brand-700 transition-colors font-black uppercase tracking-widest text-[10px] md:text-xs mb-4 group w-fit"
           >
             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
             Back to Listings
           </Link>
 
-          <div className="bg-white rounded-[2.5rem] border border-brand-200 shadow-xl shadow-brand-700/5 overflow-hidden mb-8">
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-200 shadow-xl shadow-brand-700/5 overflow-hidden mb-6">
             <div className="flex flex-col md:flex-row">
-              <div className="w-full md:w-80 h-48 md:h-auto shrink-0">
+              <div className="w-full md:w-64 h-40 md:h-auto shrink-0">
                 <ImageWithFallback src={spaceImage} alt={space.title} className="w-full h-full object-cover" />
               </div>
-              <div className="p-8 md:p-10 flex-1">
+              <div className="p-5 md:p-6 flex-1">
                 <span className="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-2 block">
                   {space.category}
                 </span>
-                <h1 className="text-3xl md:text-5xl font-black text-brand-700 tracking-tight mb-8">{space.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight mb-6">{space.title}</h1>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-5">
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold text-brand-300 uppercase">Total Bookings</p>
-                    <p className="text-2xl font-black text-brand-700">{stats.total}</p>
+                    <p className="text-xl font-black text-brand-700">{stats.total}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold text-brand-300 uppercase">Confirmed</p>
-                    <p className="text-2xl font-black text-green-600">{stats.confirmed}</p>
+                    <p className="text-xl font-black text-green-600">{stats.confirmed}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold text-brand-300 uppercase">Pending</p>
-                    <p className="text-2xl font-black text-yellow-600">{stats.pending}</p>
+                    <p className="text-xl font-black text-yellow-600">{stats.pending}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] font-bold text-brand-300 uppercase">Total Revenue</p>
-                    <p className="text-2xl font-black text-brand-700">${stats.totalRevenue}</p>
+                    <p className="text-xl font-black text-brand-700">${stats.totalRevenue}</p>
                   </div>
                 </div>
               </div>
@@ -221,40 +221,40 @@ export const ListingBookings = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-4 md:p-6 border border-brand-200 shadow-xl shadow-brand-700/5 mb-10">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 border border-brand-200 shadow-xl shadow-brand-700/5 mb-8">
+          <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-300" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-300" />
               <input
                 type="text"
                 placeholder="Search by guest name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-6 py-4 bg-brand-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-400 focus:outline-none font-bold text-brand-700 placeholder:text-brand-300"
+                className="w-full pl-11 pr-5 py-3 bg-brand-50 border-none rounded-xl focus:ring-2 focus:ring-brand-400 focus:outline-none font-bold text-brand-700 text-sm placeholder:text-brand-300"
               />
             </div>
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-2 flex-wrap">
               <button
                 onClick={() => setStatusFilter('all')}
-                className={`px-6 py-3 rounded-2xl font-black text-sm transition-all ${statusFilter === 'all' ? 'bg-brand-700 text-white shadow-lg' : 'bg-brand-50 text-brand-400 hover:bg-brand-100'}`}
+                className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${statusFilter === 'all' ? 'bg-brand-700 text-white shadow-lg' : 'bg-brand-50 text-brand-400 hover:bg-brand-100'}`}
               >
                 All ({stats.total})
               </button>
               <button
                 onClick={() => setStatusFilter('confirmed')}
-                className={`px-6 py-3 rounded-2xl font-black text-sm transition-all ${statusFilter === 'confirmed' ? 'bg-green-600 text-white shadow-lg' : 'bg-brand-50 text-brand-400 hover:bg-brand-100'}`}
+                className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${statusFilter === 'confirmed' ? 'bg-green-600 text-white shadow-lg' : 'bg-brand-50 text-brand-400 hover:bg-brand-100'}`}
               >
                 Confirmed ({stats.confirmed})
               </button>
               <button
                 onClick={() => setStatusFilter('pending')}
-                className={`px-6 py-3 rounded-2xl font-black text-sm transition-all ${statusFilter === 'pending' ? 'bg-yellow-600 text-white shadow-lg' : 'bg-brand-50 text-brand-400 hover:bg-brand-100'}`}
+                className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${statusFilter === 'pending' ? 'bg-yellow-600 text-white shadow-lg' : 'bg-brand-50 text-brand-400 hover:bg-brand-100'}`}
               >
                 Pending ({stats.pending})
               </button>
               <button
                 onClick={() => setStatusFilter('completed')}
-                className={`px-6 py-3 rounded-2xl font-black text-sm transition-all ${statusFilter === 'completed' ? 'bg-blue-600 text-white shadow-lg' : 'bg-brand-50 text-brand-400 hover:bg-brand-100'}`}
+                className={`px-4 py-2 rounded-xl font-black text-xs transition-all ${statusFilter === 'completed' ? 'bg-blue-600 text-white shadow-lg' : 'bg-brand-50 text-brand-400 hover:bg-brand-100'}`}
               >
                 Completed ({stats.completed})
               </button>
@@ -262,14 +262,14 @@ export const ListingBookings = () => {
           </div>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-5">
           {filteredBookings.length === 0 ? (
-            <div className="bg-white rounded-[3rem] p-24 text-center border border-brand-100 shadow-xl shadow-brand-700/5">
-              <div className="w-24 h-24 bg-brand-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8">
-                <Calendar className="w-12 h-12 text-brand-200" />
+            <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-8 md:p-10 text-center border border-brand-100 shadow-xl shadow-brand-700/5">
+              <div className="w-16 h-16 bg-brand-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5">
+                <Calendar className="w-8 h-8 text-brand-200" />
               </div>
-              <h3 className="text-3xl font-black text-brand-700 mb-4">No bookings found</h3>
-              <p className="text-brand-400 font-medium text-lg max-w-md mx-auto">
+              <h3 className="text-xl md:text-2xl font-black text-brand-700 mb-3">No bookings found</h3>
+              <p className="text-brand-400 font-medium text-base max-w-md mx-auto">
                 {searchQuery ? 'Try adjusting your search or filters.' : 'No bookings have been made for this space yet.'}
               </p>
             </div>
@@ -282,13 +282,13 @@ export const ListingBookings = () => {
                   key={booking.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white rounded-[2.5rem] border border-brand-100 shadow-xl shadow-brand-700/5 overflow-hidden hover:border-brand-300 hover:shadow-2xl transition-all duration-500"
+                  className="bg-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 shadow-xl shadow-brand-700/5 overflow-hidden hover:border-brand-300 hover:shadow-2xl transition-all duration-500"
                 >
-                  <div className="p-8 md:p-10">
-                    <div className="flex flex-col lg:flex-row gap-8">
-                      <div className="w-full lg:w-80 shrink-0 space-y-6">
-                        <div className="flex items-center gap-5">
-                          <div className="w-20 h-20 rounded-2xl overflow-hidden border-4 border-brand-50 shadow-lg shrink-0">
+                  <div className="p-5 md:p-6">
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      <div className="w-full lg:w-64 shrink-0 space-y-4">
+                        <div className="flex items-center gap-4">
+                          <div className="w-16 h-16 rounded-xl overflow-hidden border-4 border-brand-50 shadow-lg shrink-0">
                             <ImageWithFallback
                               src={booking.guest.avatarUrl ?? ''}
                               alt={booking.guest.name}
@@ -296,12 +296,12 @@ export const ListingBookings = () => {
                             />
                           </div>
                           <div className="min-w-0">
-                            <h4 className="text-2xl font-black text-brand-700 leading-tight truncate">
+                            <h4 className="text-base md:text-lg font-black text-brand-700 leading-tight truncate">
                               {booking.guest.name}
                             </h4>
                             <div className="flex items-center gap-2 mt-1">
-                              <Star className="w-4 h-4 text-brand-500 fill-brand-500" />
-                              <span className="text-sm font-black text-brand-700">
+                              <Star className="w-3.5 h-3.5 text-brand-500 fill-brand-500" />
+                              <span className="text-xs font-black text-brand-700">
                                 {booking.guest.reviewCount === 0
                                   ? '— · 0 reviews'
                                   : booking.guest.reviewCount != null && booking.guest.avgRatingGiven != null
@@ -312,14 +312,14 @@ export const ListingBookings = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-1 gap-2.5">
                           <button
                             onClick={() => {
                               navigate(`/dashboard?tab=Messages&with=${encodeURIComponent(booking.guest.id)}`);
                             }}
-                            className="w-full py-4 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-3 shadow-lg shadow-brand-700/20"
+                            className="w-full py-3 bg-brand-700 hover:bg-brand-600 text-white font-black text-sm rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2.5 shadow-lg shadow-brand-700/20"
                           >
-                            <MessageSquare className="w-5 h-5" />
+                            <MessageSquare className="w-4 h-4" />
                             Message Guest
                           </button>
                           <button
@@ -331,19 +331,19 @@ export const ListingBookings = () => {
                                 .then(setGuestProfile)
                                 .finally(() => setGuestProfileLoading(false));
                             }}
-                            className="w-full py-4 bg-brand-50 hover:bg-brand-100 text-brand-700 font-black rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-3"
+                            className="w-full py-3 bg-brand-50 hover:bg-brand-100 text-brand-700 font-black text-sm rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2.5"
                           >
-                            <User className="w-5 h-5" />
+                            <User className="w-4 h-4" />
                             View Full Profile
                           </button>
                         </div>
                       </div>
 
-                      <div className="flex-1 space-y-8">
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 pb-6 border-b border-brand-50">
+                      <div className="flex-1 space-y-6">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-brand-50">
                           <div className="flex items-center gap-3">
                             <span
-                              className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest border-2 flex items-center gap-2 ${getStatusColor(booking.status)}`}
+                              className={`px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border-2 flex items-center gap-2 ${getStatusColor(booking.status)}`}
                             >
                               {getStatusIcon(booking.status)}
                               {booking.status}
@@ -353,58 +353,58 @@ export const ListingBookings = () => {
                             <span className="text-[10px] font-black text-brand-400 uppercase tracking-widest mb-1 block">
                               Total
                             </span>
-                            <p className="text-3xl font-black text-brand-700">${booking.totalPrice}</p>
+                            <p className="text-xl font-black text-brand-700">${booking.totalPrice}</p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                          <div className="flex gap-4">
-                            <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center shrink-0">
-                              <Calendar className="w-6 h-6 text-brand-500" />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-5">
+                          <div className="flex gap-3">
+                            <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center shrink-0">
+                              <Calendar className="w-5 h-5 text-brand-500" />
                             </div>
                             <div>
                               <p className="text-[10px] font-bold text-brand-300 uppercase">Date</p>
-                              <p className="font-black text-brand-700">{dateFormatted}</p>
+                              <p className="text-sm font-black text-brand-700">{dateFormatted}</p>
                             </div>
                           </div>
-                          <div className="flex gap-4">
-                            <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center shrink-0">
-                              <Clock className="w-6 h-6 text-brand-500" />
+                          <div className="flex gap-3">
+                            <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center shrink-0">
+                              <Clock className="w-5 h-5 text-brand-500" />
                             </div>
                             <div>
                               <p className="text-[10px] font-bold text-brand-300 uppercase">Time</p>
-                              <p className="font-black text-brand-700">
+                              <p className="text-sm font-black text-brand-700">
                                 {booking.startTime} - {booking.endTime}
                               </p>
                             </div>
                           </div>
-                          <div className="flex gap-4">
-                            <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center justify-center shrink-0">
-                              <Timer className="w-6 h-6 text-brand-500" />
+                          <div className="flex gap-3">
+                            <div className="w-10 h-10 bg-brand-50 rounded-lg flex items-center justify-center shrink-0">
+                              <Timer className="w-5 h-5 text-brand-500" />
                             </div>
                             <div>
                               <p className="text-[10px] font-bold text-brand-300 uppercase">Duration</p>
-                              <p className="font-black text-brand-700">{hours} hours</p>
+                              <p className="text-sm font-black text-brand-700">{hours} hours</p>
                             </div>
                           </div>
                         </div>
 
                         {booking.status === 'pending' && (
-                          <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                          <div className="flex flex-col sm:flex-row gap-3 pt-3">
                             <button
                               onClick={() => handleDecline(booking.id)}
                               disabled={actioningId === booking.id}
-                              className="flex-1 py-5 bg-brand-50 text-brand-400 hover:text-brand-700 hover:bg-brand-100 font-black rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-3 disabled:opacity-50"
+                              className="flex-1 py-3.5 bg-brand-50 text-brand-400 hover:text-brand-700 hover:bg-brand-100 font-black text-sm rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2.5 disabled:opacity-50"
                             >
-                              <XCircle className="w-6 h-6" />
+                              <XCircle className="w-5 h-5" />
                               Decline
                             </button>
                             <button
                               onClick={() => handleConfirm(booking.id)}
                               disabled={actioningId === booking.id}
-                              className="flex-[2] py-5 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-3 disabled:opacity-50"
+                              className="flex-[2] py-3.5 bg-brand-700 hover:bg-brand-600 text-white font-black text-sm rounded-xl shadow-xl shadow-brand-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2.5 disabled:opacity-50"
                             >
-                              <CheckCircle2 className="w-6 h-6" />
+                              <CheckCircle2 className="w-5 h-5" />
                               Confirm Booking
                             </button>
                           </div>
@@ -436,35 +436,35 @@ export const ListingBookings = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+              className="relative w-full max-w-xl bg-white rounded-[1.5rem] md:rounded-[2rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
             >
               <button
                 onClick={() => {
                   setSelectedGuest(null);
                   setGuestProfile(null);
                 }}
-                className="absolute top-6 right-6 p-3 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-2xl transition-all z-10 cursor-pointer"
+                className="absolute top-5 right-5 p-2.5 bg-brand-50 hover:bg-brand-100 text-brand-700 rounded-xl transition-all z-10 cursor-pointer"
               >
-                <XCircle className="w-5 h-5" />
+                <XCircle className="w-4 h-4" />
               </button>
 
-              <div className="overflow-y-auto custom-scrollbar">
-                <div className="p-8 md:p-12 bg-gradient-to-b from-brand-50/50 to-white">
-                  <div className="flex flex-col md:flex-row items-center gap-8">
-                    <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-4 border-white shadow-2xl shrink-0">
+              <div className="overflow-y-auto scrollbar-hide">
+                <div className="p-5 md:p-6 bg-gradient-to-b from-brand-50/50 to-white">
+                  <div className="flex flex-col md:flex-row items-center gap-5">
+                    <div className="w-20 h-20 rounded-[1.5rem] overflow-hidden border-4 border-white shadow-2xl shrink-0">
                       <ImageWithFallback
                         src={selectedGuest.guest.avatarUrl ?? ''}
                         alt={selectedGuest.guest.name}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <div className="text-center md:text-left space-y-3">
-                      <h2 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">
+                    <div className="text-center md:text-left space-y-2">
+                      <h2 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">
                         {selectedGuest.guest.name}
                       </h2>
                       <div className="flex items-center justify-center md:justify-start gap-2">
-                        <Star className="w-5 h-5 text-brand-500 fill-brand-500" />
-                        <span className="text-lg font-black text-brand-700">
+                        <Star className="w-4 h-4 text-brand-500 fill-brand-500" />
+                        <span className="text-base font-black text-brand-700">
                           {guestProfileLoading
                             ? '— · — reviews'
                             : guestProfile
@@ -485,37 +485,37 @@ export const ListingBookings = () => {
                 </div>
 
                 {guestProfileLoading ? (
-                  <div className="px-8 md:px-12 pb-12 flex items-center justify-center py-16">
-                    <p className="text-brand-500 font-bold">Loading profile...</p>
+                  <div className="px-5 md:px-6 pb-6 flex items-center justify-center py-10">
+                    <p className="text-brand-500 font-bold text-sm">Loading profile...</p>
                   </div>
                 ) : (
-                <div className="px-8 md:px-12 pb-12 space-y-8">
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-black text-brand-700">
+                <div className="px-5 md:px-6 pb-6 space-y-5">
+                  <div className="space-y-2">
+                    <h3 className="text-base font-black text-brand-700">
                       About {selectedGuest.guest.name.split(' ')[0]}
                     </h3>
-                    <p className="text-brand-600 font-medium leading-relaxed">
+                    <p className="text-brand-600 text-sm font-medium leading-relaxed">
                       {guestProfile?.guest.bio?.trim() ? guestProfile.guest.bio : 'No bio provided.'}
                     </p>
                   </div>
 
                   {guestProfile?.withHost && (
-                    <div className="space-y-4">
-                      <h3 className="text-xl font-black text-brand-700">Booking History with You</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="bg-brand-50 rounded-2xl p-5 border border-brand-100">
+                    <div className="space-y-2">
+                      <h3 className="text-base font-black text-brand-700">Booking History with You</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="bg-brand-50 rounded-xl p-4 border border-brand-100">
                           <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1">Total Bookings</p>
-                          <p className="text-2xl font-black text-brand-700">{guestProfile.withHost.totalBookings}</p>
+                          <p className="text-xl font-black text-brand-700">{guestProfile.withHost.totalBookings}</p>
                         </div>
-                        <div className="bg-brand-50 rounded-2xl p-5 border border-brand-100">
+                        <div className="bg-brand-50 rounded-xl p-4 border border-brand-100">
                           <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1">Total Spent</p>
-                          <p className="text-2xl font-black text-brand-700">
+                          <p className="text-xl font-black text-brand-700">
                             ${guestProfile.withHost.totalSpent.toLocaleString()}
                           </p>
                         </div>
-                        <div className="bg-brand-50 rounded-2xl p-5 border border-brand-100">
+                        <div className="bg-brand-50 rounded-xl p-4 border border-brand-100">
                           <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest mb-1">Avg Rating</p>
-                          <p className="text-2xl font-black text-brand-700">
+                          <p className="text-xl font-black text-brand-700">
                             {guestProfile.withHost.avgRating != null
                               ? guestProfile.withHost.avgRating.toFixed(1)
                               : '—'}
@@ -525,16 +525,16 @@ export const ListingBookings = () => {
                     </div>
                   )}
 
-                  <div className="pt-4">
+                  <div className="pt-2">
                     <button
                       onClick={() => {
                         setSelectedGuest(null);
                         setGuestProfile(null);
                       navigate(`/dashboard?tab=Messages&with=${encodeURIComponent(selectedGuest.guest.id)}`);
                       }}
-                      className="w-full py-5 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-2xl shadow-xl shadow-brand-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-3"
+                      className="w-full py-3.5 bg-brand-700 hover:bg-brand-600 text-white font-black text-sm rounded-xl shadow-xl shadow-brand-700/20 transition-all active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2.5"
                     >
-                      <MessageSquare className="w-6 h-6" />
+                      <MessageSquare className="w-5 h-5" />
                       Contact {selectedGuest.guest.name.split(' ')[0]}
                     </button>
                   </div>

@@ -110,63 +110,63 @@ export const HostPortal = () => {
   const chartData = chartView === 'weekly' ? weeklyData : monthlyData;
 
   return (
-    <div className="pt-32 pb-24 min-h-screen bg-brand-50">
-      <div className="max-w-[1600px] mx-auto px-4 md:px-12">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
+    <div className="pt-24 md:pt-24 pb-12 min-h-screen bg-brand-50">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-4xl font-black text-brand-700 tracking-tight">Host Dashboard</h1>
-            <p className="text-brand-500 font-medium text-lg mt-2">Welcome back{user?.name?.trim() ? `, ${user.name.trim().split(/\s+/)[0]}` : ''}.</p>
+            <h1 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">Host Dashboard</h1>
+            <p className="text-brand-500 font-medium text-base mt-2">Welcome back{user?.name?.trim() ? `, ${user.name.trim().split(/\s+/)[0]}` : ''}.</p>
           </div>
           <Link
             to="/list-your-space"
-            className="flex items-center gap-3 px-10 py-4.5 bg-brand-700 hover:bg-brand-600 text-white font-black text-lg rounded-2xl shadow-xl shadow-brand-700/20 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-2.5 px-8 py-3.5 bg-brand-700 hover:bg-brand-600 text-white font-black text-base rounded-2xl shadow-xl shadow-brand-700/20 transition-all active:scale-95 cursor-pointer"
           >
-            <Plus className="w-6 h-6" />
+            <Plus className="w-5 h-5" />
             Create New Listing
           </Link>
         </div>
 
         {/* Grila de statistici */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-8">
           {stats.map((stat, idx) => (
-            <div key={idx} className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 hover:shadow-2xl transition-all">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 md:w-14 md:h-14 ${stat.color} rounded-xl md:rounded-2xl flex items-center justify-center`}>
-                  <stat.icon className="w-5 h-5 md:w-7 md:h-7" />
+            <div key={idx} className="bg-white rounded-2xl p-4 md:p-5 border border-brand-200 shadow-xl shadow-brand-700/5 hover:shadow-2xl transition-all">
+              <div className="flex items-center justify-between mb-3">
+                <div className={`w-9 h-9 md:w-11 md:h-11 ${stat.color} rounded-xl flex items-center justify-center`}>
+                  <stat.icon className="w-4 h-4 md:w-5 md:h-5" />
                 </div>
               </div>
-              <h4 className="text-xl md:text-3xl font-black text-brand-700">{stat.value}</h4>
-              <p className="text-brand-400 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[10px] mt-2">{stat.label}</p>
+              <h4 className="text-lg md:text-2xl font-black text-brand-700">{stat.value}</h4>
+              <p className="text-brand-400 font-bold uppercase tracking-[0.2em] text-[8px] md:text-[9px] mt-1.5">{stat.label}</p>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] xl:grid-cols-[1fr_450px] gap-8 md:gap-12 lg:h-[600px] xl:h-[700px]">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-6 md:gap-8 lg:h-[min(480px,calc(100dvh-24rem))]">
           {/* Sectiunea cu grafic */}
-          <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 border border-brand-200 shadow-xl shadow-brand-700/5 flex flex-col min-h-0">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 md:mb-10 gap-4">
+          <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-200 shadow-xl shadow-brand-700/5 flex flex-col min-h-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 md:mb-6 gap-3">
               <div>
-                <h3 className="text-xl md:text-2xl font-black text-brand-700">Revenue Performance</h3>
-                <p className="text-xs md:text-sm text-brand-400 font-medium mt-1">
+                <h3 className="text-lg md:text-xl font-black text-brand-700">Revenue Performance</h3>
+                <p className="text-xs text-brand-400 font-medium mt-1">
                   {chartView === 'weekly' ? 'Last 7 days' : 'Last 6 months'}
                 </p>
               </div>
               <div className="flex gap-2">
                 <button
-                  className={`px-4 py-2 ${chartView === 'weekly' ? 'bg-brand-700 text-white' : 'bg-brand-50 text-brand-500'} text-xs font-bold rounded-xl cursor-pointer transition-colors hover:bg-brand-100`}
+                  className={`px-3.5 py-1.5 ${chartView === 'weekly' ? 'bg-brand-700 text-white' : 'bg-brand-50 text-brand-500'} text-xs font-bold rounded-lg cursor-pointer transition-colors hover:bg-brand-100`}
                   onClick={() => setChartView('weekly')}
                 >
                   Weekly
                 </button>
                 <button
-                  className={`px-4 py-2 ${chartView === 'monthly' ? 'bg-brand-700 text-white' : 'bg-brand-50 text-brand-500'} text-xs font-bold rounded-xl hover:bg-brand-100 cursor-pointer transition-colors`}
+                  className={`px-3.5 py-1.5 ${chartView === 'monthly' ? 'bg-brand-700 text-white' : 'bg-brand-50 text-brand-500'} text-xs font-bold rounded-lg hover:bg-brand-100 cursor-pointer transition-colors`}
                   onClick={() => setChartView('monthly')}
                 >
                   Monthly
                 </button>
               </div>
             </div>
-            <div className="h-[300px] md:h-[400px] w-full relative shrink-0">
+            <div className="flex-1 min-h-[200px] w-full relative">
               <div className="absolute inset-0 w-full h-full">
                 {isMounted ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -184,7 +184,7 @@ export const HostPortal = () => {
                         contentStyle={{ backgroundColor: '#170f08', border: 'none', borderRadius: '16px', color: 'white' }}
                         itemStyle={{ color: '#f2ddce', fontWeight: 800 }}
                       />
-                      <Area type="monotone" dataKey="revenue" stroke="#170f08" strokeWidth={4} fillOpacity={1} fill="url(#colorRevenue)" />
+                      <Area type="monotone" dataKey="revenue" stroke="#170f08" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 ) : (
@@ -198,34 +198,34 @@ export const HostPortal = () => {
 
           {/* Performanta listarilor */}
           <div className="min-w-0 min-h-0 flex flex-col">
-            <div className="bg-white rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 border border-brand-200 shadow-xl shadow-brand-700/5 flex flex-col flex-1 min-h-0">
-              <h3 className="text-xl md:text-2xl font-black text-brand-700 mb-6 md:mb-8 shrink-0">My Listings</h3>
-              <div className="space-y-4 md:space-y-6 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 custom-scrollbar">
+            <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-200 shadow-xl shadow-brand-700/5 flex flex-col flex-1 min-h-0">
+              <h3 className="text-lg md:text-xl font-black text-brand-700 mb-4 md:mb-5 shrink-0">My Listings</h3>
+              <div className="space-y-3 md:space-y-4 flex-1 min-h-0 overflow-y-auto overflow-x-hidden pr-1 scrollbar-hide">
                 {listings.map((listing) => (
-                  <Link key={listing.id} to={`/host/manage-listings/edit/${listing.id}`} className="flex items-center gap-4 md:gap-6 p-3 md:p-4 rounded-[1.5rem] md:rounded-[2rem] hover:bg-brand-50 transition-all border border-transparent hover:border-brand-200 group cursor-pointer">
-                    <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl md:rounded-2xl overflow-hidden shrink-0 shadow-lg">
+                  <Link key={listing.id} to={`/host/manage-listings/edit/${listing.id}`} className="flex items-center gap-3 md:gap-4 p-2.5 md:p-3 rounded-xl md:rounded-2xl hover:bg-brand-50 transition-all border border-transparent hover:border-brand-200 group cursor-pointer">
+                    <div className="w-14 h-14 md:w-16 md:h-16 rounded-lg md:rounded-xl overflow-hidden shrink-0 shadow-lg">
                       <ImageWithFallback src={listing.image ?? ''} alt={listing.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-base md:text-lg font-black text-brand-700 truncate">{listing.title}</h4>
-                      <div className="flex items-center gap-4 mt-1">
-                        <span className="text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest">{listing.bookings ?? 0} bookings</span>
+                      <h4 className="text-sm md:text-base font-black text-brand-700 truncate">{listing.title}</h4>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-[10px] font-black text-brand-400 uppercase tracking-widest">{listing.bookings ?? 0} bookings</span>
                         <div className="flex items-center gap-1">
                           <Star className="w-3 h-3 text-brand-500 fill-brand-500" />
-                          <span className="text-[10px] md:text-xs font-black text-brand-700">{listing.rating ?? '—'}</span>
+                          <span className="text-[10px] font-black text-brand-700">{listing.rating ?? '—'}</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-base md:text-lg font-black text-brand-700">${listing.revenue ?? 0}</p>
-                      <span className="text-[9px] md:text-[10px] font-black text-green-600 uppercase tracking-[0.2em]">Paid</span>
+                      <p className="text-sm md:text-base font-black text-brand-700">${listing.revenue ?? 0}</p>
+                      <span className="text-[9px] font-black text-green-600 uppercase tracking-[0.2em]">Paid</span>
                     </div>
                   </Link>
                 ))}
               </div>
               <Link 
                 to="/host/manage-listings"
-                className="w-full mt-8 md:mt-10 py-4 md:py-5 border-2 border-brand-100 hover:border-brand-700 text-brand-700 font-black rounded-2xl transition-all cursor-pointer text-center block relative shrink-0"
+                className="w-full mt-5 md:mt-6 py-3 md:py-3.5 border-2 border-brand-100 hover:border-brand-700 text-brand-700 text-sm md:text-base font-black rounded-xl transition-all cursor-pointer text-center block relative shrink-0"
               >
                 Manage All Listings
                 {listings.reduce((sum, l) => sum + (l.unseenBookingsCount ?? 0), 0) > 0 && (
