@@ -203,6 +203,17 @@
   }
 }
 
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 .gm-style-iw {
   padding: 0 !important;
   background: transparent !important;

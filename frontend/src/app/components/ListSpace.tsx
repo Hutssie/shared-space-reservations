@@ -161,7 +161,7 @@ export const ListSpace = () => {
 
   React.useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [step]);
+  }, [step, isStarted]);
 
   useEffect(() => {
     fetchPublicStats()
@@ -371,7 +371,7 @@ export const ListSpace = () => {
     return (
       <div className="bg-white min-h-screen">
         {/* Hero-ul de inceput */}
-        <section className="relative min-h-[85vh] flex items-center overflow-hidden pt-32 pb-24">
+        <section className="relative min-h-screen flex items-center overflow-hidden pt-20 md:pt-24 pb-10 md:pb-12">
           <div className="absolute inset-0 z-0">
             <ImageWithFallback 
               src="https://images.unsplash.com/photo-1707197724059-d175c1091bb2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxicmlnaHQlMjBzdW5saWdodCUyMHdvcmtzcGFjZSUyMGNvZmZlZXxlbnwxfHx8fDE3NzEzMzY1NzV8MA&ixlib=rb-4.1.0&q=80&w=1920" 
@@ -381,40 +381,41 @@ export const ListSpace = () => {
             <div className="absolute inset-0 bg-brand-700/40 backdrop-blur-[2px]" />
           </div>
 
-          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+          <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <motion.div 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="max-w-2xl bg-white/10 backdrop-blur-xl p-8 md:p-12 rounded-[3rem] border border-white/20 shadow-2xl"
+              className="max-w-xl bg-white/10 backdrop-blur-xl p-6 md:p-8 rounded-[2.5rem] border border-white/20 shadow-2xl"
             >
-              <span className="inline-block px-4 py-1 bg-brand-200 text-brand-700 rounded-full text-xs font-black uppercase tracking-widest mb-6">Host on SpaceBook</span>
-              <h1 className="text-4xl md:text-6xl font-black text-white mb-6 leading-tight">
+              <span className="inline-block px-3.5 py-1 bg-brand-200 text-brand-700 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">Host on SpaceBook</span>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white mb-4 md:mb-5 leading-tight">
                 Your space, <br />
                 <span className="text-brand-200">their next masterpiece.</span>
               </h1>
-              <p className="text-brand-100 text-lg md:text-xl font-medium mb-10 leading-relaxed">
+              <p className="text-brand-100 text-sm sm:text-base md:text-lg font-medium mb-6 md:mb-8 leading-relaxed">
                 Turn your creative studio, meeting room, or vacant office into a thriving business. Join {stats ? `${formatCount(stats.users)}+` : '—+'} hosts worldwide.
               </p>
               <button 
+                type="button"
                 onClick={() => setIsStarted(true)}
-                className="group px-10 py-5 bg-white text-brand-700 font-black text-xl rounded-2xl hover:bg-brand-200 transition-all flex items-center gap-3 shadow-xl shadow-black/20 cursor-pointer"
+                className="group px-8 py-3.5 bg-white text-brand-700 font-black text-base rounded-2xl hover:bg-brand-200 transition-all flex items-center gap-2.5 shadow-xl shadow-black/20 cursor-pointer"
               >
                 Start Listing 
-                <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
             </motion.div>
           </div>
         </section>
 
         {/* Punctele forte */}
-        <section className="py-24 bg-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-5xl font-black text-brand-700 mb-4">Why list with us?</h2>
-              <p className="text-brand-400 font-medium text-lg">We provide the tools you need to succeed as a host.</p>
+        <section className="py-20 bg-white">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl lg:text-5xl font-black text-brand-700 mb-3 tracking-tight">Why list with us?</h2>
+              <p className="text-brand-400 font-medium text-base">We provide the tools you need to succeed as a host.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
               {[
                 { icon: ShieldCheck, title: 'Secure & Protected', desc: 'Every booking is protected by our $1M liability insurance. We verify all guests so you can host with peace of mind.' },
                 { icon: Clock, title: 'Flexible Scheduling', desc: 'Manage your availability with ease. Set your own hours, block dates, and sync with your existing calendars.' },
@@ -426,13 +427,13 @@ export const ListSpace = () => {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
-                  className="p-8 bg-brand-100 rounded-[2.5rem] hover:shadow-xl transition-all duration-500"
+                  className="p-6 bg-brand-100 rounded-[2rem] hover:shadow-xl transition-all duration-500"
                 >
-                  <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-6 shadow-sm">
-                    <prop.icon className="w-8 h-8 text-brand-500" />
+                  <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center mb-5 shadow-sm">
+                    <prop.icon className="w-7 h-7 text-brand-500" />
                   </div>
-                  <h3 className="text-2xl font-black text-brand-700 mb-4">{prop.title}</h3>
-                  <p className="text-brand-500 font-medium leading-relaxed">{prop.desc}</p>
+                  <h3 className="text-xl font-black text-brand-700 mb-3">{prop.title}</h3>
+                  <p className="text-brand-500 text-sm font-medium leading-relaxed">{prop.desc}</p>
                 </motion.div>
               ))}
             </div>
@@ -440,16 +441,17 @@ export const ListSpace = () => {
         </section>
 
         {/* Sectiunea CTA */}
-        <section className="pb-24 px-4">
-          <div className="max-w-7xl mx-auto bg-brand-700 rounded-[4rem] p-12 lg:p-24 text-center overflow-hidden relative">
+        <section className="pb-20 px-4">
+          <div className="max-w-6xl mx-auto bg-brand-700 rounded-[2.5rem] p-10 lg:p-16 text-center overflow-hidden relative">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--brand-200)_1px,_transparent_1px)] [background-size:30px_30px]" />
-            <h2 className="text-4xl md:text-6xl font-black text-white mb-8 relative z-10">Ready to earn?</h2>
-            <p className="text-brand-100 text-lg md:text-xl font-medium mb-12 max-w-2xl mx-auto relative z-10">
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-6 relative z-10">Ready to earn?</h2>
+            <p className="text-brand-100 text-base md:text-lg font-medium mb-10 max-w-xl mx-auto relative z-10">
               It takes less than 10 minutes to set up your listing. Join our community today.
             </p>
             <button 
+              type="button"
               onClick={() => setIsStarted(true)}
-              className="relative z-10 px-12 py-5 bg-brand-200 hover:bg-white text-brand-700 font-black text-xl rounded-2xl transition-all shadow-2xl active:scale-95 cursor-pointer"
+              className="relative z-10 px-8 py-3.5 bg-brand-200 hover:bg-white text-brand-700 font-black text-base rounded-2xl transition-all shadow-2xl active:scale-95 cursor-pointer"
             >
               Get Started Now
             </button>
@@ -461,7 +463,7 @@ export const ListSpace = () => {
 
   return (
         <div
-          className="pt-32 pb-12 min-h-screen bg-brand-100/30 flex flex-col items-center justify-center p-4"
+          className="pt-24 md:pt-28 pb-10 min-h-screen bg-brand-100/30 flex flex-col items-center p-4"
           onKeyDownCapture={(e) => {
             if (e.key !== 'Enter') return;
             if (e.isComposing) return;
@@ -483,9 +485,11 @@ export const ListSpace = () => {
             void handleNextStep();
           }}
         >
-      <div className="w-full max-w-4xl bg-white rounded-[3rem] shadow-2xl border border-brand-100 overflow-hidden">
+      <div className={`w-full bg-white rounded-[2.5rem] shadow-2xl border border-brand-100 overflow-hidden flex flex-col max-h-[calc(100dvh-8rem)] ${
+        step === 3 ? 'max-w-6xl min-h-[calc(100dvh-8rem)]' : 'max-w-3xl'
+      }`}>
         {/* Bara de progres */}
-        <div className="h-2 bg-brand-100 w-full flex">
+        <div className="h-2 bg-brand-100 w-full flex shrink-0">
           {[1, 2, 3, 4, 5, 6].map((s) => (
             <div 
               key={s}
@@ -495,7 +499,10 @@ export const ListSpace = () => {
           ))}
         </div>
 
-        <div className="p-8 md:p-12">
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className={`flex-1 min-h-0 scrollbar-hide p-6 md:p-8 ${
+            step === 3 ? 'flex flex-col overflow-hidden' : 'overflow-y-auto'
+          }`}>
           <AnimatePresence mode="wait">
             {step === 1 && (
               <motion.div 
@@ -503,11 +510,11 @@ export const ListSpace = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-8"
+                className="space-y-6"
               >
                 <div>
-                  <h2 className="text-3xl font-black text-brand-700 mb-2">What's the name of your space?</h2>
-                  <p className="text-brand-400 font-medium">Give your listing a memorable title that stands out.</p>
+                  <h2 className="text-2xl md:text-3xl font-black text-brand-700 mb-2">What's the name of your space?</h2>
+                  <p className="text-brand-400 text-sm font-medium">Give your listing a memorable title that stands out.</p>
                 </div>
                 <div>
                   <label className="block text-xs font-black text-brand-400 mb-2 uppercase tracking-widest">Space name</label>
@@ -516,7 +523,7 @@ export const ListSpace = () => {
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="e.g. Bright Industrial Loft"
-                    className="w-full px-6 py-5 bg-brand-50 border-2 border-transparent rounded-2xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700 text-lg"
+                    className="w-full px-5 py-3.5 bg-brand-50 border-2 border-transparent rounded-xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700 text-base"
                   />
                 </div>
               </motion.div>
@@ -528,32 +535,33 @@ export const ListSpace = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-8"
+                className="space-y-6"
               >
                 <div>
-                  <h2 className="text-3xl font-black text-brand-700 mb-2">What kind of space is it?</h2>
-                  <p className="text-brand-400 font-medium">Choose the category that best fits your creative hub.</p>
+                  <h2 className="text-2xl md:text-3xl font-black text-brand-700 mb-2">What kind of space is it?</h2>
+                  <p className="text-brand-400 text-sm font-medium">Choose the category that best fits your creative hub.</p>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {categories.map((cat) => (
                     <button 
                       key={cat.id}
+                      type="button"
                       onClick={() => setSelectedCategory(cat.id)}
-                      className={`p-6 border-2 rounded-3xl text-left transition-all group flex items-start gap-5 cursor-pointer ${
+                      className={`p-4 border-2 rounded-xl text-left transition-all group flex items-start gap-3 cursor-pointer ${
                         selectedCategory === cat.id 
                           ? 'border-brand-700 bg-brand-50 shadow-lg scale-[1.02]' 
                           : 'border-brand-100 hover:border-brand-300 hover:bg-brand-50/50'
                       }`}
                     >
-                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-colors ${
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                         selectedCategory === cat.id ? 'bg-brand-700 text-white' : 'bg-brand-100 text-brand-500 group-hover:bg-brand-200'
                       }`}>
-                        <cat.icon className="w-7 h-7" />
+                        <cat.icon className="w-5 h-5" />
                       </div>
                       <div>
-                        <span className="font-black text-brand-700 text-lg block mb-1">{cat.label}</span>
-                        <p className="text-sm text-brand-400 font-medium leading-relaxed">{cat.desc}</p>
+                        <span className="font-black text-brand-700 text-base block mb-1">{cat.label}</span>
+                        <p className="text-xs text-brand-400 font-medium leading-relaxed">{cat.desc}</p>
                       </div>
                     </button>
                   ))}
@@ -567,20 +575,20 @@ export const ListSpace = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
+                className="flex flex-col flex-1 min-h-0 space-y-6"
               >
-                <div>
-                  <h2 className="text-3xl font-black text-brand-700 mb-2">Where's it located?</h2>
-                  <p className="text-brand-400 font-medium">Be precise so guests can find your space easily.</p>
+                <div className="shrink-0">
+                  <h2 className="text-2xl md:text-3xl font-black text-brand-700 mb-2">Where's it located?</h2>
+                  <p className="text-brand-400 text-sm font-medium">Be precise so guests can find your space easily.</p>
                 </div>
                 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className="space-y-7">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(260px,320px)_1fr] gap-5 lg:gap-6 lg:items-stretch flex-1 min-h-0">
+                  <div className="space-y-4 shrink-0 lg:shrink">
                     <div ref={locationInputRef} className="relative">
                       <label className="block text-xs font-black text-brand-400 mb-2 uppercase tracking-widest">City or area</label>
                       {formData.country || formData.city ? (
                         <div className="flex items-center gap-3 flex-wrap">
-                          <div className="flex items-center gap-2 px-4 py-3 bg-brand-50 rounded-2xl border-2 border-transparent font-bold text-brand-700">
+                          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-brand-50 rounded-xl border-2 border-transparent font-bold text-brand-700 text-sm">
                             <MapPin className="w-4 h-4 text-brand-400 shrink-0" />
                             <span>{[formData.city, formData.region, formData.country].filter(Boolean).join(', ')}</span>
                           </div>
@@ -603,7 +611,7 @@ export const ListSpace = () => {
                               onFocus={() => setShowPlaceSuggestions(true)}
                               placeholder="Search for a city or area..."
                               autoComplete="off"
-                              className="w-full pl-11 pr-4 py-4 bg-brand-50 border-2 border-transparent rounded-2xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700"
+                              className="w-full pl-11 pr-4 py-3 bg-brand-50 border-2 border-transparent rounded-xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700 text-sm"
                             />
                           </div>
                           {showPlaceSuggestions && (placeSuggestions.length > 0 || placeSuggestionsLoading || (locationSearch.trim() !== '' && !placeSuggestionsLoading)) && (
@@ -634,7 +642,7 @@ export const ListSpace = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-7">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div className="sm:col-span-2">
                         <label className="block text-xs font-black text-brand-400 mb-2 uppercase tracking-widest">Postal Code</label>
                         <input
@@ -642,7 +650,7 @@ export const ListSpace = () => {
                           value={formData.zip}
                           onChange={(e) => setFormData({...formData, zip: e.target.value})}
                           placeholder="11201"
-                          className="w-full px-5 py-4 bg-brand-50 border-2 border-transparent rounded-2xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700"
+                          className="w-full px-4 py-3 bg-brand-50 border-2 border-transparent rounded-xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700 text-sm"
                         />
                       </div>
                     </div>
@@ -656,21 +664,21 @@ export const ListSpace = () => {
                           value={formData.address}
                           onChange={(e) => setFormData({...formData, address: e.target.value})}
                           placeholder="123 Creative Lane" 
-                          className="w-full pl-12 pr-4 py-4 bg-brand-50 border-2 border-transparent rounded-2xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700" 
+                          className="w-full pl-11 pr-4 py-3 bg-brand-50 border-2 border-transparent rounded-xl focus:border-brand-700 focus:bg-white transition-all outline-none font-bold text-brand-700 text-sm" 
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="relative h-full min-h-[400px] flex flex-col">
+                  <div className="relative flex flex-col flex-1 min-h-[280px] lg:min-h-0">
                     <ListingMap
                       center={mapCenter}
                       zoom={mapZoom}
                       pin={formData.pinPlaced && formData.latitude != null && formData.longitude != null ? { lat: formData.latitude, lng: formData.longitude } : null}
                       onPositionChange={handlePositionChange}
-                      className="flex-1 min-h-[400px]"
+                      className="flex-1 w-full min-h-0 h-full rounded-2xl"
                     />
-                    <p className="text-[10px] text-brand-400 font-bold mt-2 text-center">Click on the map to place your pin.</p>
+                    <p className="text-[10px] text-brand-400 font-bold mt-2 text-center shrink-0">Click on the map to place your pin.</p>
                   </div>
                 </div>
               </motion.div>
@@ -682,23 +690,23 @@ export const ListSpace = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-8"
+                className="space-y-6"
               >
                 <div>
-                  <h2 className="text-3xl font-black text-brand-700 mb-2">Showcase your space</h2>
-                  <p className="text-brand-400 font-medium">Add at least one high-quality photo to attract guests.</p>
+                  <h2 className="text-2xl md:text-3xl font-black text-brand-700 mb-2">Showcase your space</h2>
+                  <p className="text-brand-400 text-sm font-medium">Add at least one high-quality photo to attract guests.</p>
                 </div>
 
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full aspect-video md:aspect-[21/9] border-4 border-dashed border-brand-200 rounded-[3rem] bg-brand-50 hover:bg-brand-100 hover:border-brand-400 transition-all flex flex-col items-center justify-center gap-4 cursor-pointer group"
+                  className="w-full aspect-video md:aspect-[21/9] border-4 border-dashed border-brand-200 rounded-[2rem] bg-brand-50 hover:bg-brand-100 hover:border-brand-400 transition-all flex flex-col items-center justify-center gap-3 cursor-pointer group"
                 >
-                  <div className="w-20 h-20 bg-white rounded-3xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <ImageIcon className="w-10 h-10 text-brand-700" />
+                  <div className="w-16 h-16 bg-white rounded-2xl shadow-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <ImageIcon className="w-8 h-8 text-brand-700" />
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-black text-brand-700">Drop photos here or click to upload</p>
-                    <p className="text-sm text-brand-400 font-medium">Supports JPG, PNG (Max 5MB)</p>
+                    <p className="text-base font-black text-brand-700">Drop photos here or click to upload</p>
+                    <p className="text-xs text-brand-400 font-medium">Supports JPG, PNG (Max 5MB)</p>
                   </div>
                   <input 
                     type="file" 
@@ -711,7 +719,7 @@ export const ListSpace = () => {
                 </div>
 
                 {images.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
                     {images.map((item, idx) => (
                       <motion.div 
                         key={idx}
@@ -735,7 +743,7 @@ export const ListSpace = () => {
                       onClick={() => fileInputRef.current?.click()}
                       className="aspect-square rounded-2xl border-2 border-dashed border-brand-200 flex items-center justify-center hover:bg-brand-50 transition-all text-brand-400 hover:text-brand-700 cursor-pointer"
                     >
-                      <Plus className="w-8 h-8" />
+                      <Plus className="w-6 h-6" />
                     </button>
                   </div>
                 )}
@@ -748,15 +756,15 @@ export const ListSpace = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-10"
+                className="space-y-8"
               >
                 <div>
-                  <h2 className="text-3xl font-black text-brand-700 mb-2">The finer details</h2>
-                  <p className="text-brand-400 font-medium">Tell guests about the size, amenities, and pricing.</p>
+                  <h2 className="text-2xl md:text-3xl font-black text-brand-700 mb-2">The finer details</h2>
+                  <p className="text-brand-400 text-sm font-medium">Tell guests about the size, amenities, and pricing.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="p-6 bg-brand-50 rounded-[2rem] border border-brand-100 flex flex-col justify-between">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-5 bg-brand-50 rounded-[1.5rem] border border-brand-100 flex flex-col justify-between">
                     <div className="flex items-center gap-3 mb-4 text-brand-700">
                       <Maximize2 className="w-5 h-5" />
                       <span className="font-black uppercase tracking-widest text-[10px]">Square Meters</span>
@@ -767,13 +775,13 @@ export const ListSpace = () => {
                         value={formData.sqm}
                         onChange={(e) => setFormData({...formData, sqm: e.target.value})}
                         placeholder="0" 
-                        className="w-full bg-transparent border-none focus:ring-0 text-3xl font-black text-brand-700 p-0 outline-none" 
+                        className="w-full bg-transparent border-none focus:ring-0 text-2xl font-black text-brand-700 p-0 outline-none" 
                       />
-                      <span className="text-brand-300 font-black text-xl">m²</span>
+                      <span className="text-brand-300 font-black text-lg">m²</span>
                     </div>
                   </div>
 
-                  <div className="p-6 bg-brand-50 rounded-[2rem] border border-brand-100 flex flex-col justify-between">
+                  <div className="p-5 bg-brand-50 rounded-[1.5rem] border border-brand-100 flex flex-col justify-between">
                     <div className="flex items-center gap-3 mb-4 text-brand-700">
                       <Users className="w-5 h-5" />
                       <span className="font-black uppercase tracking-widest text-[10px]">Capacity</span>
@@ -789,9 +797,9 @@ export const ListSpace = () => {
                         onPointerUp={stopCapacityHold}
                         onPointerCancel={stopCapacityHold}
                         onPointerLeave={stopCapacityHold}
-                        className="w-10 h-10 rounded-xl bg-white border border-brand-200 flex items-center justify-center font-black text-xl text-brand-700 hover:bg-brand-700 hover:text-white transition-colors cursor-pointer"
+                        className="w-9 h-9 rounded-lg bg-white border border-brand-200 flex items-center justify-center font-black text-lg text-brand-700 hover:bg-brand-700 hover:text-white transition-colors cursor-pointer"
                       >-</button>
-                      <span className="font-black text-3xl text-brand-700">{formData.capacity}</span>
+                      <span className="font-black text-2xl text-brand-700">{formData.capacity}</span>
                       <button 
                         type="button"
                         onPointerDown={(e) => {
@@ -802,18 +810,18 @@ export const ListSpace = () => {
                         onPointerUp={stopCapacityHold}
                         onPointerCancel={stopCapacityHold}
                         onPointerLeave={stopCapacityHold}
-                        className="w-10 h-10 rounded-xl bg-white border border-brand-200 flex items-center justify-center font-black text-xl text-brand-700 hover:bg-brand-700 hover:text-white transition-colors cursor-pointer"
+                        className="w-9 h-9 rounded-lg bg-white border border-brand-200 flex items-center justify-center font-black text-lg text-brand-700 hover:bg-brand-700 hover:text-white transition-colors cursor-pointer"
                       >+</button>
                     </div>
                   </div>
 
-                  <div className="p-6 bg-brand-50 rounded-[2rem] border border-brand-100 flex flex-col justify-between">
+                  <div className="p-5 bg-brand-50 rounded-[1.5rem] border border-brand-100 flex flex-col justify-between">
                     <div className="flex items-center gap-3 mb-4 text-brand-700">
                       <DollarSign className="w-5 h-5" />
                       <span className="font-black uppercase tracking-widest text-[10px]">Hourly Price</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <span className="text-brand-300 font-black text-xl">$</span>
+                      <span className="text-brand-300 font-black text-lg">$</span>
                       <input 
                         type="number" 
                         value={formData.price === '' ? '' : formData.price}
@@ -822,7 +830,7 @@ export const ListSpace = () => {
                           const v = e.target.value;
                           setFormData({ ...formData, price: v === '' ? '' : parseInt(v, 10) });
                         }}
-                        className="w-full bg-transparent border-none focus:ring-0 text-3xl font-black text-brand-700 p-0 outline-none" 
+                        className="w-full bg-transparent border-none focus:ring-0 text-2xl font-black text-brand-700 p-0 outline-none" 
                       />
                     </div>
                   </div>
@@ -830,20 +838,20 @@ export const ListSpace = () => {
 
                 <div className="space-y-4">
                   <label className="block text-xs font-black text-brand-400 uppercase tracking-widest">Amenities</label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                     {AmenitiesList.map((amenity) => (
                       <button 
                         key={amenity.id}
                         onClick={() => toggleAmenity(amenity.id)}
                         type="button"
-                        className={`flex items-center gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer text-left ${
+                        className={`flex items-center gap-2.5 p-3 rounded-xl border-2 transition-all cursor-pointer text-left ${
                           selectedAmenities.includes(amenity.id)
                             ? 'bg-brand-700 border-brand-700 text-white shadow-lg shadow-brand-700/20'
                             : 'bg-white border-brand-50 text-brand-700 hover:border-brand-200'
                         }`}
                       >
-                        <amenity.icon className={`w-5 h-5 shrink-0 ${selectedAmenities.includes(amenity.id) ? 'text-brand-200' : 'text-brand-500'}`} />
-                        <span className="font-bold text-sm leading-tight">{amenity.label}</span>
+                        <amenity.icon className={`w-4 h-4 shrink-0 ${selectedAmenities.includes(amenity.id) ? 'text-brand-200' : 'text-brand-500'}`} />
+                        <span className="font-bold text-xs leading-tight">{amenity.label}</span>
                       </button>
                     ))}
                   </div>
@@ -866,57 +874,60 @@ export const ListSpace = () => {
                 key="step5"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="text-center py-12"
+                className="text-center py-8"
               >
-                <div className="relative w-32 h-32 mx-auto mb-10">
+                <div className="relative w-24 h-24 mx-auto mb-8">
                   <motion.div 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: 'spring', damping: 12, stiffness: 200 }}
-                    className="w-full h-full bg-brand-200 rounded-[2.5rem] flex items-center justify-center shadow-xl shadow-brand-200/20"
+                    className="w-full h-full bg-brand-200 rounded-[2rem] flex items-center justify-center shadow-xl shadow-brand-200/20"
                   >
-                    <CheckCircle2 className="w-16 h-16 text-brand-700" />
+                    <CheckCircle2 className="w-12 h-12 text-brand-700" />
                   </motion.div>
                   <motion.div 
                     animate={{ rotate: 360 }}
                     transition={{ duration: 10, repeat: Infinity, ease: 'linear' }}
-                    className="absolute -inset-4 border-2 border-dashed border-brand-300 rounded-[3rem] opacity-40"
+                    className="absolute -inset-3 border-2 border-dashed border-brand-300 rounded-[2.5rem] opacity-40"
                   />
                 </div>
-                <h2 className="text-4xl font-black text-brand-700 mb-4 tracking-tight">Your space is ready!</h2>
-                <p className="text-brand-500 font-medium text-lg mb-12 max-w-sm mx-auto leading-relaxed">
+                <h2 className="text-3xl font-black text-brand-700 mb-3 tracking-tight">Your space is ready!</h2>
+                <p className="text-brand-500 font-medium text-base mb-10 max-w-sm mx-auto leading-relaxed">
                   Excellent work! Your listing is now being reviewed. We'll have you hosting in no time.
                 </p>
                 <button 
                   onClick={() => {
                     navigate('/host', { replace: true });
                   }}
-                  className="px-12 py-5 bg-brand-700 text-white font-black text-xl rounded-2xl hover:bg-brand-600 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-brand-700/20 cursor-pointer"
+                  className="px-8 py-3.5 bg-brand-700 text-white font-black text-base rounded-2xl hover:bg-brand-600 hover:scale-[1.02] active:scale-[0.98] transition-all shadow-2xl shadow-brand-700/20 cursor-pointer"
                 >
                   Go to Dashboard
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
 
           {step < 6 && (
-            <div className="mt-12 pt-8 border-t border-brand-100 flex items-center justify-between">
+            <div className="shrink-0 px-6 md:px-8 py-4 md:py-5 border-t border-brand-100 bg-white flex items-center justify-between">
               <button 
+                type="button"
                 onClick={() => step > 1 ? setStep(step - 1) : setIsStarted(false)}
-                className="px-8 py-4 text-brand-400 font-black uppercase tracking-widest text-xs hover:text-brand-700 transition-colors cursor-pointer"
+                className="px-6 py-3 text-brand-400 font-black uppercase tracking-widest text-xs hover:text-brand-700 transition-colors cursor-pointer"
               >
                 {step === 1 ? 'Cancel' : 'Back'}
               </button>
               <button 
+                type="button"
                 disabled={nextDisabled || submitting}
                 onClick={handleNextStep}
-                className={`px-12 py-4 font-black rounded-2xl transition-all flex items-center gap-3 shadow-xl active:scale-95 cursor-pointer ${
+                className={`px-8 py-3 text-sm font-black rounded-xl transition-all flex items-center gap-2.5 shadow-xl active:scale-95 cursor-pointer ${
                   nextDisabled || submitting
                     ? 'bg-brand-100 text-brand-300 cursor-not-allowed shadow-none' 
                     : 'bg-brand-700 text-white hover:bg-brand-600 shadow-brand-700/20'
                 }`}
               >
-                {submitting ? 'Creating...' : step === 5 ? 'Complete Listing' : 'Next Step'} <ArrowRight className="w-5 h-5" />
+                {submitting ? 'Creating...' : step === 5 ? 'Complete Listing' : 'Next Step'} <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}

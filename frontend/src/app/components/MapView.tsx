@@ -130,9 +130,9 @@ export function ListingMap({
   }
 
   return (
-    <div className={`rounded-[3rem] overflow-hidden border-2 border-brand-100 ${className}`}>
+    <div className={`rounded-[3rem] overflow-hidden border-2 border-brand-100 flex flex-col h-full min-h-0 ${className}`}>
       <GoogleMap
-        mapContainerStyle={{ width: '100%', height: '100%', minHeight: '400px' }}
+        mapContainerStyle={{ width: '100%', height: '100%', minHeight: '280px' }}
         center={mapCenter}
         zoom={zoom}
         onClick={onMapClick}
@@ -141,6 +141,7 @@ export function ListingMap({
           zoomControl: true,
           streetViewControl: false,
           clickableIcons: false,
+          gestureHandling: 'greedy',
           zoomControlOptions: {
             position: google.maps.ControlPosition.RIGHT_CENTER,
           },
