@@ -37,8 +37,35 @@ export const AMENITY_ID_TO_LABELS = {
   lab: ['Lab Equipment'],
 };
 
-export function buildSpaceWhereClause({ q, location, category, minPrice, maxPrice, minCapacity, minSquareMeters, maxSquareMeters } = {}) {
+/** Parse map viewport bounds from query; returns null if missing or invalid. */
+export function parseMapBounds({ north, south, east, west } = {}) {
+  if (north == null || south == null || east == null || west == null) return null;
+  const n = parseFloat(north);
+  const s = parseFloat(south);
+  const e = parseFloat(east);
+  const w = parseFloat(west);
+  if ([n, s, e, w].some((v) => Number.isNaN(v))) return null;
+  if (s > n) return null;
+  if (Math.abs(e - w) > 360) return null;
+  return { north: n, south: s, east: e, west: w };
+}
+
+export function buildSpaceWhereClause({
+  q,
+  location,
+  category,
+  minPrice,
+  maxPrice,
+  minCapacity,
+  minSquareMeters,
+  maxSquareMeters,
+  bounds,
+} = {}) {
   const where = { status: 'active' };
+  if (bounds) {
+    where.latitude = { not: null, gte: bounds.south, lte: bounds.north };
+    where.longitude = { not: null, gte: bounds.west, lte: bounds.east };
+  }
   if (location) {
     where.location = { contains: String(location), mode: 'insensitive' };
   } else if (q) {
@@ -440,11 +467,14 @@ router.get('/featured-this-week', async (req, res, next) => {
 
 router.get('/', async (req, res, next) => {
   try {
-    const { q, location, category, date, minPrice, maxPrice, minCapacity, amenities: amenitiesParam, limit = 50, offset = 0, featured } = req.query;
-    const where = buildSpaceWhereClause({ q, location, category, minPrice, maxPrice, minCapacity });
+    const { q, location, category, date, minPrice, maxPrice, minCapacity, amenities: amenitiesParam, limit = 50, offset = 0, featured, north, south, east, west } = req.query;
+    const bounds = parseMapBounds({ north, south, east, west });
+    const where = buildSpaceWhereClause({ q, location, category, minPrice, maxPrice, minCapacity, bounds });
 
-    const skip = parseInt(offset, 10) || 0;
-    const requestedTake = Math.min(parseInt(limit, 10) || 50, 100);
+    const skip = bounds ? 0 : (parseInt(offset, 10) || 0);
+    const defaultLimit = bounds ? 150 : 50;
+    const maxLimit = bounds ? 200 : 100;
+    const requestedTake = Math.min(parseInt(limit, 10) || defaultLimit, maxLimit);
     const amenityIds = amenitiesParam
       ? String(amenitiesParam).split(',').map((a) => a.trim()).filter(Boolean)
       : [];

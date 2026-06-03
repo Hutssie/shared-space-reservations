@@ -1,8 +1,10 @@
-import React, { useCallback, useMemo, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useEffect, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Link } from 'react-router';
 import { useJsApiLoader, GoogleMap, Marker, useGoogleMap } from '@react-google-maps/api';
-import { Star, X, Users, Square } from 'lucide-react';
-import type { Space } from '../api/spaces';
+import { Star, X, Users, Square, Heart } from 'lucide-react';
+import type { Space, MapBounds } from '../api/spaces';
+export type { MapBounds };
 import { formatRatingScore } from '../utils/formatRating';
 import { ImageWithFallback } from './ImageWithFallback';
 
@@ -14,6 +16,296 @@ type LatLng = { lat: number; lng: number };
 
 const BUBBLE_WIDTH = 72;
 const BUBBLE_HEIGHT = 36;
+
+/**
+ * Airbnb map preview card at ~1080p: ~305px wide, ~410px tall, 3:2 photo (~200px).
+ * Layout is authored at 320px then scaled so styling stays identical.
+ */
+const MAP_POPUP_LAYOUT_WIDTH_PX = 320;
+const MAP_POPUP_WIDTH_PX = 300;
+const MAP_POPUP_ZOOM = MAP_POPUP_WIDTH_PX / MAP_POPUP_LAYOUT_WIDTH_PX;
+const MAP_POPUP_GAP_PX = 8;
+const MAP_POPUP_VIEWPORT_MARGIN_PX = 16;
+/** Image (3:2) + info block + CTA; used for placement / pan before layout. */
+const MAP_POPUP_ESTIMATED_HEIGHT_PX = Math.round(
+  (Math.round(MAP_POPUP_LAYOUT_WIDTH_PX * (2 / 3)) + 185) * MAP_POPUP_ZOOM
+);
+
+type MapPopupPlacement = 'north' | 'south' | 'east' | 'west';
+
+const MAP_POPUP_PLACEMENT_ORDER: MapPopupPlacement[] = ['south', 'east', 'west', 'north'];
+
+const mapProjectionHelpers = new WeakMap<google.maps.Map, google.maps.OverlayView>();
+
+function getMapProjection(map: google.maps.Map): google.maps.MapCanvasProjection | null {
+  let helper = mapProjectionHelpers.get(map);
+  if (!helper) {
+    helper = new google.maps.OverlayView();
+    helper.onAdd = () => {};
+    helper.draw = () => {};
+    helper.onRemove = () => {};
+    mapProjectionHelpers.set(map, helper);
+    helper.setMap(map);
+  }
+  return helper.getProjection() ?? null;
+}
+
+/**
+ * Viewport pixel position for a lat/lng, relative to the popup host element.
+ * Uses container pixels (visible map), not div pixels (draggable pane/world coords).
+ */
+function latLngToHostPoint(
+  map: google.maps.Map,
+  host: HTMLElement,
+  latLng: LatLng
+): { x: number; y: number } | null {
+  const projection = getMapProjection(map);
+  if (!projection) return null;
+
+  const containerPixel = projection.fromLatLngToContainerPixel(
+    new google.maps.LatLng(latLng.lat, latLng.lng)
+  );
+
+  const mapDiv = map.getDiv();
+  const mapRect = mapDiv.getBoundingClientRect();
+  const hostRect = host.getBoundingClientRect();
+
+  return {
+    x: containerPixel.x + (mapRect.left - hostRect.left),
+    y: containerPixel.y + (mapRect.top - hostRect.top),
+  };
+}
+
+function getHostMapBounds(host: HTMLElement): { width: number; height: number } {
+  return { width: host.clientWidth, height: host.clientHeight };
+}
+
+function popupDirectionRoom(
+  markerPoint: { x: number; y: number },
+  mapSize: { width: number; height: number },
+  placement: MapPopupPlacement
+): number {
+  const gap = MAP_POPUP_GAP_PX;
+  const margin = MAP_POPUP_VIEWPORT_MARGIN_PX;
+  switch (placement) {
+    case 'south':
+      return mapSize.height - markerPoint.y - gap - margin;
+    case 'north':
+      return markerPoint.y - BUBBLE_HEIGHT - gap - margin;
+    case 'east':
+      return mapSize.width - markerPoint.x - BUBBLE_WIDTH / 2 - gap - margin;
+    case 'west':
+      return markerPoint.x - BUBBLE_WIDTH / 2 - gap - margin;
+  }
+}
+
+function popupRectOverflow(
+  rect: { left: number; top: number; right: number; bottom: number },
+  mapWidth: number,
+  mapHeight: number
+): number {
+  const margin = MAP_POPUP_VIEWPORT_MARGIN_PX;
+  return (
+    Math.max(0, margin - rect.top) +
+    Math.max(0, rect.bottom - (mapHeight - margin)) +
+    Math.max(0, margin - rect.left) +
+    Math.max(0, rect.right - (mapWidth - margin))
+  );
+}
+
+function choosePopupPlacement(
+  markerPoint: { x: number; y: number },
+  mapSize: { width: number; height: number },
+  popupWidth: number,
+  popupHeight: number
+): MapPopupPlacement {
+  const options = MAP_POPUP_PLACEMENT_ORDER.map((placement) => {
+    const rect = popupViewportRect(markerPoint, placement, popupWidth, popupHeight);
+    const overflow = popupRectOverflow(rect, mapSize.width, mapSize.height);
+    return {
+      placement,
+      room: popupDirectionRoom(markerPoint, mapSize, placement),
+      overflow,
+      fits: overflow === 0,
+    };
+  });
+
+  const fitting = options.filter((o) => o.fits);
+  const pool = fitting.length > 0 ? fitting : options;
+
+  let best = pool[0];
+  for (const option of pool.slice(1)) {
+    if (fitting.length > 0) {
+      if (option.room > best.room) {
+        best = option;
+      }
+    } else if (
+      option.overflow < best.overflow ||
+      (option.overflow === best.overflow &&
+        MAP_POPUP_PLACEMENT_ORDER.indexOf(option.placement) <
+          MAP_POPUP_PLACEMENT_ORDER.indexOf(best.placement))
+    ) {
+      best = option;
+    }
+  }
+
+  // Bubbles in the upper half should open south when it fits.
+  const bubbleCenterY = markerPoint.y - BUBBLE_HEIGHT / 2;
+  const south = options.find((o) => o.placement === 'south');
+  if (
+    south?.fits &&
+    bubbleCenterY < mapSize.height / 2 &&
+    best.placement === 'north'
+  ) {
+    return 'south';
+  }
+
+  return best.placement;
+}
+
+function measurePopupHeight(cardEl: HTMLDivElement | null): number {
+  if (!cardEl) return MAP_POPUP_ESTIMATED_HEIGHT_PX;
+  const height = cardEl.getBoundingClientRect().height;
+  return height > 0 ? Math.round(height) : MAP_POPUP_ESTIMATED_HEIGHT_PX;
+}
+
+function popupViewportRect(
+  markerPoint: { x: number; y: number },
+  placement: MapPopupPlacement,
+  popupWidth: number,
+  popupHeight: number
+): { left: number; top: number; right: number; bottom: number } {
+  const gap = MAP_POPUP_GAP_PX;
+  const bubbleCenterY = markerPoint.y - BUBBLE_HEIGHT / 2;
+
+  switch (placement) {
+    case 'south': {
+      const left = markerPoint.x - popupWidth / 2;
+      const top = markerPoint.y + gap;
+      return { left, top, right: left + popupWidth, bottom: top + popupHeight };
+    }
+    case 'north': {
+      const left = markerPoint.x - popupWidth / 2;
+      const bottom = markerPoint.y - BUBBLE_HEIGHT - gap;
+      return { left, top: bottom - popupHeight, right: left + popupWidth, bottom };
+    }
+    case 'east': {
+      const left = markerPoint.x + BUBBLE_WIDTH / 2 + gap;
+      const top = bubbleCenterY - popupHeight / 2;
+      return { left, top, right: left + popupWidth, bottom: top + popupHeight };
+    }
+    case 'west': {
+      const right = markerPoint.x - BUBBLE_WIDTH / 2 - gap;
+      const left = right - popupWidth;
+      const top = bubbleCenterY - popupHeight / 2;
+      return { left, top, right, bottom: top + popupHeight };
+    }
+  }
+}
+
+function popupNeedsPan(
+  rect: { left: number; top: number; right: number; bottom: number },
+  mapWidth: number,
+  mapHeight: number
+) {
+  const margin = MAP_POPUP_VIEWPORT_MARGIN_PX;
+  return (
+    rect.bottom > mapHeight - margin ||
+    rect.top < margin ||
+    rect.right > mapWidth - margin ||
+    rect.left < margin
+  );
+}
+
+function panByToFitPopup(
+  map: google.maps.Map,
+  rect: { left: number; top: number; right: number; bottom: number }
+) {
+  const el = map.getDiv();
+  const margin = MAP_POPUP_VIEWPORT_MARGIN_PX;
+  const popupHeight = rect.bottom - rect.top;
+  const maxVisibleHeight = el.clientHeight - margin * 2;
+  let dx = 0;
+  let dy = 0;
+
+  const overflowBottom = rect.bottom - (el.clientHeight - margin);
+  const overflowTop = margin - rect.top;
+
+  if (popupHeight > maxVisibleHeight) {
+    dy = rect.top - margin;
+  } else if (overflowBottom > 0 && overflowTop > 0) {
+    dy = overflowBottom >= overflowTop ? overflowBottom : -overflowTop;
+  } else if (overflowBottom > 0) {
+    dy = overflowBottom;
+  } else if (overflowTop > 0) {
+    dy = -overflowTop;
+  }
+
+  const overflowRight = rect.right - (el.clientWidth - margin);
+  const overflowLeft = margin - rect.left;
+  if (overflowRight > 0 && overflowLeft > 0) {
+    dx = overflowRight >= overflowLeft ? overflowRight : -overflowLeft;
+  } else if (overflowRight > 0) {
+    dx = overflowRight;
+  } else if (overflowLeft > 0) {
+    dx = -overflowLeft;
+  }
+
+  if (dx !== 0 || dy !== 0) {
+    map.panBy(Math.round(dx), Math.round(dy));
+  }
+}
+
+function waitForMapIdle(map: google.maps.Map): Promise<void> {
+  return new Promise((resolve) => {
+    const listener = map.addListener('idle', () => {
+      google.maps.event.removeListener(listener);
+      resolve();
+    });
+  });
+}
+
+/** Overlay projection is not ready until the map has drawn at least once. */
+function waitForMapProjection(
+  map: google.maps.Map,
+  timeoutMs = 4000
+): Promise<google.maps.MapCanvasProjection | null> {
+  const existing = getMapProjection(map);
+  if (existing) return Promise.resolve(existing);
+
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = (projection: google.maps.MapCanvasProjection | null) => {
+      if (settled) return;
+      settled = true;
+      resolve(projection);
+    };
+
+    const tryResolve = () => {
+      const projection = getMapProjection(map);
+      if (projection) finish(projection);
+    };
+
+    tryResolve();
+    if (settled) return;
+
+    const idleListener = map.addListener('idle', tryResolve);
+    window.setTimeout(() => {
+      google.maps.event.removeListener(idleListener);
+      finish(getMapProjection(map));
+    }, timeoutMs);
+  });
+}
+
+function computePopupScreenPosition(
+  markerPoint: { x: number; y: number },
+  placement: MapPopupPlacement,
+  popupWidth: number,
+  popupHeight: number
+) {
+  const rect = popupViewportRect(markerPoint, placement, popupWidth, popupHeight);
+  return { left: rect.left, top: rect.top };
+}
 
 /** Iconul pin pentru harta locatiei spatiului (picatura maro). */
 function getLocationPinIcon(): google.maps.Icon {
@@ -274,16 +566,51 @@ function SpacesMapMarkers({
   return null;
 }
 
-/** Pan map to selected marker and leave room for the bottom detail card. */
-function PanToSelectedSpace({ space }: { space: Space | null }) {
+function boundsFromMap(map: google.maps.Map): MapBounds | null {
+  const b = map.getBounds();
+  if (!b) return null;
+  const ne = b.getNorthEast();
+  const sw = b.getSouthWest();
+  return {
+    north: ne.lat(),
+    south: sw.lat(),
+    east: ne.lng(),
+    west: sw.lng(),
+  };
+}
+
+/** Ensures MapCanvasProjection exists as soon as the map is on screen. */
+function MapProjectionWarmup() {
   const map = useGoogleMap();
   useEffect(() => {
-    if (!map || space?.latitude == null || space?.longitude == null) return;
-    map.panTo({ lat: space.latitude, lng: space.longitude });
-    window.requestAnimationFrame(() => {
-      map.panBy(0, -100);
-    });
-  }, [map, space?.id, space?.latitude, space?.longitude]);
+    if (!map) return;
+    const warm = () => {
+      getMapProjection(map);
+    };
+    warm();
+    const idleListener = map.addListener('idle', warm);
+    return () => google.maps.event.removeListener(idleListener);
+  }, [map]);
+  return null;
+}
+
+/** Reports viewport bounds after pan/zoom settles. */
+function MapBoundsReporter({ onBoundsChange }: { onBoundsChange?: (bounds: MapBounds) => void }) {
+  const map = useGoogleMap();
+  const onBoundsChangeRef = React.useRef(onBoundsChange);
+  onBoundsChangeRef.current = onBoundsChange;
+
+  useEffect(() => {
+    if (!map || !onBoundsChangeRef.current) return;
+    const report = () => {
+      const bounds = boundsFromMap(map);
+      if (bounds) onBoundsChangeRef.current?.(bounds);
+    };
+    const idleListener = map.addListener('idle', report);
+    report();
+    return () => google.maps.event.removeListener(idleListener);
+  }, [map]);
+
   return null;
 }
 
@@ -291,77 +618,107 @@ function MapSpaceDetailCard({
   space,
   dateParam,
   onClose,
+  isFavorite,
+  onFavoriteClick,
 }: {
   space: Space;
   dateParam?: string;
   onClose: () => void;
+  isFavorite?: boolean;
+  onFavoriteClick?: (spaceId: string) => void;
 }) {
+  const detailPath = `/space/${space.id}${dateParam ? `?date=${dateParam}` : ''}`;
+  const bookingPath = `${detailPath}#booking`;
   const handleClosePopup = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onClose();
   }, [onClose]);
+  const handleFavoriteClick = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onFavoriteClick?.(space.id);
+  }, [onFavoriteClick, space.id]);
 
   return (
     <div
-      className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[min(360px,calc(100%-1.25rem))] z-10 max-h-[calc(100%-1rem)] overflow-y-auto pointer-events-auto"
+      className="pointer-events-auto"
+      style={{ width: MAP_POPUP_WIDTH_PX }}
       onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
     >
-      <div className="bg-white rounded-2xl border border-[#f2ddce] shadow-xl overflow-hidden">
-        <Link
-          to={`/space/${space.id}${dateParam ? `?date=${dateParam}` : ''}`}
-          className="block hover:opacity-95 transition-opacity"
-        >
-          <div className="relative aspect-[16/10] overflow-hidden bg-brand-100">
+      <div
+        className="bg-white rounded-2xl border border-[#f2ddce] shadow-xl overflow-hidden"
+        style={{ width: MAP_POPUP_LAYOUT_WIDTH_PX, zoom: MAP_POPUP_ZOOM }}
+      >
+        <div className="relative aspect-[3/2] overflow-hidden bg-brand-100">
+          <Link to={detailPath} className="block absolute inset-0 hover:opacity-95 transition-opacity">
             <ImageWithFallback
               src={space.images?.[0] ?? space.image ?? ''}
               alt={space.title}
               className="w-full h-full object-cover"
             />
-            <div className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 bg-[#38291a] text-[#e6e2df] px-3 py-1 rounded-full shadow-lg">
-              <span className="text-lg font-semibold">${space.price}</span>
-              <span className="text-xs opacity-90 ml-1">/ hr</span>
-            </div>
+          </Link>
+          <div className="absolute bottom-2 left-2 bg-[#38291a] text-[#e6e2df] px-2.5 py-0.5 rounded-full shadow-lg pointer-events-none">
+            <span className="text-base font-semibold">${space.price}</span>
+            <span className="text-[10px] opacity-90 ml-0.5">/ hr</span>
+          </div>
+          <div className="absolute top-2 right-2 z-10 flex items-center gap-1.5">
+            {onFavoriteClick && (
+              <button
+                type="button"
+                onClick={handleFavoriteClick}
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90 ${
+                  isFavorite
+                    ? 'bg-red-500/90 text-white backdrop-blur-md shadow-lg'
+                    : 'bg-white/20 hover:bg-white/40 backdrop-blur-md text-white hover:scale-110'
+                }`}
+                aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              >
+                <Heart
+                  className={`w-4 h-4 ${isFavorite ? 'fill-current' : 'fill-none'} hover:fill-red-500 hover:text-red-500 transition-colors`}
+                />
+              </button>
+            )}
             <button
               type="button"
               onClick={handleClosePopup}
-              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-[#f2ddce] flex items-center justify-center text-[#38291a] shadow-md transition-colors"
+              className="w-7 h-7 rounded-full bg-white/90 hover:bg-white border border-[#f2ddce] flex items-center justify-center text-[#38291a] shadow-md transition-colors"
               aria-label="Close"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
-        </Link>
-        <div className="p-3.5 sm:p-4">
-          <Link
-            to={`/space/${space.id}${dateParam ? `?date=${dateParam}` : ''}`}
-            className="block hover:opacity-90 transition-opacity"
-          >
-            <div className="flex items-center justify-between mb-2 gap-2">
-              <p className="text-sm text-[#896849] line-clamp-1">{space.location}</p>
-              <div className="flex items-center gap-1 bg-[#f2ddce] px-2 py-1 rounded-full shrink-0">
-                <Star className="w-4 h-4 fill-[#896849] text-[#896849]" />
-                <span className="text-sm text-[#38291a] font-medium">{formatRatingScore(space.rating)}</span>
-                <span className="text-xs text-[#896849]">({space.reviews})</span>
+        </div>
+        <div className="p-3">
+          <Link to={detailPath} className="block hover:opacity-90 transition-opacity">
+            <div className="flex items-center justify-between mb-1.5 gap-2">
+              <p className="text-xs text-[#896849] line-clamp-1">{space.location}</p>
+              <div className="flex items-center gap-1 bg-[#f2ddce] px-1.5 py-0.5 rounded-full shrink-0">
+                <Star className="w-3.5 h-3.5 fill-[#896849] text-[#896849]" />
+                <span className="text-xs text-[#38291a] font-medium">{formatRatingScore(space.rating)}</span>
+                <span className="text-[10px] text-[#896849]">({space.reviews})</span>
               </div>
             </div>
-            <h3 className="text-lg font-bold text-[#38291a] mb-1 line-clamp-1">{space.title}</h3>
-            <p className="text-xs text-[#896849] mb-2.5 sm:mb-3">{space.category}</p>
+            <h3 className="text-base font-bold text-[#38291a] mb-0.5 line-clamp-1">{space.title}</h3>
+            <p className="text-[10px] text-[#896849] mb-2">{space.category}</p>
           </Link>
-          <div className="border-t border-[#f2ddce] my-2.5 sm:my-3" />
-          <div className="flex items-center gap-4 mb-3 sm:mb-4 text-[#5f4731]">
-            <div className="flex items-center gap-1.5">
-              <Users className="w-4 h-4" />
-              <span className="text-xs">{space.capacity} guests</span>
+          <div className="border-t border-[#f2ddce] my-2" />
+          <div className="flex items-center gap-3 mb-2.5 text-[#5f4731]">
+            <div className="flex items-center gap-1">
+              <Users className="w-3.5 h-3.5" />
+              <span className="text-[10px]">{space.capacity} guests</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Square className="w-4 h-4" />
-              <span className="text-xs">{space.squareMeters != null ? `${space.squareMeters} m²` : '— m²'}</span>
+            <div className="flex items-center gap-1">
+              <Square className="w-3.5 h-3.5" />
+              <span className="text-[10px]">
+                {space.squareMeters != null ? `${space.squareMeters} m²` : '— m²'}
+              </span>
             </div>
           </div>
           <Link
-            to={`/space/${space.id}${dateParam ? `?date=${dateParam}` : ''}#booking`}
-            className="inline-block w-full px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-lg transition-all shadow-md shadow-brand-500/20 active:translate-y-0.5 text-center"
+            to={bookingPath}
+            className="inline-block w-full px-3 py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold text-[10px] rounded-lg transition-all shadow-md shadow-brand-500/20 active:translate-y-0.5 text-center"
           >
             Book Now
           </Link>
@@ -371,22 +728,216 @@ function MapSpaceDetailCard({
   );
 }
 
+/**
+ * Renders the popup inside the clipped map layer so it is hidden past map edges.
+ * Pans only once when opened; afterwards only repositions with the marker.
+ */
+function SelectedMapPopup({
+  space,
+  dateParam,
+  onClose,
+  popupHostRef,
+  isFavorite,
+  onFavoriteClick,
+}: {
+  space: Space & { latitude: number; longitude: number };
+  dateParam?: string;
+  onClose: () => void;
+  popupHostRef: React.RefObject<HTMLDivElement | null>;
+  isFavorite?: boolean;
+  onFavoriteClick?: (spaceId: string) => void;
+}) {
+  const map = useGoogleMap();
+  const cardRef = useRef<HTMLDivElement>(null);
+  const placementRef = useRef<MapPopupPlacement>('south');
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
+
+  useEffect(() => {
+    setPosition(null);
+  }, [space.id]);
+
+  const applyPopupLayout = useCallback(
+    (pickPlacement: boolean) => {
+      const host = popupHostRef.current;
+      if (!map || !host) return false;
+
+      const point = latLngToHostPoint(map, host, {
+        lat: space.latitude,
+        lng: space.longitude,
+      });
+      if (!point) return false;
+
+      const mapSize = getHostMapBounds(host);
+      const height = measurePopupHeight(cardRef.current);
+      const placement = pickPlacement
+        ? choosePopupPlacement(point, mapSize, MAP_POPUP_WIDTH_PX, height)
+        : placementRef.current;
+      if (pickPlacement) {
+        placementRef.current = placement;
+      }
+
+      setPosition(computePopupScreenPosition(point, placement, MAP_POPUP_WIDTH_PX, height));
+      return true;
+    },
+    [map, popupHostRef, space.latitude, space.longitude]
+  );
+
+  /** Pan at most a few times when a bubble is clicked; never during user drag. */
+  useEffect(() => {
+    const host = popupHostRef.current;
+    if (!map || !host) return;
+
+    let cancelled = false;
+
+    const fitPopupInView = async () => {
+      await waitForMapProjection(map);
+
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        if (cancelled) return;
+        await new Promise<void>((resolve) => {
+          window.requestAnimationFrame(() => resolve());
+        });
+
+        if (!applyPopupLayout(true)) {
+          await waitForMapIdle(map);
+          continue;
+        }
+
+        const point = latLngToHostPoint(map, host, {
+          lat: space.latitude,
+          lng: space.longitude,
+        });
+        if (!point) {
+          await waitForMapIdle(map);
+          continue;
+        }
+
+        const mapSize = getHostMapBounds(host);
+        const height = measurePopupHeight(cardRef.current);
+        const placement = placementRef.current;
+        const rect = popupViewportRect(point, placement, MAP_POPUP_WIDTH_PX, height);
+        if (!popupNeedsPan(rect, mapSize.width, mapSize.height)) {
+          return;
+        }
+
+        panByToFitPopup(map, rect);
+        await waitForMapIdle(map);
+      }
+    };
+
+    fitPopupInView();
+    return () => {
+      cancelled = true;
+    };
+  }, [map, popupHostRef, space.id, space.latitude, space.longitude, applyPopupLayout]);
+
+  /** Keep the card glued to the marker when the user pans/zooms. */
+  useEffect(() => {
+    if (!map || !popupHostRef.current || !position) return;
+
+    const sync = () => applyPopupLayout(false);
+    const idleListener = map.addListener('idle', sync);
+
+    let resizeObserver: ResizeObserver | undefined;
+    const attachResizeObserver = () => {
+      const el = cardRef.current;
+      if (!el || resizeObserver) return;
+      resizeObserver = new ResizeObserver(sync);
+      resizeObserver.observe(el);
+    };
+    attachResizeObserver();
+    const resizeTimer = window.setTimeout(attachResizeObserver, 0);
+
+    return () => {
+      google.maps.event.removeListener(idleListener);
+      window.clearTimeout(resizeTimer);
+      resizeObserver?.disconnect();
+    };
+  }, [map, popupHostRef, space.id, position, applyPopupLayout]);
+
+  /** Retry layout when projection becomes available after the first failed open. */
+  useEffect(() => {
+    if (!map || !popupHostRef.current || position) return;
+
+    const listener = map.addListener('idle', () => {
+      if (applyPopupLayout(true)) {
+        google.maps.event.removeListener(listener);
+      }
+    });
+
+    return () => google.maps.event.removeListener(listener);
+  }, [map, popupHostRef, position, applyPopupLayout]);
+
+  const host = popupHostRef.current;
+  if (!host) return null;
+
+  return createPortal(
+    <div
+      ref={cardRef}
+      className="pointer-events-auto"
+      style={{
+        position: 'absolute',
+        left: position?.left ?? 0,
+        top: position?.top ?? 0,
+        width: MAP_POPUP_WIDTH_PX,
+        zIndex: 30,
+        visibility: position ? 'visible' : 'hidden',
+        pointerEvents: position ? 'auto' : 'none',
+      }}
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      <MapSpaceDetailCard
+        space={space}
+        dateParam={dateParam}
+        onClose={onClose}
+        isFavorite={isFavorite}
+        onFavoriteClick={onFavoriteClick}
+      />
+    </div>,
+    host
+  );
+}
+
 export function SpacesMap({
   spaces,
   center,
+  initialCenter,
+  initialZoom,
   dateParam,
   className = '',
+  onBoundsChange,
+  favoriteIds,
+  onFavoriteClick,
 }: {
   spaces: Space[];
   center?: LatLng | null;
+  initialCenter?: LatLng | null;
+  initialZoom?: number;
   dateParam?: string;
   className?: string;
+  onBoundsChange?: (bounds: MapBounds) => void;
+  favoriteIds?: Set<string>;
+  onFavoriteClick?: (spaceId: string) => void;
 }) {
   const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: API_KEY,
   });
 
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapClipRef = useRef<HTMLDivElement>(null);
+  const lastMarkerClickAtRef = useRef(0);
+
+  const handleMarkerClick = useCallback((space: Space) => {
+    lastMarkerClickAtRef.current = Date.now();
+    setSelectedSpace(space);
+  }, []);
+
+  const handleMapClick = useCallback(() => {
+    if (Date.now() - lastMarkerClickAtRef.current < 400) return;
+    setSelectedSpace(null);
+  }, []);
 
   const withCoords = useMemo(
     () => spaces.filter((s): s is Space & { latitude: number; longitude: number } =>
@@ -395,12 +946,23 @@ export function SpacesMap({
     [spaces]
   );
 
+  useEffect(() => {
+    if (selectedSpace && !withCoords.some((s) => s.id === selectedSpace.id)) {
+      setSelectedSpace(null);
+    }
+  }, [withCoords, selectedSpace]);
+
   const mapCenter = useMemo((): LatLng => {
+    if (initialCenter) return initialCenter;
     if (center) return center;
-    if (withCoords.length > 0)
-      return { lat: withCoords[0].latitude, lng: withCoords[0].longitude };
     return DEFAULT_CENTER;
-  }, [center, withCoords]);
+  }, [initialCenter, center]);
+
+  const mapZoom = initialZoom ?? (initialCenter || center ? 12 : 4);
+
+  const cameraKey = initialCenter
+    ? `${initialCenter.lat},${initialCenter.lng},${mapZoom}`
+    : 'default';
 
   if (!API_KEY) {
     return (
@@ -425,13 +987,14 @@ export function SpacesMap({
   }
 
   return (
-    <div className={`relative rounded-2xl border border-brand-200 ${className}`}>
-      <div className="absolute inset-0 overflow-hidden rounded-2xl">
+    <div ref={mapContainerRef} className={`relative rounded-2xl border border-brand-200 ${className}`}>
+      <div ref={mapClipRef} className="absolute inset-0 overflow-hidden rounded-2xl isolate">
         <GoogleMap
-          mapContainerStyle={{ width: '100%', height: '100%' }}
+          key={cameraKey}
+          mapContainerStyle={{ width: '100%', height: '100%', position: 'relative' }}
           center={mapCenter}
-          zoom={withCoords.length ? 12 : 4}
-          onClick={() => setSelectedSpace(null)}
+          zoom={mapZoom}
+          onClick={handleMapClick}
           options={{
             disableDefaultUI: false,
             zoomControl: true,
@@ -444,17 +1007,21 @@ export function SpacesMap({
             gestureHandling: 'greedy',
           }}
         >
-          <SpacesMapMarkers spaces={withCoords} onMarkerClick={setSelectedSpace} />
-          <PanToSelectedSpace space={selectedSpace} />
+          <MapProjectionWarmup />
+          <MapBoundsReporter onBoundsChange={onBoundsChange} />
+          <SpacesMapMarkers spaces={withCoords} onMarkerClick={handleMarkerClick} />
+          {selectedSpace?.latitude != null && selectedSpace?.longitude != null && (
+            <SelectedMapPopup
+              space={selectedSpace as Space & { latitude: number; longitude: number }}
+              dateParam={dateParam}
+              onClose={() => setSelectedSpace(null)}
+              popupHostRef={mapClipRef}
+              isFavorite={favoriteIds?.has(selectedSpace.id)}
+              onFavoriteClick={onFavoriteClick}
+            />
+          )}
         </GoogleMap>
       </div>
-      {selectedSpace != null && (
-        <MapSpaceDetailCard
-          space={selectedSpace}
-          dateParam={dateParam}
-          onClose={() => setSelectedSpace(null)}
-        />
-      )}
     </div>
   );
 }

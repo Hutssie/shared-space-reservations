@@ -43,19 +43,33 @@ export type CategoryPricingStats = {
 
 export type CategoryPricingResponse = Record<string, CategoryPricingStats>;
 
-export function fetchSpaces(params: {
-  q?: string;
-  location?: string;
-  category?: string;
-  date?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  minCapacity?: number;
-  amenities?: string[];
-  limit?: number;
-  offset?: number;
-  featured?: boolean;
-}): Promise<{ spaces: Space[]; total: number }> {
+export type MapBounds = {
+  north: number;
+  south: number;
+  east: number;
+  west: number;
+};
+
+export function fetchSpaces(
+  params: {
+    q?: string;
+    location?: string;
+    category?: string;
+    date?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    minCapacity?: number;
+    amenities?: string[];
+    limit?: number;
+    offset?: number;
+    featured?: boolean;
+    north?: number;
+    south?: number;
+    east?: number;
+    west?: number;
+  },
+  options?: { signal?: AbortSignal }
+): Promise<{ spaces: Space[]; total: number }> {
   const sp = new URLSearchParams();
   if (params.q) sp.set('q', params.q);
   if (params.location) sp.set('location', params.location);
@@ -68,8 +82,14 @@ export function fetchSpaces(params: {
   if (params.limit != null) sp.set('limit', String(params.limit));
   if (params.offset != null) sp.set('offset', String(params.offset));
   if (params.featured != null) sp.set('featured', String(params.featured));
+  if (params.north != null) sp.set('north', String(params.north));
+  if (params.south != null) sp.set('south', String(params.south));
+  if (params.east != null) sp.set('east', String(params.east));
+  if (params.west != null) sp.set('west', String(params.west));
   const query = sp.toString();
-  return apiGet<{ spaces: Space[]; total: number }>(`/api/spaces${query ? `?${query}` : ''}`);
+  return apiGet<{ spaces: Space[]; total: number }>(`/api/spaces${query ? `?${query}` : ''}`, {
+    signal: options?.signal,
+  });
 }
 
 export function fetchLocationSuggestions(query: string): Promise<{ locations: string[] }> {

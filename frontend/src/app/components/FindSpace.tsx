@@ -4,7 +4,8 @@ import { SlidersHorizontal, Map as MapIcon, Grid, ChevronDown, Calendar, Users, 
 import { DateDropdown, GuestsDropdown, PriceDropdown, MoreFiltersDropdown, SpaceTypeDropdown, FiltersContent } from './FilterDropdowns';
 import { useSearchParams, useNavigate } from 'react-router';
 import { format } from 'date-fns';
-import { fetchSpaces } from '../api/spaces';
+import { fetchSpaces, type MapBounds } from '../api/spaces';
+import { geocodeAddress } from '../utils/geocode';
 import { fetchPlaceSuggestions, type PlaceSuggestion } from '../api/places';
 import { fetchFavorites, addFavorite, removeFavorite } from '../api/favorites';
 import { useAuth } from '../context/AuthContext';
@@ -17,6 +18,14 @@ export const FindSpace = () => {
   const [view, setView] = React.useState<'grid' | 'map'>('grid');
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [loading, setLoading] = useState(true);
+  const [mapSpaces, setMapSpaces] = useState<Space[]>([]);
+  const [mapTotal, setMapTotal] = useState(0);
+  const [mapInitialCenter, setMapInitialCenter] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapInitialZoom, setMapInitialZoom] = useState<number | undefined>(undefined);
+  const lastMapBoundsRef = React.useRef<MapBounds | null>(null);
+  const mapFetchDebounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mapAbortRef = React.useRef<AbortController | null>(null);
+  const mapRequestIdRef = React.useRef(0);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const { token } = useAuth();
   const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
@@ -110,6 +119,10 @@ export const FindSpace = () => {
     setLocationInput('');
     setShowSuggestions(false);
     setSuggestions([]);
+    if (suggestion.latitude != null && suggestion.longitude != null) {
+      setMapInitialCenter({ lat: suggestion.latitude, lng: suggestion.longitude });
+      setMapInitialZoom(12);
+    }
   }, [searchParams, setSearchParams]);
 
   const handleClearLocation = useCallback(() => {
@@ -121,10 +134,8 @@ export const FindSpace = () => {
     setShowSuggestions(false);
   }, [searchParams, setSearchParams]);
 
-  useEffect(() => {
-    setLoading(true);
-    const offset = (currentPage - 1) * perPage;
-    fetchSpaces({
+  const mapFilterParams = useMemo(
+    () => ({
       location: locationParam || undefined,
       category: selectedCategories.length > 0 ? selectedCategories.join(',') : undefined,
       date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined,
@@ -132,6 +143,69 @@ export const FindSpace = () => {
       maxPrice: appliedPriceRange?.[1],
       minCapacity: appliedMinCapacity ?? undefined,
       amenities: appliedAmenityIds.length > 0 ? appliedAmenityIds : undefined,
+    }),
+    [
+      locationParam,
+      selectedCategories.join(','),
+      selectedDate,
+      appliedPriceRange,
+      appliedMinCapacity,
+      appliedAmenityIds,
+    ]
+  );
+
+  const fetchMapSpacesForBounds = useCallback(
+    (bounds: MapBounds) => {
+      lastMapBoundsRef.current = bounds;
+      mapAbortRef.current?.abort();
+      const controller = new AbortController();
+      mapAbortRef.current = controller;
+      const requestId = ++mapRequestIdRef.current;
+      fetchSpaces(
+        {
+          ...mapFilterParams,
+          north: bounds.north,
+          south: bounds.south,
+          east: bounds.east,
+          west: bounds.west,
+          limit: 150,
+        },
+        { signal: controller.signal }
+      )
+        .then((res) => {
+          if (requestId !== mapRequestIdRef.current) return;
+          setMapSpaces(res.spaces);
+          setMapTotal(res.total);
+        })
+        .catch((err: unknown) => {
+          if (err instanceof DOMException && err.name === 'AbortError') return;
+          if (err instanceof Error && err.name === 'AbortError') return;
+          if (requestId !== mapRequestIdRef.current) return;
+          setMapSpaces([]);
+          setMapTotal(0);
+        })
+    },
+    [mapFilterParams]
+  );
+
+  const handleMapBoundsChange = useCallback(
+    (bounds: MapBounds) => {
+      if (view !== 'map') return;
+      if (mapFetchDebounceRef.current) clearTimeout(mapFetchDebounceRef.current);
+      mapFetchDebounceRef.current = setTimeout(() => {
+        mapFetchDebounceRef.current = null;
+        fetchMapSpacesForBounds(bounds);
+      }, 300);
+    },
+    [view, fetchMapSpacesForBounds]
+  );
+
+  useEffect(() => {
+    if (view !== 'grid') return;
+    setLoading(true);
+    const offset = (currentPage - 1) * perPage;
+    fetchSpaces({
+      ...mapFilterParams,
       limit: perPage,
       offset,
     })
@@ -144,41 +218,51 @@ export const FindSpace = () => {
         setTotalSpaces(0);
       })
       .finally(() => setLoading(false));
-  }, [locationParam, selectedCategories.join(','), selectedDate?.toISOString(), currentPage, minPriceParam, maxPriceParam, minCapacityParam, amenitiesParam]);
+  }, [view, mapFilterParams, currentPage]);
 
   useEffect(() => {
+    if (view !== 'map') return;
+    const bounds = lastMapBoundsRef.current;
+    if (bounds) fetchMapSpacesForBounds(bounds);
+  }, [view, mapFilterParams, fetchMapSpacesForBounds]);
+
+  useEffect(() => {
+    if (view !== 'grid') return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
+  }, [currentPage, view]);
 
-  const refetchSpaces = useCallback(() => {
-    setLoading(true);
-    const offset = (currentPage - 1) * perPage;
-    fetchSpaces({
-      location: locationParam || undefined,
-      category: selectedCategories.length > 0 ? selectedCategories.join(',') : undefined,
-      date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined,
-      minPrice: appliedPriceRange?.[0],
-      maxPrice: appliedPriceRange?.[1],
-      minCapacity: appliedMinCapacity ?? undefined,
-      amenities: appliedAmenityIds.length > 0 ? appliedAmenityIds : undefined,
-      limit: perPage,
-      offset,
-    })
-      .then((res) => {
-        setSpaces(res.spaces);
-        setTotalSpaces(res.total);
-      })
-      .catch(() => {
-        setSpaces([]);
-        setTotalSpaces(0);
-      })
-      .finally(() => setLoading(false));
-  }, [locationParam, selectedCategories.join(','), selectedDate, currentPage, minPriceParam, maxPriceParam, minCapacityParam, appliedAmenityIds]);
+  useEffect(() => {
+    if (!locationParam) return;
+    let cancelled = false;
+    geocodeAddress(locationParam).then((result) => {
+      if (cancelled || !result) return;
+      setMapInitialCenter({ lat: result.lat, lng: result.lng });
+      setMapInitialZoom(result.zoom);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [locationParam]);
+
+  useEffect(() => {
+    return () => {
+      if (mapFetchDebounceRef.current) clearTimeout(mapFetchDebounceRef.current);
+      mapAbortRef.current?.abort();
+    };
+  }, []);
 
   const handleSwitchToMap = useCallback(() => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('page');
+    if (newParams.toString() !== searchParams.toString()) {
+      setSearchParams(newParams);
+    }
     setView('map');
-    refetchSpaces();
-  }, [refetchSpaces]);
+  }, [searchParams, setSearchParams]);
+
+  const handleSwitchToGrid = useCallback(() => {
+    setView('grid');
+  }, []);
 
   useEffect(() => {
     if (!token) {
@@ -266,6 +350,7 @@ export const FindSpace = () => {
   };
 
   const filteredSpaces = spaces;
+  const displayTotal = view === 'map' ? mapTotal : totalSpaces;
   const totalPages = Math.max(1, Math.ceil(totalSpaces / perPage));
 
   const setPage = useCallback((page: number) => {
@@ -460,14 +545,15 @@ export const FindSpace = () => {
             <div className="flex items-center justify-between mb-5 gap-4">
               <div className="min-w-0">
                 <h1 className="text-lg lg:text-xl font-black text-brand-700 truncate">
-                  {totalSpaces} {totalSpaces === 1 ? 'space' : 'spaces'} found {locationParam ? `in ${locationParam}` : ''}
+                  {displayTotal} {displayTotal === 1 ? 'space' : 'spaces'} found {locationParam ? `in ${locationParam}` : ''}
+                  {view === 'map' ? ' in this area' : ''}
                 </h1>
                 <p className="text-brand-400 font-medium text-xs sm:text-sm">Prices may vary depending on date and time</p>
               </div>
 
               <div className="flex bg-brand-100 p-0.5 rounded-lg shrink-0">
                 <button 
-                  onClick={() => setView('grid')}
+                  onClick={handleSwitchToGrid}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${view === 'grid' ? 'bg-white text-brand-700 shadow-sm' : 'text-brand-500 hover:text-brand-700'}`}
                 >
                   <Grid className="w-3.5 h-3.5" /> Grid
@@ -518,15 +604,20 @@ export const FindSpace = () => {
             ) : (
               <div className="relative h-[min(68vh,calc(100vh-17rem))] min-h-[360px] w-full rounded-2xl border border-brand-200 shadow-inner">
                 <SpacesMap
-                  spaces={filteredSpaces}
+                  spaces={mapSpaces}
+                  initialCenter={mapInitialCenter}
+                  initialZoom={mapInitialZoom}
+                  onBoundsChange={handleMapBoundsChange}
                   dateParam={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined}
                   className="absolute inset-0 w-full h-full"
+                  favoriteIds={favoriteIds}
+                  onFavoriteClick={handleFavoriteClick}
                 />
               </div>
             )}
 
             {/* paginatie */}
-            {totalSpaces > 0 && (
+            {view === 'grid' && totalSpaces > 0 && (
               <div className="mt-8 flex items-center justify-center gap-1.5 flex-wrap">
                 <button
                   type="button"

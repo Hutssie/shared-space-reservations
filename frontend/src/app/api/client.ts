@@ -30,7 +30,7 @@ export async function api<T>(
   return res.json() as Promise<T>;
 }
 
-export const apiGet = <T>(path: string) => api<T>(path, { method: 'GET' });
+export const apiGet = <T>(path: string, init?: RequestInit) => api<T>(path, { method: 'GET', ...init });
 export const apiPost = <T>(path: string, body?: unknown) =>
   api<T>(path, { method: 'POST', body: body != null ? JSON.stringify(body) : undefined });
 export const apiPatch = <T>(path: string, body?: unknown) =>
