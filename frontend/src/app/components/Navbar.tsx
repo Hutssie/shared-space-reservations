@@ -103,23 +103,23 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
                           initial={{ opacity: 0, y: 15, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                          className="absolute right-0 mt-4 w-56 bg-white rounded-[2.5rem] shadow-2xl border border-brand-100 overflow-hidden z-[100] p-3"
+                          className="absolute right-0 mt-4 w-52 bg-white rounded-[2rem] shadow-2xl border border-brand-100 overflow-hidden z-[100] p-2.5"
                         >
                           <button
                             onClick={() => { setAuthDropdownOpen(false); navigate('/auth/login'); }}
-                            className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-brand-700 hover:bg-brand-50 transition-all cursor-pointer"
+                            className="w-full flex items-center gap-2.5 p-3.5 rounded-xl text-sm font-bold text-brand-700 hover:bg-brand-50 transition-all cursor-pointer"
                           >
-                            <LogIn className="w-5 h-5 text-brand-500" />
+                            <LogIn className="w-4 h-4 text-brand-500" />
                             Sign in
-                            <ChevronRight className="w-4 h-4 ml-auto text-brand-300" />
+                            <ChevronRight className="w-3.5 h-3.5 ml-auto text-brand-300" />
                           </button>
                           <button
                             onClick={() => { setAuthDropdownOpen(false); navigate('/auth/register'); }}
-                            className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-brand-700 hover:bg-brand-50 transition-all cursor-pointer"
+                            className="w-full flex items-center gap-2.5 p-3.5 rounded-xl text-sm font-bold text-brand-700 hover:bg-brand-50 transition-all cursor-pointer"
                           >
-                            <UserPlus className="w-5 h-5 text-brand-500" />
+                            <UserPlus className="w-4 h-4 text-brand-500" />
                             Sign up
-                            <ChevronRight className="w-4 h-4 ml-auto text-brand-300" />
+                            <ChevronRight className="w-3.5 h-3.5 ml-auto text-brand-300" />
                           </button>
                         </motion.div>
                       )}

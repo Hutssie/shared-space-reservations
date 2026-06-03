@@ -9,7 +9,6 @@ import {
   ChevronDown,
   Filter,
   Star,
-  CreditCard,
   LogOut,
   Bell as BellIcon,
   Heart,
@@ -64,12 +63,6 @@ import {
   type ChatMessage,
   type ConversationSummary,
 } from '../api/messages';
-
-const transactions = [
-  { id: 'TR-9821', date: 'Feb 15, 2026', amount: 380, status: 'Completed', method: 'Visa ending in 4242' },
-  { id: 'TR-9820', date: 'Jan 28, 2026', amount: 125, status: 'Completed', method: 'Visa ending in 4242' },
-  { id: 'TR-9819', date: 'Jan 12, 2026', amount: 450, status: 'Completed', method: 'Apple Pay' },
-];
 
 const CANCELLATION_NOTICE_HOURS: Record<string, number> = { flexible: 24, moderate: 48, strict: 168 };
 
@@ -180,7 +173,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Popup-ul de eroare la anulare */}
       <AnimatePresence>
         {cancelErrorPopup && (
@@ -305,9 +298,9 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-[90] px-6 py-3 bg-green-600 text-white font-bold rounded-2xl shadow-xl flex items-center gap-2"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[90] px-5 py-2.5 bg-green-600 text-white font-bold text-sm rounded-xl shadow-xl flex items-center gap-2"
           >
-            <CheckCircle2 className="w-5 h-5" />
+            <CheckCircle2 className="w-4 h-4" />
             Booking cancelled successfully.
           </motion.div>
         )}
@@ -473,22 +466,22 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
           </div>
         )}
       </AnimatePresence>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
         <div>
-          <h1 className="text-4xl font-black text-brand-700 tracking-tight">My Bookings</h1>
-          <p className="text-brand-400 font-bold mt-1 uppercase tracking-widest text-xs">Manage your creative sessions</p>
+          <h1 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">My Bookings</h1>
+          <p className="text-brand-400 font-bold mt-1 uppercase tracking-widest text-[10px] md:text-xs">Manage your creative sessions</p>
         </div>
         
         <div className="relative">
           <button 
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-4 px-6 py-3.5 bg-white border-2 border-brand-100 rounded-2xl text-brand-700 font-black hover:border-brand-400 hover:shadow-xl transition-all cursor-pointer min-w-[200px] justify-between group"
+            className="flex items-center gap-3 px-5 py-3 bg-white border-2 border-brand-100 rounded-xl text-brand-700 text-sm font-black hover:border-brand-400 hover:shadow-xl transition-all cursor-pointer min-w-[180px] justify-between group"
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <Filter className="w-4 h-4 text-brand-400 group-hover:text-brand-700 transition-colors" />
               <span>{filter}</span>
             </div>
-            <ChevronDown className={`w-5 h-5 text-brand-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-4 h-4 text-brand-400 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
           </button>
 
           <AnimatePresence>
@@ -502,7 +495,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
                   initial={{ opacity: 0, y: 10, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute right-0 mt-3 w-full bg-white border border-brand-100 rounded-[2rem] shadow-2xl overflow-hidden z-20 p-2"
+                  className="absolute right-0 mt-2.5 w-full bg-white border border-brand-100 rounded-xl md:rounded-2xl shadow-2xl overflow-hidden z-20 p-1.5"
                 >
                   {options.map((option) => (
                     <button
@@ -511,10 +504,10 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
                         setFilter(option);
                         setIsOpen(false);
                       }}
-                      className={`w-full text-left px-6 py-4 rounded-xl font-black transition-all flex items-center justify-between group/item relative overflow-hidden ${
+                      className={`w-full text-left px-5 py-3 rounded-lg font-black text-sm transition-all flex items-center justify-between group/item relative overflow-hidden ${
                         filter === option 
                           ? 'bg-brand-700 text-white shadow-lg' 
-                          : 'text-brand-700 hover:bg-brand-50 hover:pl-8'
+                          : 'text-brand-700 hover:bg-brand-50 hover:pl-7'
                       }`}
                     >
                       <span className="relative z-10 flex items-center gap-3">
@@ -537,7 +530,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-5">
         {filteredBookings.map((booking, index) => {
           const hasMatchingBooking = filteredBookings.some((b) => String(b.id) === String(newestBookingId));
           const showNewBadge =
@@ -548,7 +541,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
           key={booking.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-[2.5rem] p-6 border border-brand-200 flex flex-col md:flex-row gap-8 items-center shadow-lg hover:shadow-2xl transition-all group relative overflow-hidden"
+          className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-200 flex flex-col md:flex-row gap-6 items-center shadow-lg hover:shadow-2xl transition-all group relative overflow-hidden"
         >
           {/* Badge-ul „NEW” */}
           {showNewBadge && (
@@ -556,9 +549,9 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="absolute top-5 left-5 z-10"
+              className="absolute top-4 left-4 z-10"
             >
-              <div className="px-3 py-1.5 bg-gradient-to-br from-red-500 to-red-600 text-white font-bold text-xs rounded-lg shadow-md flex items-center gap-1.5">
+              <div className="px-2.5 py-1 bg-gradient-to-br from-red-500 to-red-600 text-white font-bold text-[10px] rounded-md shadow-md flex items-center gap-1.5">
                 <div className="w-1.5 h-1.5 bg-white rounded-full" />
                 NEW
               </div>
@@ -566,61 +559,61 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
           )}
 
           {booking.spaceId ? (
-            <Link to={`/space/${booking.spaceId}`} className="w-full md:w-48 h-32 rounded-3xl overflow-hidden shrink-0 block">
+            <Link to={`/space/${booking.spaceId}`} className="w-full md:w-40 h-28 rounded-2xl overflow-hidden shrink-0 block">
               <ImageWithFallback src={booking.image ?? ''} alt={booking.space} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
             </Link>
           ) : (
-            <div className="w-full md:w-48 h-32 rounded-3xl overflow-hidden shrink-0">
+            <div className="w-full md:w-40 h-28 rounded-2xl overflow-hidden shrink-0">
               <ImageWithFallback src={booking.image ?? ''} alt={booking.space} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
             </div>
           )}
-          <div className="flex-1 space-y-2">
+          <div className="flex-1 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider ${(booking.status === 'Confirmed' || booking.status === 'confirmed') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${(booking.status === 'Confirmed' || booking.status === 'confirmed') ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
                 {booking.status}
               </span>
-              <span className="text-brand-400 font-black text-xs">ID: {booking.id}</span>
+              <span className="text-brand-400 font-black text-[10px]">ID: {booking.id}</span>
             </div>
             {booking.spaceId ? (
-              <Link to={`/space/${booking.spaceId}`} className="inline text-xl font-black text-brand-700 hover:text-brand-500 transition-colors">{booking.space}</Link>
+              <Link to={`/space/${booking.spaceId}`} className="inline text-lg md:text-xl font-black text-brand-700 hover:text-brand-500 transition-colors">{booking.space}</Link>
             ) : (
-              <h4 className="text-xl font-black text-brand-700">{booking.space}</h4>
+              <h4 className="text-lg md:text-xl font-black text-brand-700">{booking.space}</h4>
             )}
-            <div className="flex flex-wrap gap-6 text-brand-500 font-medium">
+            <div className="flex flex-wrap gap-4 text-brand-500 font-medium text-sm">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
+                <Clock className="w-3.5 h-3.5" />
                 {booking.date} · {booking.time}
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-center md:items-end gap-4 shrink-0">
+          <div className="flex flex-col items-center md:items-end gap-3 shrink-0">
             <div className="text-center md:text-right">
-              <span className="text-2xl font-black text-brand-700">${booking.price}</span>
-              <p className="text-xs font-bold text-brand-400 uppercase tracking-widest">Total Paid</p>
+              <span className="text-xl font-black text-brand-700">${booking.price}</span>
+              <p className="text-[10px] font-bold text-brand-400 uppercase tracking-widest">Total Paid</p>
             </div>
             {booking.status?.toLowerCase() === 'cancelled' ? (
-              <div className="px-8 py-3 bg-brand-100 text-brand-400 font-black rounded-xl flex items-center gap-2 cursor-default border-2 border-brand-200">
+              <div className="px-6 py-2.5 bg-brand-100 text-brand-400 font-black text-sm rounded-xl flex items-center gap-2 cursor-default border-2 border-brand-200">
                 Cancelled
               </div>
             ) : isBookingUpcoming(booking) && canCancelBooking(booking) ? (
               <button
                 onClick={() => setCancelConfirmBooking(booking)}
-                className="px-8 py-3 bg-white border-2 border-brand-200 hover:border-red-300 hover:text-red-600 text-brand-700 font-black rounded-xl transition-all active:scale-[0.98] flex items-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 bg-white border-2 border-brand-200 hover:border-red-300 hover:text-red-600 text-brand-700 font-black text-sm rounded-xl transition-all active:scale-[0.98] flex items-center gap-2 cursor-pointer"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
                 Cancel booking
               </button>
             ) : isBookingUpcoming(booking) ? null : booking.spaceId && reviewedSpaceIds.has(booking.spaceId) ? (
-              <div className="px-8 py-3 bg-brand-50 text-brand-400 font-black rounded-xl flex items-center gap-2 cursor-default border-2 border-brand-100">
-                <CheckCircle2 className="w-4 h-4" />
+              <div className="px-6 py-2.5 bg-brand-50 text-brand-400 font-black text-sm rounded-xl flex items-center gap-2 cursor-default border-2 border-brand-100">
+                <CheckCircle2 className="w-3.5 h-3.5" />
                 Reviewed
               </div>
             ) : (
               <button 
                 onClick={() => setReviewBooking(booking)}
-                className="px-8 py-3 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-xl transition-all shadow-lg shadow-brand-700/10 active:scale-[0.98] flex items-center gap-2 cursor-pointer"
+                className="px-6 py-2.5 bg-brand-700 hover:bg-brand-600 text-white font-black text-sm rounded-xl transition-all shadow-lg shadow-brand-700/10 active:scale-[0.98] flex items-center gap-2 cursor-pointer"
               >
-                <Star className="w-4 h-4 fill-current" />
+                <Star className="w-3.5 h-3.5 fill-current" />
                 Leave a review
               </button>
             )}
@@ -630,14 +623,14 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
         })}
     </div>
 
-    <div className="bg-brand-700 rounded-[3rem] p-12 relative overflow-hidden text-white shadow-2xl">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
-      <div className="relative z-10 space-y-6">
-        <h3 className="text-3xl font-black leading-tight">Host your own space and <br />earn up to $2,500 / month</h3>
-        <p className="text-brand-100/70 font-medium text-lg max-w-lg">
+    <div className="bg-brand-700 rounded-[1.5rem] md:rounded-[2rem] p-8 md:p-10 relative overflow-hidden text-white shadow-2xl">
+      <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -mr-16 -mt-16 blur-3xl" />
+      <div className="relative z-10 space-y-4">
+        <h3 className="text-2xl md:text-3xl font-black leading-tight">Host your own space and <br />earn up to $2,500 / month</h3>
+        <p className="text-brand-100/70 font-medium text-base max-w-lg">
           You have the creative eye. Why not turn your studio into a revenue stream? List your space for free.
         </p>
-        <Link to="/earnings-calculator" className="px-10 py-4.5 bg-brand-200 hover:bg-white text-brand-700 font-black rounded-2xl shadow-xl transition-all active:scale-95 cursor-pointer inline-block">
+        <Link to="/earnings-calculator" className="px-8 py-3.5 bg-brand-200 hover:bg-white text-brand-700 font-black text-sm rounded-xl shadow-xl transition-all active:scale-95 cursor-pointer inline-block">
           Learn More
         </Link>
       </div>
@@ -655,13 +648,13 @@ const FavoritesTab = ({
   removedFromFavorites: Set<string>;
   onFavoriteClick: (spaceId: string) => void;
 }) => (
-  <div className="space-y-8">
-    <div className="flex items-center justify-between">
-      <h1 className="text-4xl font-black text-brand-700 tracking-tight">My Favorites</h1>
-      <p className="text-brand-400 font-bold">{favorites.length} saved spaces</p>
+  <div className="space-y-6">
+    <div className="flex items-center justify-between gap-4">
+      <h1 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">My Favorites</h1>
+      <p className="text-brand-400 font-bold text-sm">{favorites.length} saved spaces</p>
     </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
       {favorites.map((space) => {
         const spaceId = space.spaceId ?? space.id;
         const isFavorite = !removedFromFavorites.has(spaceId);
@@ -670,39 +663,39 @@ const FavoritesTab = ({
           key={space.id}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-white rounded-[2.5rem] overflow-hidden border border-brand-200 shadow-lg hover:shadow-2xl transition-all group"
+          className="bg-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden border border-brand-200 shadow-lg hover:shadow-2xl transition-all group flex flex-col"
         >
-          <div className="relative h-64 overflow-hidden">
+          <div className="relative aspect-[4/3] overflow-hidden">
             <Link to={`/space/${spaceId}`} className="block w-full h-full">
               <ImageWithFallback src={space.image ?? ''} alt={space.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
             </Link>
             <button
               type="button"
               onClick={() => onFavoriteClick(spaceId)}
-              className={`absolute top-6 right-6 p-3 rounded-2xl shadow-lg hover:scale-110 transition-all cursor-pointer ${
+              className={`absolute top-4 right-4 p-2.5 rounded-xl shadow-lg hover:scale-110 transition-all cursor-pointer ${
                 isFavorite ? 'bg-red-500/90 text-white backdrop-blur-md' : 'bg-white/90 backdrop-blur-md text-red-500'
               }`}
             >
-              <Heart className={`w-6 h-6 ${isFavorite ? 'fill-current' : 'fill-none'}`} />
+              <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : 'fill-none'}`} />
             </button>
           </div>
-          <div className="p-8 space-y-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <Link to={`/space/${spaceId}`} className="inline text-2xl font-black text-brand-700 hover:text-brand-500 transition-colors">{space.name}</Link>
-                <p className="text-brand-400 font-bold">{space.location}</p>
+          <div className="p-5 md:p-6 space-y-3">
+            <div className="flex justify-between items-start gap-3">
+              <div className="min-w-0">
+                <Link to={`/space/${spaceId}`} className="inline text-base md:text-lg font-black text-brand-700 hover:text-brand-500 transition-colors line-clamp-1">{space.name}</Link>
+                <p className="text-brand-400 font-bold text-sm truncate">{space.location}</p>
               </div>
-              <div className="flex items-center gap-1.5 bg-brand-50 px-3 py-1.5 rounded-xl">
-                <Star className="w-4 h-4 text-brand-500 fill-brand-500" />
-                <span className="font-black text-brand-700">{formatRatingScore(space.rating)}</span>
+              <div className="flex items-center gap-1.5 bg-brand-50 px-2.5 py-1 rounded-lg shrink-0">
+                <Star className="w-3.5 h-3.5 text-brand-500 fill-brand-500" />
+                <span className="text-sm font-black text-brand-700">{formatRatingScore(space.rating)}</span>
               </div>
             </div>
-            <div className="flex items-center justify-between pt-4 border-t border-brand-100">
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-black text-brand-700">${space.price}</span>
-                <span className="text-brand-400 font-bold">/hr</span>
+            <div className="flex items-center justify-between pt-3 border-t border-brand-100 gap-3">
+              <div className="flex items-baseline gap-1 min-w-0">
+                <span className="text-lg md:text-xl font-black text-brand-700">${space.price}</span>
+                <span className="text-brand-400 font-bold text-xs">/hr</span>
               </div>
-              <Link to={`/space/${spaceId}#booking`} className="px-6 py-3 bg-brand-700 hover:bg-brand-600 text-white font-black rounded-xl transition-all cursor-pointer">
+              <Link to={`/space/${spaceId}#booking`} className="px-4 py-2 bg-brand-700 hover:bg-brand-600 text-white font-black text-xs rounded-lg transition-all cursor-pointer shrink-0 whitespace-nowrap">
                 Book Space
               </Link>
             </div>
@@ -983,36 +976,36 @@ const MessagesTab = () => {
   }, [newModalOpen, userQuery]);
 
   return (
-    <div className={`h-[calc(100vh-120px)] lg:h-[calc(100vh-180px)] min-h-[600px] flex gap-0 md:gap-8 overflow-hidden relative ${mobileView === 'chat' ? 'fixed inset-0 z-50 md:relative md:inset-auto md:z-0 bg-white' : ''}`}>
+    <div className={`h-[calc(100vh-120px)] lg:h-[calc(100vh-180px)] min-h-[520px] flex gap-0 md:gap-6 overflow-hidden relative ${mobileView === 'chat' ? 'fixed inset-0 z-50 md:relative md:inset-auto md:z-0 bg-white' : ''}`}>
       {/* Lista din sidebar */}
       <div
-        className={`w-full md:w-[350px] lg:w-[400px] flex flex-col bg-white rounded-none md:rounded-[3rem] border-r md:border border-brand-200 overflow-hidden shadow-2xl shadow-brand-700/5 transition-all duration-300
+        className={`w-full md:w-[300px] lg:w-[320px] flex flex-col bg-white rounded-none md:rounded-[1.5rem] md:rounded-[2rem] border-r md:border border-brand-200 overflow-hidden shadow-2xl shadow-brand-700/5 transition-all duration-300
           ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}
         `}
       >
-        <div className="p-6 md:p-8 bg-white border-b border-brand-100">
+        <div className="p-5 md:p-6 bg-white border-b border-brand-100">
           <div className="flex items-center justify-between">
-            <h3 className="text-3xl font-black text-brand-700 tracking-tight">Messages</h3>
+            <h3 className="text-2xl md:text-3xl font-black text-brand-700 tracking-tight">Messages</h3>
             <button
               type="button"
               onClick={() => setNewModalOpen(true)}
-              className="p-3 bg-brand-50 text-brand-500 rounded-2xl hover:bg-brand-700 hover:text-white transition-all cursor-pointer shadow-sm group"
+              className="p-2.5 bg-brand-50 text-brand-500 rounded-xl hover:bg-brand-700 hover:text-white transition-all cursor-pointer shadow-sm group"
             >
-              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+              <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-3 space-y-1.5 custom-scrollbar">
           {loadingConversations && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[0, 1, 2, 3, 4].map((i) => (
-                <div key={i} className="p-5 rounded-[2rem] bg-brand-50/60 animate-pulse">
-                  <div className="flex gap-4 items-center">
-                    <div className="w-14 h-14 rounded-[1.25rem] bg-brand-100" />
+                <div key={i} className="p-4 rounded-xl md:rounded-2xl bg-brand-50/60 animate-pulse">
+                  <div className="flex gap-3 items-center">
+                    <div className="w-11 h-11 rounded-xl bg-brand-100" />
                     <div className="flex-1 space-y-2">
-                      <div className="h-3 w-32 bg-brand-100 rounded" />
-                      <div className="h-3 w-44 bg-brand-100 rounded" />
+                      <div className="h-3 w-28 bg-brand-100 rounded" />
+                      <div className="h-3 w-36 bg-brand-100 rounded" />
                     </div>
                   </div>
                 </div>
@@ -1021,9 +1014,9 @@ const MessagesTab = () => {
           )}
 
           {!loadingConversations && conversations.length === 0 && (
-            <div className="p-10 text-center">
-              <p className="text-xs font-black text-brand-400 uppercase tracking-[0.25em]">No messages yet</p>
-              <p className="mt-3 text-brand-500 font-medium">Start a new conversation using the + button.</p>
+            <div className="p-8 text-center">
+              <p className="text-[10px] font-black text-brand-400 uppercase tracking-[0.25em]">No messages yet</p>
+              <p className="mt-2 text-brand-500 font-medium text-sm">Start a new conversation using the + button.</p>
             </div>
           )}
 
@@ -1037,7 +1030,7 @@ const MessagesTab = () => {
                   setActiveConversationId(msg.id);
                   setMobileView('chat');
                 }}
-                className={`w-full flex items-center gap-4 p-5 rounded-[2rem] transition-all cursor-pointer relative group text-left
+                className={`w-full flex items-center gap-3 p-4 rounded-xl md:rounded-2xl transition-all cursor-pointer relative group text-left
                   ${isActive
                     ? 'bg-brand-700 text-white shadow-xl shadow-brand-700/20'
                     : 'hover:bg-brand-50'
@@ -1045,28 +1038,28 @@ const MessagesTab = () => {
                 `}
               >
                 <div className="relative shrink-0">
-                  <div className={`w-14 h-14 rounded-[1.25rem] overflow-hidden border-2 shadow-lg transition-transform group-hover:scale-105
+                  <div className={`w-11 h-11 rounded-xl overflow-hidden border-2 shadow-lg transition-transform group-hover:scale-105
                     ${isActive ? 'border-brand-600' : 'border-white'}
                   `}>
                     <ImageWithFallback src={msg.avatar ?? ''} alt={msg.user} />
                   </div>
                   {msg.online && (
-                    <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
                   )}
                   {msg.unread && !isActive && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-500 border-2 border-white rounded-full animate-pulse shadow-md" />
+                    <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-brand-500 border-2 border-white rounded-full animate-pulse shadow-md" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-center mb-1">
-                    <h5 className={`font-black truncate text-base ${isActive ? 'text-white' : 'text-brand-700'}`}>
+                  <div className="flex justify-between items-center mb-0.5">
+                    <h5 className={`font-black truncate text-sm ${isActive ? 'text-white' : 'text-brand-700'}`}>
                       {msg.user}
                     </h5>
-                    <span className={`text-[10px] font-black uppercase tracking-tighter shrink-0 ${isActive ? 'text-brand-200/80' : 'text-brand-300'}`}>
+                    <span className={`text-[9px] font-black uppercase tracking-tighter shrink-0 ${isActive ? 'text-brand-200/80' : 'text-brand-300'}`}>
                       {msg.time}
                     </span>
                   </div>
-                  <p className={`text-sm line-clamp-1 leading-snug
+                  <p className={`text-xs line-clamp-1 leading-snug
                     ${isActive
                       ? 'text-brand-100/90 font-medium'
                       : msg.unread ? 'font-black text-brand-700' : 'text-brand-400 font-medium'
@@ -1083,35 +1076,35 @@ const MessagesTab = () => {
 
       {/* Zona principala de chat */}
       <div
-        className={`flex-1 flex flex-col bg-white rounded-none md:rounded-[3rem] border md:border-brand-200 overflow-hidden shadow-2xl shadow-brand-700/10 transition-all duration-300
+        className={`flex-1 flex flex-col bg-white rounded-none md:rounded-[1.5rem] md:rounded-[2rem] border md:border-brand-200 overflow-hidden shadow-2xl shadow-brand-700/10 transition-all duration-300
           ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}
         `}
       >
-        <div className="px-6 py-4 md:p-8 border-b border-brand-100 flex items-center justify-between bg-white/90 backdrop-blur-xl sticky top-0 z-10">
-          <div className="flex items-center gap-4 min-w-0">
+        <div className="px-5 py-3.5 md:p-6 border-b border-brand-100 flex items-center justify-between bg-white/90 backdrop-blur-xl sticky top-0 z-10">
+          <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               onClick={() => setMobileView('list')}
-              className="md:hidden p-3 bg-brand-50 text-brand-700 rounded-2xl active:scale-90 transition-transform"
+              className="md:hidden p-2.5 bg-brand-50 text-brand-700 rounded-xl active:scale-90 transition-transform"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
             {activeChat ? (
               <>
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-[1.5rem] overflow-hidden shadow-xl shrink-0 border-2 border-brand-50 relative group">
+                <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl overflow-hidden shadow-xl shrink-0 border-2 border-brand-50 relative group">
                   <ImageWithFallback src={activeChat.avatar ?? ''} alt={activeChat.user} />
                   {activeChat.online && (
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full" />
                   )}
                 </div>
                 <div className="truncate">
-                  <h4 className="font-black text-brand-700 text-lg md:text-xl truncate leading-tight tracking-tight">{activeChat.user}</h4>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-[10px] font-black text-brand-300 uppercase tracking-[0.1em]">{activeChat.role}</span>
+                  <h4 className="font-black text-brand-700 text-base md:text-lg truncate leading-tight tracking-tight">{activeChat.user}</h4>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[9px] font-black text-brand-300 uppercase tracking-[0.1em]">{activeChat.role}</span>
                     {activeChat.online && (
                       <>
                         <div className="w-1 h-1 bg-brand-200 rounded-full" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.1em] text-green-500">
+                        <span className="text-[9px] font-black uppercase tracking-[0.1em] text-green-500">
                           Active Now
                         </span>
                       </>
@@ -1121,9 +1114,9 @@ const MessagesTab = () => {
               </>
             ) : (
               <div className="truncate">
-                <h4 className="font-black text-brand-700 text-lg md:text-xl truncate leading-tight tracking-tight">Select a conversation</h4>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-[10px] font-black text-brand-300 uppercase tracking-[0.1em]">Messages</span>
+                <h4 className="font-black text-brand-700 text-base md:text-lg truncate leading-tight tracking-tight">Select a conversation</h4>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-[9px] font-black text-brand-300 uppercase tracking-[0.1em]">Messages</span>
                 </div>
               </div>
             )}
@@ -1134,9 +1127,9 @@ const MessagesTab = () => {
               <button
                 type="button"
                 onClick={() => setShowConversationMenu((v) => !v)}
-                className="p-3 bg-brand-50 text-brand-500 rounded-2xl hover:bg-brand-700 hover:text-white transition-all cursor-pointer shadow-sm"
+                className="p-2.5 bg-brand-50 text-brand-500 rounded-xl hover:bg-brand-700 hover:text-white transition-all cursor-pointer shadow-sm"
               >
-                <MoreVertical className="w-5 h-5" />
+                <MoreVertical className="w-4 h-4" />
               </button>
 
               <AnimatePresence>
@@ -1145,7 +1138,7 @@ const MessagesTab = () => {
                     initial={{ opacity: 0, y: 8, scale: 0.98 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                    className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-2xl border border-brand-100 overflow-hidden z-20"
+                    className="absolute right-0 mt-2.5 w-56 bg-white rounded-xl shadow-2xl border border-brand-100 overflow-hidden z-20"
                   >
                     <button
                       type="button"
@@ -1154,9 +1147,9 @@ const MessagesTab = () => {
                         setShowConversationMenu(false);
                         setDeleteConversationConfirm({ id: activeConversationId, userName: activeChat?.user ?? 'this conversation' });
                       }}
-                      className="w-full flex items-center gap-3 px-5 py-4 text-left font-black text-red-500 hover:bg-red-50 transition-all cursor-pointer"
+                      className="w-full flex items-center gap-2.5 px-4 py-3 text-left text-sm font-black text-red-500 hover:bg-red-50 transition-all cursor-pointer"
                     >
-                      <Trash2 className="w-5 h-5" />
+                      <Trash2 className="w-4 h-4" />
                       Delete conversation
                     </button>
                   </motion.div>
@@ -1182,26 +1175,26 @@ const MessagesTab = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 onClick={(e) => e.stopPropagation()}
-                className="relative w-full max-w-md bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl border-2 border-brand-200 p-8 sm:p-10"
+                className="relative w-full max-w-md bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl border-2 border-brand-200 p-5 sm:p-6"
               >
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 bg-red-50 rounded-2xl shrink-0">
-                      <Trash2 className="w-6 h-6 text-red-500" />
+                <div className="space-y-5">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2.5 bg-red-50 rounded-xl shrink-0">
+                      <Trash2 className="w-5 h-5 text-red-500" />
                     </div>
                     <div className="flex-1 space-y-2">
-                      <h3 className="text-xl sm:text-2xl font-black text-brand-700">Delete conversation</h3>
-                      <p className="text-sm sm:text-base text-brand-400 font-medium leading-relaxed">
+                      <h3 className="text-lg sm:text-xl font-black text-brand-700">Delete conversation</h3>
+                      <p className="text-sm text-brand-400 font-medium leading-relaxed">
                         Remove the conversation with <span className="font-black text-brand-700">{deleteConversationConfirm.userName}</span> from your messages? This will only remove it for you; the other person will still see the chat.
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <div className="flex flex-col sm:flex-row gap-3 pt-1">
                     <button
                       type="button"
                       onClick={() => setDeleteConversationConfirm(null)}
                       disabled={deleteConversationInProgress}
-                      className="flex-1 px-6 py-4 bg-brand-50 text-brand-700 font-black rounded-xl sm:rounded-2xl hover:bg-brand-100 transition-all cursor-pointer disabled:opacity-60"
+                      className="flex-1 px-5 py-3 md:py-3.5 bg-brand-50 text-brand-700 font-black rounded-xl hover:bg-brand-100 transition-all cursor-pointer disabled:opacity-60"
                     >
                       Keep
                     </button>
@@ -1223,7 +1216,7 @@ const MessagesTab = () => {
                         }
                       }}
                       disabled={deleteConversationInProgress}
-                      className="flex-1 px-6 py-4 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl sm:rounded-2xl shadow-lg shadow-red-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
+                      className="flex-1 px-5 py-3 md:py-3.5 bg-red-500 hover:bg-red-600 text-white font-black rounded-xl shadow-lg shadow-red-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-60"
                     >
                       {deleteConversationInProgress ? (
                         <span className="flex items-center justify-center gap-2">
@@ -1279,15 +1272,15 @@ const MessagesTab = () => {
 
         <div
           ref={messagesScrollRef}
-          className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 md:space-y-12 bg-gradient-to-b from-brand-50/20 to-white custom-scrollbar"
+          className="flex-1 overflow-y-auto p-5 md:p-6 space-y-5 md:space-y-6 bg-gradient-to-b from-brand-50/20 to-white custom-scrollbar"
         >
           {loadingMessages && (
-            <div className="space-y-6">
+            <div className="space-y-4">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="flex gap-4 max-w-[75%]">
-                  <div className="w-10 h-10 rounded-xl bg-brand-100 animate-pulse" />
+                <div key={i} className="flex gap-3 max-w-[75%]">
+                  <div className="w-8 h-8 rounded-lg bg-brand-100 animate-pulse" />
                   <div className="flex-1">
-                    <div className="h-16 bg-white border border-brand-100 rounded-[2rem] animate-pulse" />
+                    <div className="h-14 bg-white border border-brand-100 rounded-xl md:rounded-2xl animate-pulse" />
                   </div>
                 </div>
               ))}
@@ -1295,9 +1288,9 @@ const MessagesTab = () => {
           )}
 
           {!loadingMessages && activeChat && chatMessages.length === 0 && (
-            <div className="py-10 text-center">
-              <p className="text-xs font-black text-brand-400 uppercase tracking-[0.25em]">No messages yet</p>
-              <p className="mt-3 text-brand-500 font-medium">Say hello to start the conversation.</p>
+            <div className="py-8 text-center">
+              <p className="text-[10px] font-black text-brand-400 uppercase tracking-[0.25em]">No messages yet</p>
+              <p className="mt-2 text-brand-500 font-medium text-sm">Say hello to start the conversation.</p>
             </div>
           )}
 
@@ -1310,29 +1303,29 @@ const MessagesTab = () => {
             }
             const dateKeys = Array.from(byDate.keys()).sort();
             return dateKeys.map((dateKey) => (
-              <div key={dateKey} className="space-y-6 md:space-y-8">
+              <div key={dateKey} className="space-y-4 md:space-y-5">
                 <div className="flex justify-center">
-                  <div className="px-5 py-2 bg-white/80 border border-brand-100 backdrop-blur-sm text-brand-300 text-[10px] font-black uppercase tracking-[0.25em] rounded-full shadow-sm">
+                  <div className="px-4 py-1.5 bg-white/80 border border-brand-100 backdrop-blur-sm text-brand-300 text-[9px] font-black uppercase tracking-[0.25em] rounded-full shadow-sm">
                     {getDateDividerLabel(dateKey)}
                   </div>
                 </div>
                 {(byDate.get(dateKey) ?? []).map((chat) => (
                   <div
                     key={chat.id}
-                    className={`flex gap-4 max-w-[85%] md:max-w-[75%] ${chat.type === 'sent' ? 'flex-row-reverse ml-auto' : ''}`}
+                    className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${chat.type === 'sent' ? 'flex-row-reverse ml-auto' : ''}`}
                   >
                     {chat.type === 'received' && (
-                      <div className="w-10 h-10 rounded-xl overflow-hidden shadow-md shrink-0 mt-1 ring-2 ring-brand-50">
+                      <div className="w-8 h-8 rounded-lg overflow-hidden shadow-md shrink-0 mt-0.5 ring-2 ring-brand-50">
                         <ImageWithFallback src={activeChat.avatar ?? ''} alt={activeChat.user} />
                       </div>
                     )}
                     {chat.type === 'sent' && (
-                      <div className="w-10 h-10 rounded-xl bg-brand-700 flex items-center justify-center text-white shrink-0 mt-1 shadow-lg shadow-brand-700/20">
-                        <User className="w-5 h-5" />
+                      <div className="w-8 h-8 rounded-lg bg-brand-700 flex items-center justify-center text-white shrink-0 mt-0.5 shadow-lg shadow-brand-700/20">
+                        <User className="w-4 h-4" />
                       </div>
                     )}
-                    <div className={`space-y-2 ${chat.type === 'sent' ? 'text-right' : ''}`}>
-                      <div className={`px-5 py-4 md:px-7 md:py-5 shadow-xl rounded-[2rem] text-sm md:text-base leading-relaxed
+                    <div className={`space-y-1.5 ${chat.type === 'sent' ? 'text-right' : ''}`}>
+                      <div className={`px-4 py-3 md:px-5 md:py-3.5 shadow-lg rounded-xl md:rounded-2xl text-sm leading-relaxed
                         ${chat.type === 'sent'
                           ? 'bg-brand-700 text-white rounded-tr-none shadow-brand-700/10'
                           : 'bg-white text-brand-700 rounded-tl-none border border-brand-100 shadow-brand-700/5'
@@ -1343,15 +1336,15 @@ const MessagesTab = () => {
                             chat.type === 'sent'
                               ? 'text-white [&_a]:text-brand-100 [&_a]:hover:text-white [&_strong]:text-white'
                               : 'text-brand-700',
-                            '[&_img]:rounded-2xl [&_img]:max-w-full [&_img]:h-auto [&_img]:border [&_img]:border-brand-100 [&_img]:shadow-sm [&_p]:mb-0',
+                            '[&_img]:rounded-xl [&_img]:max-w-full [&_img]:h-auto [&_img]:border [&_img]:border-brand-100 [&_img]:shadow-sm [&_p]:mb-0',
                           ].join(' ')}
                           onImageClick={setFullscreenImageUrl}
                         >
                           {chat.text}
                         </MarkdownContent>
                       </div>
-                      <div className={`flex items-center gap-2 px-1 ${chat.type === 'sent' ? 'justify-end' : ''}`}>
-                        <span className="text-[10px] font-black text-brand-200 uppercase tracking-tighter">{chat.time}</span>
+                      <div className={`flex items-center gap-1.5 px-1 ${chat.type === 'sent' ? 'justify-end' : ''}`}>
+                        <span className="text-[9px] font-black text-brand-200 uppercase tracking-tighter">{chat.time}</span>
                         {chat.type === 'sent' && (() => {
                           const seen =
                             Boolean(otherParticipantLastReadAt) &&
@@ -1359,11 +1352,11 @@ const MessagesTab = () => {
                             new Date(chat.createdAt as string).getTime() <= new Date(otherParticipantLastReadAt as string).getTime();
                           return seen ? (
                             <span title="Message seen" className="inline-flex">
-                              <CheckCheck className="w-4 h-4 text-brand-300" />
+                              <CheckCheck className="w-3.5 h-3.5 text-brand-300" />
                             </span>
                           ) : (
                             <span title="Message sent" className="inline-flex">
-                              <Check className="w-4 h-4 text-brand-300" />
+                              <Check className="w-3.5 h-3.5 text-brand-300" />
                             </span>
                           );
                         })()}
@@ -1376,8 +1369,8 @@ const MessagesTab = () => {
           })()}
         </div>
 
-        <div className="p-3 md:p-10 border-t border-brand-100 bg-white">
-          <div className="flex items-center gap-2 md:gap-4 max-w-[1200px] mx-auto">
+        <div className="p-3 md:p-6 border-t border-brand-100 bg-white">
+          <div className="flex items-center gap-2 md:gap-3 max-w-[1200px] mx-auto">
             <input
               ref={messageFileInputRef}
               type="file"
@@ -1390,9 +1383,9 @@ const MessagesTab = () => {
               onClick={triggerMessageFileInput}
               disabled={!activeConversationId || messageUploadInProgress}
               aria-label="Add attachment"
-              className="p-3 md:p-4 bg-brand-50 text-brand-400 rounded-xl md:rounded-2xl hover:text-brand-700 hover:bg-brand-100 transition-all cursor-pointer shrink-0 active:scale-90 group disabled:opacity-60 disabled:pointer-events-none"
+              className="p-2.5 md:p-3 bg-brand-50 text-brand-400 rounded-xl hover:text-brand-700 hover:bg-brand-100 transition-all cursor-pointer shrink-0 active:scale-90 group disabled:opacity-60 disabled:pointer-events-none"
             >
-              <Plus className="w-5 h-5 md:w-6 md:h-6 group-hover:rotate-90 transition-transform" />
+              <Plus className="w-4 h-4 md:w-5 md:h-5 group-hover:rotate-90 transition-transform" />
             </button>
             <div className="flex-1">
               <textarea
@@ -1407,14 +1400,14 @@ const MessagesTab = () => {
                 }}
                 placeholder={messageUploadInProgress ? 'Uploading…' : 'Type a message...'}
                 disabled={messageUploadInProgress}
-                className="w-full px-4 py-3 md:px-6 md:py-5 bg-brand-50 border-2 border-transparent rounded-[1.25rem] md:rounded-[1.75rem] focus:ring-0 focus:border-brand-700/10 focus:bg-white focus:shadow-inner transition-all font-medium text-xs md:text-base outline-none resize-none disabled:opacity-60"
+                className="w-full px-4 py-2.5 md:px-5 md:py-3.5 bg-brand-50 border-2 border-transparent rounded-xl md:rounded-2xl focus:ring-0 focus:border-brand-700/10 focus:bg-white focus:shadow-inner transition-all font-medium text-sm outline-none resize-none disabled:opacity-60"
               ></textarea>
             </div>
             <button
               type="button"
               onClick={() => handleSendMessage()}
               disabled={!inputValue.trim() || !activeConversationId || messageUploadInProgress}
-              className="px-5 md:px-12 py-3 md:py-5 bg-brand-700 hover:bg-brand-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black rounded-[1.25rem] md:rounded-[1.75rem] transition-all shadow-xl shadow-brand-700/20 active:scale-95 cursor-pointer text-xs md:text-base shrink-0"
+              className="px-4 md:px-8 py-2.5 md:py-3.5 bg-brand-700 hover:bg-brand-800 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-sm rounded-xl md:rounded-2xl transition-all shadow-xl shadow-brand-700/20 active:scale-95 cursor-pointer shrink-0"
             >
               Send
             </button>
@@ -1438,11 +1431,11 @@ const MessagesTab = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               onClick={(e) => e.stopPropagation()}
-              className="relative w-full max-w-lg bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl border border-brand-200 overflow-hidden"
+              className="relative w-full max-w-lg bg-white rounded-[1.5rem] sm:rounded-[2rem] shadow-2xl border border-brand-200 overflow-hidden"
             >
-              <div className="p-6 sm:p-8 border-b border-brand-100 flex items-start justify-between gap-4">
+              <div className="p-5 md:p-6 border-b border-brand-100 flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <h3 className="text-2xl font-black text-brand-700 tracking-tight">New message</h3>
+                  <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">New message</h3>
                   <p className="text-sm text-brand-400 font-medium">Search for a user to start chatting.</p>
                 </div>
                 <button
@@ -1450,28 +1443,28 @@ const MessagesTab = () => {
                   onClick={() => setNewModalOpen(false)}
                   className="p-2 bg-brand-50 text-brand-400 hover:text-brand-700 hover:bg-brand-100 rounded-xl transition-all cursor-pointer"
                 >
-                  <Plus className="w-5 h-5 rotate-45" />
+                  <Plus className="w-4 h-4 rotate-45" />
                 </button>
               </div>
 
-              <div className="p-6 sm:p-8 space-y-4">
+              <div className="p-5 md:p-6 space-y-3">
                 <input
                   type="text"
                   value={userQuery}
                   onChange={(e) => setUserQuery(e.target.value)}
                   placeholder="Search by name or email..."
-                  className="w-full px-5 py-4 bg-brand-50 border border-brand-100 rounded-[1.5rem] focus:ring-2 focus:ring-brand-200 focus:outline-none font-medium text-brand-700 placeholder:text-brand-300 transition-all"
+                  className="w-full px-4 py-3 bg-brand-50 border border-brand-100 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-medium text-sm text-brand-700 placeholder:text-brand-300 transition-all"
                 />
 
-                <div className="max-h-[320px] overflow-y-auto custom-scrollbar space-y-2">
+                <div className="max-h-[280px] overflow-y-auto custom-scrollbar space-y-1.5">
                   {userSearching && (
-                    <div className="p-4 rounded-2xl bg-brand-50/50 animate-pulse">
-                      <div className="h-3 w-48 bg-brand-100 rounded" />
+                    <div className="p-3 rounded-xl bg-brand-50/50 animate-pulse">
+                      <div className="h-3 w-40 bg-brand-100 rounded" />
                     </div>
                   )}
 
                   {!userSearching && userQuery.trim().length >= 2 && userResults.length === 0 && (
-                    <div className="p-6 text-center text-brand-400 font-medium">No users found.</div>
+                    <div className="p-5 text-center text-brand-400 font-medium text-sm">No users found.</div>
                   )}
 
                   {userResults.map((u) => (
@@ -1489,13 +1482,13 @@ const MessagesTab = () => {
                           toast.error(e instanceof Error ? e.message : 'Failed to start conversation');
                         }
                       }}
-                      className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50 transition-all cursor-pointer text-left"
+                      className="w-full flex items-center gap-3 p-3.5 rounded-xl hover:bg-brand-50 transition-all cursor-pointer text-left"
                     >
-                      <div className="w-12 h-12 rounded-[1.25rem] overflow-hidden border border-brand-100 shadow-sm shrink-0">
+                      <div className="w-10 h-10 rounded-xl overflow-hidden border border-brand-100 shadow-sm shrink-0">
                         <ImageWithFallback src={u.avatarUrl ?? ''} alt={u.name} />
                       </div>
                       <div className="min-w-0">
-                        <div className="font-black text-brand-700 truncate">{u.name}</div>
+                        <div className="text-sm font-black text-brand-700 truncate">{u.name}</div>
                         <div className="text-xs font-bold text-brand-400 truncate">{u.email}</div>
                       </div>
                     </button>
@@ -1591,7 +1584,7 @@ const ReviewsTab = () => {
   };
 
   return (
-  <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
     {/* Modalul de editare pentru recenzie */}
     <AnimatePresence>
@@ -1790,14 +1783,14 @@ const ReviewsTab = () => {
       )}
     </AnimatePresence>
 
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h2 className="text-4xl font-black text-brand-700 tracking-tight">Reviews I've Written</h2>
-        <p className="text-brand-400 font-medium text-lg mt-2">Manage your feedback and help the community grow.</p>
+        <h2 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">Reviews I've Written</h2>
+        <p className="text-brand-400 font-medium text-sm mt-1">Manage your feedback and help the community grow.</p>
       </div>
-      <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-2xl border border-brand-100 shadow-sm">
-        <Star className="w-5 h-5 text-brand-500 fill-brand-500" />
-        <span className="text-brand-700 font-black">
+      <div className="flex items-center gap-2.5 bg-white px-4 py-2.5 rounded-xl border border-brand-100 shadow-sm">
+        <Star className="w-4 h-4 text-brand-500 fill-brand-500" />
+        <span className="text-brand-700 font-black text-sm">
           {myReviews.length > 0
             ? formatRatingScore(myReviews.reduce((sum, r) => sum + r.rating, 0) / myReviews.length)
             : '—'} Average Rating Given
@@ -1805,7 +1798,7 @@ const ReviewsTab = () => {
       </div>
     </div>
 
-    <div className="grid grid-cols-1 gap-6">
+    <div className="grid grid-cols-1 gap-5">
       {myReviews.map((review) => (
         <motion.div 
           key={review.id}
@@ -1856,15 +1849,15 @@ const ReviewsTab = () => {
       ))}
 
       {myReviews.length === 0 && (
-        <div className="py-24 text-center bg-white rounded-[2.5rem] border border-brand-100">
-          <div className="w-24 h-24 bg-brand-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-            <Star className="w-12 h-12 text-brand-200" />
+        <div className="py-12 md:py-16 text-center bg-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100">
+          <div className="w-16 h-16 bg-brand-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5">
+            <Star className="w-8 h-8 text-brand-200" />
           </div>
-          <h3 className="text-2xl font-black text-brand-700">No reviews written yet</h3>
-          <p className="text-brand-400 font-medium mt-2 max-w-sm mx-auto">
+          <h3 className="text-xl md:text-2xl font-black text-brand-700">No reviews written yet</h3>
+          <p className="text-brand-400 font-medium text-sm mt-2 max-w-sm mx-auto">
             Once you complete a booking, you'll be able to share your experience with the community.
           </p>
-          <button className="mt-8 px-10 py-4 bg-brand-700 text-white font-black rounded-2xl hover:bg-brand-600 transition-all cursor-pointer shadow-lg active:scale-95">
+          <button className="mt-6 px-8 py-3 bg-brand-700 text-white font-black text-sm rounded-xl hover:bg-brand-600 transition-all cursor-pointer shadow-lg active:scale-95">
             Book a Space
           </button>
         </div>
@@ -1873,87 +1866,6 @@ const ReviewsTab = () => {
   </div>
   );
 };
-
-const BillingTab = () => (
-  <div className="space-y-8 md:space-y-12">
-    <div className="flex items-center justify-between">
-      <h1 className="text-2xl md:text-4xl font-black text-brand-700 tracking-tight">Billing & Payments</h1>
-    </div>
-
-    <div className="flex flex-col gap-8 md:gap-12">
-      {/* Metode de plata */}
-      <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-6 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 space-y-6 md:space-y-8 max-w-3xl">
-        <h3 className="text-lg md:text-2xl font-black text-brand-700 flex items-center gap-3">
-          <CreditCard className="w-6 h-6 md:w-7 md:h-7 text-brand-500" />
-          Payment Methods
-        </h3>
-        <div className="space-y-4">
-          <div className="p-4 md:p-6 bg-brand-50 border-2 border-brand-700 rounded-xl md:rounded-2xl flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-7 md:w-12 md:h-8 bg-brand-700 rounded-md flex items-center justify-center text-[6px] md:text-[8px] text-white font-black uppercase tracking-widest shrink-0">VISA</div>
-              <div className="min-w-0">
-                <p className="font-black text-brand-700 text-sm md:text-base truncate">•••• 4242</p>
-                <p className="text-[10px] font-bold text-brand-400 mt-1 uppercase tracking-wider truncate">Expires 12/28 · Primary</p>
-              </div>
-            </div>
-            <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-brand-700 shrink-0" />
-          </div>
-          <div className="p-4 md:p-6 bg-white border border-brand-100 rounded-xl md:rounded-2xl flex items-center justify-between hover:border-brand-300 transition-all cursor-pointer group">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-7 md:w-12 md:h-8 bg-black rounded-md flex items-center justify-center text-[8px] md:text-[10px] text-white font-black shrink-0">Pay</div>
-              <div className="min-w-0">
-                <p className="font-black text-brand-700 text-sm md:text-base truncate">Apple Pay</p>
-                <p className="text-[10px] font-bold text-brand-400 mt-1 uppercase tracking-wider truncate">Default for mobile</p>
-              </div>
-            </div>
-            <button className="text-brand-300 hover:text-red-500 transition-colors shrink-0">
-              <Trash2 className="w-4 h-4 md:w-5 md:h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Istoric tranzactii */}
-      <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] border border-brand-200 overflow-hidden shadow-xl shadow-brand-700/5">
-      <div className="p-6 md:p-8 border-b border-brand-100 flex items-center justify-between">
-        <h3 className="text-lg md:text-2xl font-black text-brand-700">Transaction History</h3>
-        <button className="text-brand-500 font-bold hover:text-brand-700 flex items-center gap-2 text-xs md:text-sm">
-          Download All
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left min-w-[600px] md:min-w-0">
-          <thead>
-            <tr className="bg-brand-50">
-              <th className="px-6 md:px-8 py-3 md:py-4 text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest">ID</th>
-              <th className="px-6 md:px-8 py-3 md:py-4 text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest">Date</th>
-              <th className="px-6 md:px-8 py-3 md:py-4 text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest">Method</th>
-              <th className="px-6 md:px-8 py-3 md:py-4 text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest text-right">Amount</th>
-              <th className="px-6 md:px-8 py-3 md:py-4 text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest text-right">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-brand-100">
-            {transactions.map((t) => (
-              <tr key={t.id} className="hover:bg-brand-50/50 transition-colors">
-                <td className="px-6 md:px-8 py-4 md:py-6 font-bold text-brand-700 text-sm md:text-base">{t.id}</td>
-                <td className="px-6 md:px-8 py-4 md:py-6 text-brand-500 font-medium text-sm md:text-base">{t.date}</td>
-                <td className="px-6 md:px-8 py-4 md:py-6 text-brand-500 font-medium text-sm md:text-base">{t.method}</td>
-                <td className="px-6 md:px-8 py-4 md:py-6 text-brand-700 font-black text-right text-sm md:text-base">${t.amount}</td>
-                <td className="px-6 md:px-8 py-4 md:py-6 text-right">
-                  <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-black uppercase tracking-wider">
-                    {t.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
-);
 
 const NotificationsTab = () => {
   const navigate = useNavigate();
@@ -1977,32 +1889,32 @@ const NotificationsTab = () => {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl md:text-4xl font-black text-brand-700 tracking-tight">Notifications</h2>
-          <p className="text-brand-400 font-medium text-sm md:text-lg mt-1 md:mt-2">Stay up to date with your activity.</p>
+          <h2 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">Notifications</h2>
+          <p className="text-brand-400 font-medium text-sm mt-1">Stay up to date with your activity.</p>
         </div>
         <button
           type="button"
           onClick={() => markAllRead()}
           disabled={isLoading || notifications.filter((n) => !n.readAt).length === 0}
-          className="w-full md:w-auto px-6 md:px-8 py-2.5 md:py-3.5 bg-brand-100 hover:bg-brand-200 text-brand-700 font-black rounded-xl md:rounded-2xl transition-all active:scale-95 cursor-pointer text-xs md:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full md:w-auto px-5 py-2.5 bg-brand-100 hover:bg-brand-200 text-brand-700 font-black rounded-xl transition-all active:scale-95 cursor-pointer text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Mark all as read
         </button>
       </div>
 
-      <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-2 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 divide-y divide-brand-50">
+      <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-2 md:p-4 border border-brand-200 shadow-xl shadow-brand-700/5 divide-y divide-brand-50">
         {isLoading && notifications.length === 0 ? (
-          <div className="py-12 text-center text-brand-400 font-medium">Loading notifications…</div>
+          <div className="py-10 text-center text-brand-400 font-medium text-sm">Loading notifications…</div>
         ) : notifications.length === 0 ? (
-          <div className="py-20 text-center">
-            <div className="w-20 h-20 bg-brand-50 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-              <BellIcon className="w-10 h-10 text-brand-300" />
+          <div className="py-12 md:py-16 text-center">
+            <div className="w-16 h-16 bg-brand-50 rounded-[1.5rem] flex items-center justify-center mx-auto mb-5">
+              <BellIcon className="w-8 h-8 text-brand-300" />
             </div>
-            <h3 className="text-2xl font-black text-brand-700">No notifications yet</h3>
-            <p className="text-brand-400 font-medium mt-2">We&apos;ll let you know when something important happens.</p>
+            <h3 className="text-xl md:text-2xl font-black text-brand-700">No notifications yet</h3>
+            <p className="text-brand-400 font-medium text-sm mt-2">We&apos;ll let you know when something important happens.</p>
           </div>
         ) : (
           notifications.map((notif) => {
@@ -2011,41 +1923,41 @@ const NotificationsTab = () => {
             return (
               <div
                 key={notif.id}
-                className={`p-4 md:p-6 flex gap-4 md:gap-6 transition-all hover:bg-brand-50/50 rounded-2xl md:rounded-3xl group ${unread ? 'bg-brand-50/30' : ''}`}
+                className={`p-4 md:p-5 flex gap-3 md:gap-4 transition-all hover:bg-brand-50/50 rounded-xl md:rounded-2xl group ${unread ? 'bg-brand-50/30' : ''}`}
               >
                 <div
-                  className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.5rem] ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-sm`}
+                  className={`w-11 h-11 md:w-12 md:h-12 rounded-xl ${bg} flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform shadow-sm`}
                 >
-                  <Icon className={`w-6 h-6 md:w-8 md:h-8 ${color}`} />
+                  <Icon className={`w-5 h-5 md:w-6 md:h-6 ${color}`} />
                 </div>
-                <div className="flex-1 space-y-1 md:space-y-2 min-w-0">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 md:gap-2">
-                    <div className="flex items-center gap-2 md:gap-3">
-                      <span className="text-[10px] md:text-sm font-black text-brand-400 uppercase tracking-widest leading-none">{typeLabel}</span>
+                <div className="flex-1 space-y-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-brand-400 uppercase tracking-widest leading-none">{typeLabel}</span>
                       {unread && (
-                        <span className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-brand-500 shadow-[0_0_12px_rgba(180,131,106,0.6)] animate-pulse" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-500 shadow-[0_0_12px_rgba(180,131,106,0.6)] animate-pulse" />
                       )}
                     </div>
-                    <span className="text-[10px] md:text-sm font-bold text-brand-300">{formatNotificationTime(notif.createdAt)}</span>
+                    <span className="text-[10px] font-bold text-brand-300">{formatNotificationTime(notif.createdAt)}</span>
                   </div>
-                  <h4 className="text-base md:text-xl font-black text-brand-700 leading-tight truncate md:whitespace-normal">{notif.title}</h4>
-                  <p className="text-xs md:text-lg text-brand-500 font-medium leading-relaxed max-w-3xl line-clamp-2 md:line-clamp-none">
+                  <h4 className="text-sm md:text-base font-black text-brand-700 leading-tight truncate md:whitespace-normal">{notif.title}</h4>
+                  <p className="text-xs md:text-sm text-brand-500 font-medium leading-relaxed max-w-3xl line-clamp-2 md:line-clamp-none">
                     {notif.message}
                   </p>
-                  <div className="pt-1 md:pt-2 flex items-center gap-3 md:gap-4">
+                  <div className="pt-1 flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => handleViewDetails(notif)}
-                      className="text-[10px] md:text-sm font-black text-brand-700 hover:text-brand-400 transition-colors cursor-pointer flex items-center gap-1 group/btn"
+                      className="text-[10px] md:text-xs font-black text-brand-700 hover:text-brand-400 transition-colors cursor-pointer flex items-center gap-1 group/btn"
                     >
                       View Details
-                      <ChevronRight className="w-3 h-3 md:w-4 md:h-4 group-hover/btn:translate-x-1 transition-transform" />
+                      <ChevronRight className="w-3 h-3 group-hover/btn:translate-x-1 transition-transform" />
                     </button>
                     {unread && (
                       <button
                         type="button"
                         onClick={() => markRead(notif.id)}
-                        className="text-[10px] md:text-sm font-black text-brand-300 hover:text-brand-700 transition-colors cursor-pointer"
+                        className="text-[10px] md:text-xs font-black text-brand-300 hover:text-brand-700 transition-colors cursor-pointer"
                       >
                         Mark as read
                       </button>
@@ -2060,12 +1972,12 @@ const NotificationsTab = () => {
 
       {/* Incarca mai multe */}
       {nextCursor && (
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-2">
           <button
             type="button"
             onClick={handleLoadMore}
             disabled={loadingMore}
-            className="px-6 py-3 bg-brand-100 hover:bg-brand-200 text-brand-700 font-black rounded-2xl transition-all disabled:opacity-50 cursor-pointer"
+            className="px-5 py-2.5 bg-brand-100 hover:bg-brand-200 text-brand-700 font-black text-sm rounded-xl transition-all disabled:opacity-50 cursor-pointer"
           >
             {loadingMore ? 'Loading…' : 'Load more notifications'}
           </button>
@@ -2262,7 +2174,7 @@ const SettingsTab = () => {
   };
 
   return (
-    <div className="space-y-12 pb-12 relative">
+    <div className="space-y-7 md:space-y-9 pb-8 relative animate-in fade-in slide-in-from-bottom-4 duration-500">
       <AnimatePresence>
         {activeSecurityAction && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -2340,16 +2252,19 @@ const SettingsTab = () => {
         )}
       </AnimatePresence>
 
-      <div className="flex items-center justify-between mb-6 md:mb-10">
-        <h1 className="text-2xl md:text-4xl font-black text-brand-700 tracking-tight">Account Settings</h1>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl md:text-4xl font-black text-brand-700 tracking-tight">Account Settings</h2>
+          <p className="text-brand-400 font-medium text-sm mt-1">Manage your profile, security, and notifications.</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 md:gap-12">
-        <div className="space-y-2 md:space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 md:gap-9">
+        <div className="space-y-2 md:space-y-2.5">
           <h3 className="text-lg md:text-xl font-black text-brand-700">Profile Information</h3>
           <p className="text-sm text-brand-400 font-medium">Update your photo and personal details here.</p>
         </div>
-        <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 space-y-6 md:space-y-8 group/settings-card relative transition-all duration-500 hover:shadow-2xl hover:shadow-brand-700/10">
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6.5 border border-brand-200 shadow-xl shadow-brand-700/5 space-y-6 group/settings-card relative transition-all duration-500 hover:shadow-2xl hover:shadow-brand-700/10">
           <input
             ref={avatarFileInputRef}
             type="file"
@@ -2357,16 +2272,16 @@ const SettingsTab = () => {
             className="hidden"
             onChange={handleAvatarFileChange}
           />
-          <div className="flex flex-col sm:flex-row items-center gap-6 md:gap-8">
+          <div className="flex flex-col sm:flex-row items-center gap-6">
             <div
               role="button"
               tabIndex={0}
               onClick={triggerAvatarFileInput}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerAvatarFileInput(); } }}
-              className="relative group cursor-pointer shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-2xl md:rounded-[2rem]"
+              className="relative group cursor-pointer shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 rounded-xl md:rounded-2xl"
               aria-label={(displayAvatarUrl ?? user?.avatarUrl) ? 'Change profile photo' : 'Add profile photo'}
             >
-              <div className="w-24 h-24 md:w-32 md:h-32 rounded-2xl md:rounded-[2rem] bg-brand-100 overflow-hidden border-4 border-white shadow-xl">
+              <div className="w-[5.75rem] h-[5.75rem] md:w-[6.75rem] md:h-[6.75rem] rounded-xl md:rounded-2xl bg-brand-100 overflow-hidden border-2 md:border-4 border-white shadow-xl">
                 <ImageWithFallback
                   key={displayAvatarUrl ?? user?.avatarUrl ?? 'default'}
                   src={displayAvatarUrl ?? user?.avatarUrl ?? 'https://images.unsplash.com/photo-1535711905757-85180196c21a?q=80&w=200'}
@@ -2374,18 +2289,18 @@ const SettingsTab = () => {
                 />
               </div>
               {avatarUploading ? (
-                <div className="absolute inset-0 bg-brand-700/80 rounded-2xl md:rounded-[2rem] flex items-center justify-center">
+                <div className="absolute inset-0 bg-brand-700/80 rounded-xl md:rounded-2xl flex items-center justify-center">
                   <span className="text-white text-xs md:text-sm font-bold">Uploading…</span>
                 </div>
               ) : (
-                <div className="absolute inset-0 bg-brand-700/60 rounded-2xl md:rounded-[2rem] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all pointer-events-none">
-                  <Plus className="w-6 h-6 md:w-8 md:h-8 text-white" />
+                <div className="absolute inset-0 bg-brand-700/60 rounded-xl md:rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all pointer-events-none">
+                  <Plus className="w-5 h-5 md:w-6 md:h-6 text-white" />
                 </div>
               )}
             </div>
             <div className="text-center sm:text-left w-full">
               <h4 className="text-base md:text-lg font-black text-brand-700">Profile Photo</h4>
-              <p className="text-xs md:text-sm text-brand-400 font-bold mb-4">Recommended size: 800x800px</p>
+              <p className="text-xs md:text-sm text-brand-400 font-bold mb-3.5">Recommended size: 800x800px</p>
               {avatarError && <p className="text-sm text-red-500 font-medium mb-3">{avatarError}</p>}
               <div className="flex flex-wrap justify-center sm:justify-start gap-3 md:gap-4">
                 <button
@@ -2408,32 +2323,32 @@ const SettingsTab = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5 md:space-y-2">
-              <label className="text-[10px] md:text-sm font-black text-brand-400 uppercase tracking-widest">Full Name</label>
+              <label className="text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest">Full Name</label>
               <input 
                 type="text" 
                 value={profileName}
                 onChange={(e) => setProfileName(e.target.value)}
-                className="w-full px-4 md:px-5 py-3 md:py-4 bg-brand-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 text-sm md:text-base"
+                className="w-full px-4 md:px-5 py-3 md:py-3.5 bg-brand-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 text-sm md:text-[15px]"
               />
             </div>
             <div className="space-y-1.5 md:space-y-2">
-              <label className="text-[10px] md:text-sm font-black text-brand-400 uppercase tracking-widest">Professional Title</label>
+              <label className="text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest">Professional Title</label>
               <input 
                 type="text" 
                 value={profileTitle}
                 onChange={(e) => setProfileTitle(e.target.value)}
-                className="w-full px-4 md:px-5 py-3 md:py-4 bg-brand-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 text-sm md:text-base"
+                className="w-full px-4 md:px-5 py-3 md:py-3.5 bg-brand-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 text-sm md:text-[15px]"
               />
             </div>
             <div className="sm:col-span-2 space-y-1.5 md:space-y-2">
-              <label className="text-[10px] md:text-sm font-black text-brand-400 uppercase tracking-widest">Bio</label>
+              <label className="text-[10px] md:text-xs font-black text-brand-400 uppercase tracking-widest">Bio</label>
               <textarea 
                 rows={3}
                 value={profileBio}
                 onChange={(e) => setProfileBio(e.target.value)}
-                className="w-full px-4 md:px-5 py-3 md:py-4 bg-brand-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 resize-none text-sm md:text-base"
+                className="w-full px-4 md:px-5 py-3 md:py-3.5 bg-brand-50 border-none rounded-xl md:rounded-2xl focus:ring-2 focus:ring-brand-200 focus:outline-none font-bold text-brand-700 resize-none text-sm md:text-[15px]"
               />
             </div>
           </div>
@@ -2442,15 +2357,15 @@ const SettingsTab = () => {
             <p className="text-sm text-red-500 font-medium">{profileError}</p>
           )}
 
-          <div className={`grid transition-all duration-500 ease-in-out !mt-0 ${hasProfileChanges ? 'grid-rows-[1fr] opacity-100 !mt-6 md:!mt-8' : 'grid-rows-[0fr] opacity-0'}`}>
+          <div className={`grid transition-all duration-500 ease-in-out !mt-0 ${hasProfileChanges ? 'grid-rows-[1fr] opacity-100 !mt-6' : 'grid-rows-[0fr] opacity-0'}`}>
             <div className="overflow-hidden">
-              <div className={`pt-6 md:pt-8 border-t border-brand-100 flex justify-end transform transition-all duration-700 ${hasProfileChanges ? 'translate-y-0' : 'translate-y-8'}`}>
+              <div className={`pt-6 border-t border-brand-100 flex justify-end transform transition-all duration-700 ${hasProfileChanges ? 'translate-y-0' : 'translate-y-8'}`}>
                 <button 
                   onClick={handleApplyProfileChanges}
                   disabled={profileSaving}
-                  className="flex items-center gap-2 px-6 md:px-10 py-3 md:py-4 bg-brand-700 text-white font-black rounded-xl md:rounded-2xl shadow-xl shadow-brand-700/20 hover:bg-brand-600 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-sm md:text-base disabled:opacity-70 disabled:pointer-events-none"
+                  className="flex items-center gap-2 px-6 md:px-7 py-3 bg-brand-700 text-white font-black rounded-xl md:rounded-2xl shadow-xl shadow-brand-700/20 hover:bg-brand-600 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer text-sm disabled:opacity-70 disabled:pointer-events-none"
                 >
-                  <CheckCircle2 className="w-4 h-4 md:w-5 h-5" />
+                  <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5" />
                   {profileSaving ? 'Saving…' : 'Apply Changes'}
                 </button>
               </div>
@@ -2459,39 +2374,39 @@ const SettingsTab = () => {
         </div>
       </div>
 
-      <div className="border-t border-brand-100 pt-8 md:pt-12" />
+      <div className="border-t border-brand-100 pt-6 md:pt-9" />
 
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 md:gap-12">
-        <div className="space-y-2 md:space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 md:gap-9">
+        <div className="space-y-2 md:space-y-2.5">
           <h3 className="text-lg md:text-xl font-black text-brand-700">Account Security</h3>
           <p className="text-sm text-brand-400 font-medium">Manage your password and security preferences.</p>
         </div>
-        <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 space-y-4 md:space-y-6">
-          <div className="flex items-center justify-between p-4 md:p-6 bg-brand-50 rounded-xl md:rounded-2xl">
-            <div className="flex items-center gap-3 md:gap-4">
-              <div className="p-2 md:p-3 bg-white rounded-lg md:rounded-xl shadow-sm text-brand-500">
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6.5 border border-brand-200 shadow-xl shadow-brand-700/5 space-y-4">
+          <div className="flex items-center justify-between p-3.5 md:p-4.5 bg-brand-50 rounded-xl md:rounded-2xl">
+            <div className="flex items-center gap-3">
+              <div className="p-2 md:p-2.5 bg-white rounded-lg md:rounded-xl shadow-sm text-brand-500">
                 <Mail className="w-5 h-5 md:w-6 md:h-6" />
               </div>
               <div>
-                <p className="font-black text-brand-700 text-sm md:text-base">Email Address</p>
+                <p className="font-black text-brand-700 text-sm md:text-[15px]">Email Address</p>
                 <p className="text-xs md:text-sm text-brand-400 font-bold">{user?.email ?? '—'}</p>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center justify-between p-4 md:p-6 bg-brand-50 rounded-xl md:rounded-2xl">
-            <div className="flex items-center gap-3 md:gap-4">
-              <div className="p-2 md:p-3 bg-white rounded-lg md:rounded-xl shadow-sm text-brand-500">
+          <div className="flex items-center justify-between p-3.5 md:p-4.5 bg-brand-50 rounded-xl md:rounded-2xl">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2 md:p-2.5 bg-white rounded-lg md:rounded-xl shadow-sm text-brand-500 shrink-0">
                 <Lock className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <div>
-                <p className="font-black text-brand-700 text-sm md:text-base">Password</p>
+              <div className="min-w-0">
+                <p className="font-black text-brand-700 text-sm md:text-[15px]">Password</p>
                 <p className="text-xs md:text-sm text-brand-400 font-bold">Last changed 3 months ago</p>
               </div>
             </div>
             <button 
               onClick={() => setActiveSecurityAction('Password')}
-              className="group relative px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-brand-700 to-brand-600 text-white font-black text-xs md:text-sm rounded-xl shadow-lg shadow-brand-700/20 hover:shadow-xl hover:shadow-brand-700/30 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden"
+              className="group relative px-4 md:px-4.5 py-2 md:py-2.5 bg-gradient-to-r from-brand-700 to-brand-600 text-white font-black text-xs md:text-sm rounded-xl shadow-lg shadow-brand-700/20 hover:shadow-xl hover:shadow-brand-700/30 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer overflow-hidden shrink-0 ml-2"
             >
               <span className="relative z-10 flex items-center gap-2">
                 <RotateCcw className="w-3.5 h-3.5 md:w-4 md:h-4 group-hover:rotate-180 transition-transform duration-500" />
@@ -2503,24 +2418,24 @@ const SettingsTab = () => {
         </div>
       </div>
 
-      <div className="border-t border-brand-100 pt-8 md:pt-12" />
+      <div className="border-t border-brand-100 pt-6 md:pt-9" />
 
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 md:gap-12">
-        <div className="space-y-2 md:space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-6 md:gap-9">
+        <div className="space-y-2 md:space-y-2.5">
           <h3 className="text-lg md:text-xl font-black text-brand-700">Notifications</h3>
           <p className="text-sm text-brand-400 font-medium">Control how and when you receive updates.</p>
         </div>
-        <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-5 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 space-y-4 md:space-y-6">
+        <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6.5 border border-brand-200 shadow-xl shadow-brand-700/5 space-y-4">
           {[
             { key: 'bookingUpdatesEnabled' as const, label: 'Booking Updates', desc: 'Get notified when one of your bookings is confirmed or changed.' },
             { key: 'hostBookingUpdatesEnabled' as const, label: 'Host Booking Updates', desc: 'Get notified about booking confirmations and changes for spaces you host.' },
             { key: 'messageAlertsEnabled' as const, label: 'Message Alerts', desc: 'Instant notifications when you receive a message from a host.' },
             { key: 'systemNotificationsEnabled' as const, label: 'System Notifications', desc: 'Get notified about important system updates and security changes.' },
           ].map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between gap-4 md:gap-8 pb-4 md:pb-6 border-b border-brand-100 last:border-0 last:pb-0">
+            <div key={idx} className="flex items-center justify-between gap-4 md:gap-5 pb-3.5 md:pb-4.5 border-b border-brand-100 last:border-0 last:pb-0">
               <div className="min-w-0">
-                <p className="font-black text-brand-700 text-sm md:text-base truncate">{item.label}</p>
-                <p className="text-xs md:text-sm text-brand-400 font-medium mt-0.5 md:mt-1 line-clamp-2">{item.desc}</p>
+                <p className="font-black text-brand-700 text-sm md:text-[15px] truncate">{item.label}</p>
+                <p className="text-xs md:text-sm text-brand-400 font-medium mt-0.5 line-clamp-2">{item.desc}</p>
               </div>
               <button
                 type="button"
@@ -2531,10 +2446,10 @@ const SettingsTab = () => {
                   if (notificationPrefsAnyBusy) return;
                   handleNotificationToggle(item.key);
                 }}
-                className={`w-14 md:w-16 h-8 md:h-9 rounded-full transition-all relative shrink-0 ${notificationPrefs[item.key] ? 'bg-brand-700' : 'bg-brand-200'} cursor-pointer scale-110 md:scale-100 ${notificationPrefsAnyBusy ? 'opacity-60' : ''}`}
+                className={`w-12 md:w-[3.25rem] h-7 md:h-[1.875rem] rounded-full transition-all relative shrink-0 ${notificationPrefs[item.key] ? 'bg-brand-700' : 'bg-brand-200'} cursor-pointer ${notificationPrefsAnyBusy ? 'opacity-60' : ''}`}
               >
                 <div
-                  className={`absolute top-1 w-6 h-6 md:w-7 md:h-7 bg-white rounded-full transition-all ${notificationPrefs[item.key] ? 'right-1' : 'left-1'}`}
+                  className={`absolute top-0.5 md:top-1 w-5 h-5 md:w-5 md:h-5 bg-white rounded-full transition-all ${notificationPrefs[item.key] ? 'right-0.5 md:right-1' : 'left-0.5 md:left-1'}`}
                 />
               </button>
             </div>
@@ -2612,7 +2527,6 @@ export const Dashboard = () => {
     { label: 'Messages', icon: MessageSquare },
     { label: 'Notifications', icon: BellIcon },
     { label: 'Reviews', icon: Star },
-    { label: 'Billing', icon: CreditCard },
     { label: 'Settings', icon: Settings },
   ];
 
@@ -2623,7 +2537,6 @@ export const Dashboard = () => {
       case 'Messages': return <MessagesTab />;
       case 'Notifications': return <NotificationsTab />;
       case 'Reviews': return <ReviewsTab />;
-      case 'Billing': return <BillingTab />;
       case 'Settings': return <SettingsTab />;
       default: return <BookingsTab bookings={bookings} setBookings={setBookings} newestBookingId={newestBookingId} />;
     }
@@ -2646,16 +2559,16 @@ export const Dashboard = () => {
                 </div>
               </div>
 
-              <nav className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto pb-4 lg:pb-0 scrollbar-hide flex-1">
+              <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 flex-1">
                 {menuItems.map((item) => (
                   <button 
                     key={item.label}
                     onClick={() => handleTabChange(item.label)}
-                    className={`whitespace-nowrap flex-shrink-0 flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-2xl font-bold transition-all cursor-pointer ${activeTab === item.label ? 'bg-brand-700 text-white shadow-lg' : 'text-brand-500 hover:bg-brand-50 hover:text-brand-700'}`}
+                    className={`w-full flex items-center justify-between p-3 md:p-4 rounded-xl md:rounded-2xl font-bold transition-all cursor-pointer ${activeTab === item.label ? 'bg-brand-700 text-white shadow-lg' : 'text-brand-500 hover:bg-brand-50 hover:text-brand-700'}`}
                   >
-                    <div className="flex items-center gap-3 relative">
-                      <item.icon className="w-4 h-4 md:w-5 md:h-5" />
-                      <span className="text-sm md:text-base">{item.label}</span>
+                    <div className="flex items-center gap-2 md:gap-3 relative min-w-0">
+                      <item.icon className="w-4 h-4 md:w-5 md:h-5 shrink-0" />
+                      <span className="text-xs sm:text-sm md:text-base truncate">{item.label}</span>
                       {item.label === 'My Bookings' && (
                         <UnreadBadge show={hasUnreadBookings} position="inline" size="sm" />
                       )}

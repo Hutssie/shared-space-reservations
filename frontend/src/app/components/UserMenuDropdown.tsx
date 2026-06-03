@@ -6,7 +6,6 @@ import {
   MessageSquare, 
   Bell as BellIcon,
   Star,
-  CreditCard, 
   Settings, 
   LogOut, 
   ChevronRight,
@@ -41,7 +40,6 @@ export const UserMenuDropdown = () => {
     { label: 'Messages', icon: MessageSquare, tab: 'Messages' },
     { label: 'Notifications', icon: BellIcon, tab: 'Notifications' },
     { label: 'Reviews', icon: Star, tab: 'Reviews' },
-    { label: 'Billing', icon: CreditCard, tab: 'Billing' },
     { label: 'Settings', icon: Settings, tab: 'Settings' },
   ];
 
@@ -76,38 +74,38 @@ export const UserMenuDropdown = () => {
             initial={{ opacity: 0, y: 15, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 15, scale: 0.95 }}
-            className="absolute right-0 mt-4 w-72 bg-white rounded-[2.5rem] shadow-2xl border border-brand-100 overflow-hidden z-[100] p-3"
+            className="absolute right-0 mt-4 w-[272px] bg-white rounded-[2rem] shadow-2xl border border-brand-100 overflow-hidden z-[100] p-2.5"
           >
-            <div className="px-6 py-6 border-b border-brand-50 mb-2">
-              <p className="text-xs font-black text-brand-400 uppercase tracking-[0.2em] mb-1">Signed in as</p>
-              <p className="font-black text-brand-700">{user?.name ?? 'User'}</p>
+            <div className="px-5 py-4 border-b border-brand-50 mb-1.5">
+              <p className="text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] mb-0.5">Signed in as</p>
+              <p className="text-sm font-black text-brand-700">{user?.name ?? 'User'}</p>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {menuItems.map((item) => (
                 <button
                   key={item.label}
                   onClick={() => handleNavigate(item.tab)}
-                  className="w-full flex items-center justify-between p-4 rounded-2xl font-bold text-brand-500 hover:bg-brand-50 hover:text-brand-700 transition-all group cursor-pointer"
+                  className="w-full flex items-center justify-between p-3.5 rounded-xl text-sm font-bold text-brand-500 hover:bg-brand-50 hover:text-brand-700 transition-all group cursor-pointer"
                 >
-                  <div className="flex items-center gap-3 relative">
-                    <item.icon className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  <div className="flex items-center gap-2.5 relative">
+                    <item.icon className="w-4 h-4 group-hover:scale-110 transition-transform" />
                     {item.label}
                     {item.label === 'My Bookings' && (
                       <UnreadBadge show={hasUnreadBookings} position="inline" size="sm" />
                     )}
                   </div>
-                  <ChevronRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                  <ChevronRight className="w-3.5 h-3.5 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
                 </button>
               ))}
             </div>
 
-            <div className="mt-2 pt-2 border-t border-brand-50">
+            <div className="mt-1.5 pt-1.5 border-t border-brand-50">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all cursor-pointer"
+                className="w-full flex items-center gap-2.5 p-3.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all cursor-pointer"
               >
-                <LogOut className="w-5 h-5" />
+                <LogOut className="w-4 h-4" />
                 Logout
               </button>
             </div>
