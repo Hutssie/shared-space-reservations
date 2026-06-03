@@ -853,10 +853,13 @@ export const SpaceDetails = () => {
           };
           const cellClass = 'overflow-hidden group cursor-pointer shadow-xl shadow-brand-700/5';
           const imgClass = 'w-full h-full object-cover group-hover:scale-105 transition-transform duration-700';
+          const galleryShellClass = 'mb-10 md:mb-12 w-full aspect-[16/9] md:aspect-[21/9]';
+          const galleryGapClass = 'gap-2 md:gap-3';
+          const roundedClass = 'rounded-[1.5rem] md:rounded-[2rem]';
 
           if (imageCount === 0) {
             return (
-              <div className="mb-10 md:mb-12 h-[240px] md:h-[320px] rounded-[1.5rem] md:rounded-[2rem] bg-brand-100 flex items-center justify-center">
+              <div className={`${galleryShellClass} bg-brand-100 flex items-center justify-center`}>
                 <span className="text-brand-400 font-bold">No photos</span>
               </div>
             );
@@ -864,13 +867,13 @@ export const SpaceDetails = () => {
 
           if (imageCount === 1) {
             return (
-              <div className="mb-10 md:mb-12">
+              <div className={galleryShellClass}>
                 <div
                   role="button"
                   tabIndex={0}
                   onClick={() => openGallery(0)}
                   onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
-                  className={`aspect-[16/9] md:aspect-[21/9] relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
+                  className={`h-full w-full relative ${roundedClass} ${cellClass}`}
                 >
                   <ImageWithFallback src={images[0]} alt="Space" className={imgClass} />
                 </div>
@@ -880,46 +883,18 @@ export const SpaceDetails = () => {
 
           if (imageCount === 2) {
             return (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-10 md:mb-12">
-                {images.slice(0, 2).map((img, idx) => (
-                  <div
-                    key={idx}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => openGallery(idx)}
-                    onKeyDown={(e) => e.key === 'Enter' && openGallery(idx)}
-                    className={`aspect-[4/3] md:h-[400px] relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
-                  >
-                    <ImageWithFallback src={img} alt={`Space ${idx + 1}`} className={imgClass} />
-                  </div>
-                ))}
-              </div>
-            );
-          }
-
-          if (imageCount === 3) {
-            return (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-10 md:mb-12 md:h-[480px] min-h-0 overflow-hidden">
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => openGallery(0)}
-                  onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
-                  className={`aspect-[4/3] md:aspect-auto md:min-h-0 relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
-                >
-                  <ImageWithFallback src={images[0]} alt="Space 1" className={imgClass} />
-                </div>
-                <div className="grid grid-rows-2 gap-4 md:gap-6 min-h-0">
-                  {images.slice(1, 3).map((img, idx) => (
+              <div className={galleryShellClass}>
+                <div className={`grid h-full min-h-0 grid-cols-2 ${galleryGapClass}`}>
+                  {images.slice(0, 2).map((img, idx) => (
                     <div
                       key={idx}
                       role="button"
                       tabIndex={0}
-                      onClick={() => openGallery(idx + 1)}
-                      onKeyDown={(e) => e.key === 'Enter' && openGallery(idx + 1)}
-                      className={`aspect-[4/3] md:aspect-auto md:min-h-0 relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
+                      onClick={() => openGallery(idx)}
+                      onKeyDown={(e) => e.key === 'Enter' && openGallery(idx)}
+                      className={`h-full min-h-0 relative ${roundedClass} ${cellClass}`}
                     >
-                      <ImageWithFallback src={img} alt={`Space ${idx + 2}`} className={imgClass} />
+                      <ImageWithFallback src={img} alt={`Space ${idx + 1}`} className={imgClass} />
                     </div>
                   ))}
                 </div>
@@ -927,58 +902,99 @@ export const SpaceDetails = () => {
             );
           }
 
-          return (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 mb-10 md:mb-12 h-auto md:h-[480px]">
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => openGallery(0)}
-                onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
-                className={`md:col-span-2 aspect-[4/3] md:aspect-auto relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
-              >
-                <ImageWithFallback src={images[0] ?? ''} alt="Space 1" className={imgClass} />
-              </div>
-              <div className="hidden md:grid grid-rows-2 gap-6 md:col-span-1">
-                {images.slice(1, 3).map((img, idx) => (
+          if (imageCount === 3) {
+            return (
+              <div className={galleryShellClass}>
+                <div className={`grid h-full min-h-0 grid-cols-1 md:grid-cols-2 ${galleryGapClass}`}>
                   <div
-                    key={idx}
                     role="button"
                     tabIndex={0}
-                    onClick={() => openGallery(idx + 1)}
-                    onKeyDown={(e) => e.key === 'Enter' && openGallery(idx + 1)}
-                    className={`relative rounded-[1.5rem] md:rounded-[2rem] ${cellClass}`}
-                  >
-                    <ImageWithFallback src={img} alt={`Space ${idx + 2}`} className={imgClass} />
-                  </div>
-                ))}
-              </div>
-              <div
-                role="button"
-                tabIndex={0}
-                onClick={() => openGallery(3)}
-                onKeyDown={(e) => e.key === 'Enter' && openGallery(3)}
-                className={`hidden md:block relative rounded-[1.5rem] md:rounded-[2rem] overflow-hidden group cursor-pointer shadow-xl shadow-brand-700/5 md:col-span-1 ${cellClass}`}
-              >
-                <ImageWithFallback src={images[3] ?? ''} alt="Space 4" className={imgClass} />
-                {imageCount > 4 && (
-                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-100 group-hover:bg-black/60 transition-colors">
-                    <span className="px-5 py-2.5 md:px-6 md:py-3 bg-white text-brand-700 font-black text-sm md:text-base rounded-xl md:rounded-2xl shadow-2xl hover:scale-105 transition-transform cursor-pointer">
-                      View all {imageCount} photos
-                    </span>
-                  </div>
-                )}
-              </div>
-              {imageCount >= 4 && (
-                <div className="md:hidden">
-                  <button
-                    type="button"
                     onClick={() => openGallery(0)}
-                    className="w-full py-4 border-2 border-brand-200 rounded-2xl text-brand-700 font-black flex items-center justify-center gap-2"
+                    onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
+                    className={`h-full min-h-0 relative ${roundedClass} ${cellClass}`}
                   >
-                    View all {imageCount} photos
-                  </button>
+                    <ImageWithFallback src={images[0]} alt="Space 1" className={imgClass} />
+                  </div>
+                  <div className={`grid h-full min-h-0 grid-rows-2 ${galleryGapClass}`}>
+                    {images.slice(1, 3).map((img, idx) => (
+                      <div
+                        key={idx}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openGallery(idx + 1)}
+                        onKeyDown={(e) => e.key === 'Enter' && openGallery(idx + 1)}
+                        className={`h-full min-h-0 relative ${roundedClass} ${cellClass}`}
+                      >
+                        <ImageWithFallback src={img} alt={`Space ${idx + 2}`} className={imgClass} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              )}
+              </div>
+            );
+          }
+
+          return (
+            <div className={galleryShellClass}>
+              <div className={`hidden md:grid h-full min-h-0 grid-cols-4 ${galleryGapClass}`}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openGallery(0)}
+                  onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
+                  className={`col-span-2 h-full min-h-0 relative ${roundedClass} ${cellClass}`}
+                >
+                  <ImageWithFallback src={images[0] ?? ''} alt="Space 1" className={imgClass} />
+                </div>
+                <div className={`col-span-1 grid h-full min-h-0 grid-rows-2 ${galleryGapClass}`}>
+                  {images.slice(1, 3).map((img, idx) => (
+                    <div
+                      key={idx}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openGallery(idx + 1)}
+                      onKeyDown={(e) => e.key === 'Enter' && openGallery(idx + 1)}
+                      className={`h-full min-h-0 relative ${roundedClass} ${cellClass}`}
+                    >
+                      <ImageWithFallback src={img} alt={`Space ${idx + 2}`} className={imgClass} />
+                    </div>
+                  ))}
+                </div>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openGallery(3)}
+                  onKeyDown={(e) => e.key === 'Enter' && openGallery(3)}
+                  className={`col-span-1 h-full min-h-0 relative ${roundedClass} ${cellClass}`}
+                >
+                  <ImageWithFallback src={images[3] ?? ''} alt="Space 4" className={imgClass} />
+                  {imageCount > 4 && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-100 group-hover:bg-black/60 transition-colors">
+                      <span className="px-5 py-2.5 md:px-6 md:py-3 bg-white text-brand-700 font-black text-sm md:text-base rounded-xl md:rounded-2xl shadow-2xl hover:scale-105 transition-transform cursor-pointer">
+                        View all {imageCount} photos
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className={`md:hidden h-full min-h-0 flex flex-col ${galleryGapClass}`}>
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => openGallery(0)}
+                  onKeyDown={(e) => e.key === 'Enter' && openGallery(0)}
+                  className={`flex-1 min-h-0 relative ${roundedClass} ${cellClass}`}
+                >
+                  <ImageWithFallback src={images[0] ?? ''} alt="Space 1" className={imgClass} />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openGallery(0)}
+                  className="shrink-0 w-full py-3 border-2 border-brand-200 rounded-2xl text-brand-700 font-black flex items-center justify-center gap-2"
+                >
+                  View all {imageCount} photos
+                </button>
+              </div>
             </div>
           );
         })()}
