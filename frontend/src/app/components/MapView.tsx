@@ -9,8 +9,10 @@ import { formatRatingScore } from '../utils/formatRating';
 import { ImageWithFallback } from './ImageWithFallback';
 
 const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
-const DEFAULT_CENTER = { lat: 40.7128, lng: -74.006 };
 const DEFAULT_ZOOM = 12;
+/** Default world-view camera for maps with no location selected yet. */
+const WORLD_DEFAULT_CENTER = { lat: 15, lng: 0 };
+const WORLD_DEFAULT_ZOOM = 2;
 
 type LatLng = { lat: number; lng: number };
 
@@ -380,23 +382,23 @@ export function ListingMap({
 
   // If parent doesn't control `center` yet, keep the camera on the placed pin
   // instead of snapping back to the default location on re-render.
-  const mapCenter = useMemo(() => center ?? pin ?? DEFAULT_CENTER, [center, pin]);
-  const zoom = useMemo(() => zoomProp ?? (pin ? 15 : DEFAULT_ZOOM), [zoomProp, pin]);
+  const mapCenter = useMemo(
+    () => center ?? pin ?? WORLD_DEFAULT_CENTER,
+    [center, pin]
+  );
+  const zoom = useMemo(() => {
+    if (pin) return 15;
+    if (center) return zoomProp ?? DEFAULT_ZOOM;
+    return WORLD_DEFAULT_ZOOM;
+  }, [zoomProp, pin, center]);
   const onMapClick = useCallback(
     (e: google.maps.MapMouseEvent) => {
+      if (pin) return;
       const lat = e.latLng?.lat();
       const lng = e.latLng?.lng();
       if (lat != null && lng != null) onPositionChange(lat, lng);
     },
-    [onPositionChange]
-  );
-  const onDragEnd = useCallback(
-    (e: google.maps.MapMouseEvent) => {
-      const lat = e.latLng?.lat();
-      const lng = e.latLng?.lng();
-      if (lat != null && lng != null) onPositionChange(lat, lng);
-    },
-    [onPositionChange]
+    [onPositionChange, pin]
   );
 
   if (!API_KEY) {
@@ -443,8 +445,7 @@ export function ListingMap({
         {pin && (
           <Marker
             position={pin}
-            draggable
-            onDragEnd={onDragEnd}
+            draggable={false}
           />
         )}
       </GoogleMap>
@@ -955,10 +956,10 @@ export function SpacesMap({
   const mapCenter = useMemo((): LatLng => {
     if (initialCenter) return initialCenter;
     if (center) return center;
-    return DEFAULT_CENTER;
+    return WORLD_DEFAULT_CENTER;
   }, [initialCenter, center]);
 
-  const mapZoom = initialZoom ?? (initialCenter || center ? 12 : 4);
+  const mapZoom = initialZoom ?? (initialCenter || center ? 12 : WORLD_DEFAULT_ZOOM);
 
   const cameraKey = initialCenter
     ? `${initialCenter.lat},${initialCenter.lng},${mapZoom}`

@@ -235,7 +235,17 @@ export const ListSpace = () => {
   }, []);
 
   const handleChangePlace = useCallback(() => {
-    setFormData((prev) => ({ ...prev, country: '', region: '', city: '' }));
+    lastReverseGeocodeRef.current = null;
+    setMapCenter(null);
+    setFormData((prev) => ({
+      ...prev,
+      country: '',
+      region: '',
+      city: '',
+      pinPlaced: false,
+      latitude: null,
+      longitude: null,
+    }));
     setLocationSearch('');
     setShowPlaceSuggestions(true);
   }, []);
@@ -678,7 +688,11 @@ export const ListSpace = () => {
                       onPositionChange={handlePositionChange}
                       className="flex-1 w-full min-h-0 h-full rounded-2xl"
                     />
-                    <p className="text-[10px] text-brand-400 font-bold mt-2 text-center shrink-0">Click on the map to place your pin.</p>
+                    <p className="text-[10px] text-brand-400 font-bold mt-2 text-center shrink-0">
+                      {formData.pinPlaced
+                        ? 'Click Change above to update the city or area and place a new pin.'
+                        : 'Click on the map to place your pin.'}
+                    </p>
                   </div>
                 </div>
               </motion.div>
