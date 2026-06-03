@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { useJsApiLoader, GoogleMap, Marker, useGoogleMap, InfoWindow } from '@react-google-maps/api';
+import { useJsApiLoader, GoogleMap, Marker, useGoogleMap } from '@react-google-maps/api';
 import { Star, X, Users, Square } from 'lucide-react';
 import type { Space } from '../api/spaces';
 import { formatRatingScore } from '../utils/formatRating';
@@ -273,6 +273,103 @@ function SpacesMapMarkers({
   return null;
 }
 
+/** Pan map to selected marker and leave room for the bottom detail card. */
+function PanToSelectedSpace({ space }: { space: Space | null }) {
+  const map = useGoogleMap();
+  useEffect(() => {
+    if (!map || space?.latitude == null || space?.longitude == null) return;
+    map.panTo({ lat: space.latitude, lng: space.longitude });
+    window.requestAnimationFrame(() => {
+      map.panBy(0, -100);
+    });
+  }, [map, space?.id, space?.latitude, space?.longitude]);
+  return null;
+}
+
+function MapSpaceDetailCard({
+  space,
+  dateParam,
+  onClose,
+}: {
+  space: Space;
+  dateParam?: string;
+  onClose: () => void;
+}) {
+  const handleClosePopup = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+  }, [onClose]);
+
+  return (
+    <div
+      className="absolute bottom-2.5 left-2.5 right-2.5 sm:bottom-3 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[min(360px,calc(100%-1.25rem))] z-10 max-h-[calc(100%-1rem)] overflow-y-auto pointer-events-auto"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="bg-white rounded-2xl border border-[#f2ddce] shadow-xl overflow-hidden">
+        <Link
+          to={`/space/${space.id}${dateParam ? `?date=${dateParam}` : ''}`}
+          className="block hover:opacity-95 transition-opacity"
+        >
+          <div className="relative aspect-[16/10] overflow-hidden bg-brand-100">
+            <ImageWithFallback
+              src={space.images?.[0] ?? space.image ?? ''}
+              alt={space.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-2.5 left-2.5 sm:bottom-3 sm:left-3 bg-[#38291a] text-[#e6e2df] px-3 py-1 rounded-full shadow-lg">
+              <span className="text-lg font-semibold">${space.price}</span>
+              <span className="text-xs opacity-90 ml-1">/ hr</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleClosePopup}
+              className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-[#f2ddce] flex items-center justify-center text-[#38291a] shadow-md transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </Link>
+        <div className="p-3.5 sm:p-4">
+          <Link
+            to={`/space/${space.id}${dateParam ? `?date=${dateParam}` : ''}`}
+            className="block hover:opacity-90 transition-opacity"
+          >
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <p className="text-sm text-[#896849] line-clamp-1">{space.location}</p>
+              <div className="flex items-center gap-1 bg-[#f2ddce] px-2 py-1 rounded-full shrink-0">
+                <Star className="w-4 h-4 fill-[#896849] text-[#896849]" />
+                <span className="text-sm text-[#38291a] font-medium">{formatRatingScore(space.rating)}</span>
+                <span className="text-xs text-[#896849]">({space.reviews})</span>
+              </div>
+            </div>
+            <h3 className="text-lg font-bold text-[#38291a] mb-1 line-clamp-1">{space.title}</h3>
+            <p className="text-xs text-[#896849] mb-2.5 sm:mb-3">{space.category}</p>
+          </Link>
+          <div className="border-t border-[#f2ddce] my-2.5 sm:my-3" />
+          <div className="flex items-center gap-4 mb-3 sm:mb-4 text-[#5f4731]">
+            <div className="flex items-center gap-1.5">
+              <Users className="w-4 h-4" />
+              <span className="text-xs">{space.capacity} guests</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Square className="w-4 h-4" />
+              <span className="text-xs">{space.squareMeters != null ? `${space.squareMeters} m²` : '— m²'}</span>
+            </div>
+          </div>
+          <Link
+            to={`/space/${space.id}${dateParam ? `?date=${dateParam}` : ''}#booking`}
+            className="inline-block w-full px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs rounded-lg transition-all shadow-md shadow-brand-500/20 active:translate-y-0.5 text-center"
+          >
+            Book Now
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SpacesMap({
   spaces,
   center,
@@ -304,12 +401,6 @@ export function SpacesMap({
     return DEFAULT_CENTER;
   }, [center, withCoords]);
 
-  const handleClosePopup = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setSelectedSpace(null);
-  }, []);
-
   if (!API_KEY) {
     return (
       <div className={`bg-brand-100 rounded-[3rem] border-2 border-brand-200 flex items-center justify-center ${className}`}>
@@ -333,97 +424,36 @@ export function SpacesMap({
   }
 
   return (
-    <div className={`rounded-[3rem] overflow-hidden border-2 border-brand-200 ${className}`}>
-      <GoogleMap
-        mapContainerStyle={{ width: '100%', height: '100%', minHeight: '70vh' }}
-        center={mapCenter}
-        zoom={withCoords.length ? 12 : 4}
-        onClick={() => setSelectedSpace(null)}
-        options={{
-          disableDefaultUI: false,
-          zoomControl: true,
-          streetViewControl: false,
-          clickableIcons: false,
-          zoomControlOptions: {
-            position: google.maps.ControlPosition.RIGHT_CENTER,
-          },
-          styles: MAP_STYLE_MUTED,
-          gestureHandling: 'greedy',
-        }}
-      >
-        <SpacesMapMarkers spaces={withCoords} onMarkerClick={setSelectedSpace} />
-        {selectedSpace != null && selectedSpace.latitude != null && selectedSpace.longitude != null && (
-          <InfoWindow
-            position={{ lat: selectedSpace.latitude, lng: selectedSpace.longitude }}
-            onCloseClick={() => setSelectedSpace(null)}
-            options={{
-              pixelOffset: new google.maps.Size(0, -28),
-              disableAutoPan: false,
-            }}
-          >
-            <div className="w-[400px] max-w-[95vw] bg-white rounded-[3rem] border-2 border-[#f2ddce] shadow-2xl overflow-hidden">
-              <Link
-                to={`/space/${selectedSpace.id}${dateParam ? `?date=${dateParam}` : ''}`}
-                className="block hover:opacity-95 transition-opacity"
-              >
-                <div className="relative aspect-[16/10] overflow-hidden bg-brand-100">
-                  <ImageWithFallback
-                    src={selectedSpace.images?.[0] ?? selectedSpace.image ?? ''}
-                    alt={selectedSpace.title}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute bottom-4 left-4 bg-[#38291a] text-[#e6e2df] px-4 py-2 rounded-full shadow-lg">
-                    <span className="text-2xl font-semibold">${selectedSpace.price}</span>
-                    <span className="text-sm opacity-90 ml-1">/ hr</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleClosePopup}
-                    className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/90 hover:bg-white border border-[#f2ddce] flex items-center justify-center text-[#38291a] shadow-md transition-colors"
-                    aria-label="Close"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
-              </Link>
-              <div className="p-5">
-                <Link
-                  to={`/space/${selectedSpace.id}${dateParam ? `?date=${dateParam}` : ''}`}
-                  className="block hover:opacity-90 transition-opacity"
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-sm text-[#896849] line-clamp-1">{selectedSpace.location}</p>
-                    <div className="flex items-center gap-1 bg-[#f2ddce] px-2 py-1 rounded-full shrink-0">
-                      <Star className="w-4 h-4 fill-[#896849] text-[#896849]" />
-                      <span className="text-sm text-[#38291a] font-medium">{formatRatingScore(selectedSpace.rating)}</span>
-                      <span className="text-xs text-[#896849]">({selectedSpace.reviews})</span>
-                    </div>
-                  </div>
-                  <h3 className="text-2xl font-bold text-[#38291a] mb-1 line-clamp-1">{selectedSpace.title}</h3>
-                  <p className="text-sm text-[#896849] mb-4">{selectedSpace.category}</p>
-                </Link>
-                <div className="border-t border-[#f2ddce] my-4" />
-                <div className="flex items-center gap-6 mb-5 text-[#5f4731]">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    <span className="text-sm">{selectedSpace.capacity} guests</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Square className="w-5 h-5" />
-                    <span className="text-sm">{selectedSpace.squareMeters != null ? `${selectedSpace.squareMeters} m²` : '— m²'}</span>
-                  </div>
-                </div>
-                <Link
-                  to={`/space/${selectedSpace.id}${dateParam ? `?date=${dateParam}` : ''}#booking`}
-                  className="inline-block w-full px-5 py-4 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-all shadow-lg shadow-brand-500/20 active:translate-y-0.5 text-center"
-                >
-                  Book Now
-                </Link>
-              </div>
-            </div>
-          </InfoWindow>
-        )}
-      </GoogleMap>
+    <div className={`relative rounded-2xl border border-brand-200 ${className}`}>
+      <div className="absolute inset-0 overflow-hidden rounded-2xl">
+        <GoogleMap
+          mapContainerStyle={{ width: '100%', height: '100%' }}
+          center={mapCenter}
+          zoom={withCoords.length ? 12 : 4}
+          onClick={() => setSelectedSpace(null)}
+          options={{
+            disableDefaultUI: false,
+            zoomControl: true,
+            streetViewControl: false,
+            clickableIcons: false,
+            zoomControlOptions: {
+              position: google.maps.ControlPosition.RIGHT_CENTER,
+            },
+            styles: MAP_STYLE_MUTED,
+            gestureHandling: 'greedy',
+          }}
+        >
+          <SpacesMapMarkers spaces={withCoords} onMarkerClick={setSelectedSpace} />
+          <PanToSelectedSpace space={selectedSpace} />
+        </GoogleMap>
+      </div>
+      {selectedSpace != null && (
+        <MapSpaceDetailCard
+          space={selectedSpace}
+          dateParam={dateParam}
+          onClose={() => setSelectedSpace(null)}
+        />
+      )}
     </div>
   );
 }

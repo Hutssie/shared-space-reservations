@@ -349,20 +349,20 @@ export const FiltersContent = ({
   const isControlled = isSidebar && onAmenityChange != null;
   const content = (
     <section>
-      <h4 className="text-[10px] sm:text-xs font-black text-brand-400 uppercase tracking-widest mb-4 sm:mb-6">Amenities</h4>
-      <div className={`grid gap-3 sm:gap-4 ${!isSidebar ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+      <h4 className={`font-black text-brand-400 uppercase tracking-widest ${isSidebar ? 'text-[10px] mb-3' : 'text-[10px] sm:text-xs mb-4 sm:mb-6'}`}>Amenities</h4>
+      <div className={`grid ${isSidebar ? 'grid-cols-1 gap-2.5' : 'gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2'}`}>
         {AmenitiesList.map((item) => {
           const checked = isControlled ? selectedAmenityIds.includes(item.id) : undefined;
           return (
-            <label key={item.id} className="flex items-center justify-between group cursor-pointer pr-2 sm:pr-4 md:pr-0">
-              <div className="flex items-center gap-3 sm:gap-4">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-50 rounded-xl flex items-center justify-center group-hover:bg-brand-100 transition-colors shrink-0">
-                  <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-500" />
+            <label key={item.id} className={`flex items-center justify-between group cursor-pointer ${isSidebar ? 'pr-1' : 'pr-2 sm:pr-4 md:pr-0'}`}>
+              <div className={`flex items-center ${isSidebar ? 'gap-2.5' : 'gap-3 sm:gap-4'}`}>
+                <div className={`bg-brand-50 rounded-lg flex items-center justify-center group-hover:bg-brand-100 transition-colors shrink-0 ${isSidebar ? 'w-7 h-7' : 'w-8 h-8 sm:w-10 sm:h-10 rounded-xl'}`}>
+                  <item.icon className={`text-brand-500 ${isSidebar ? 'w-3.5 h-3.5' : 'w-4 h-4 sm:w-5 sm:h-5'}`} />
                 </div>
-                <span className="font-bold text-brand-700 text-xs sm:text-sm">{item.label}</span>
+                <span className={`font-bold text-brand-700 ${isSidebar ? 'text-xs' : 'text-xs sm:text-sm'}`}>{item.label}</span>
               </div>
               <Checkbox.Root
-                className="w-5 h-5 sm:w-6 sm:h-6 rounded-lg bg-brand-100 flex items-center justify-center data-[state=checked]:bg-brand-700 transition-colors outline-none shrink-0 cursor-pointer"
+                className={`rounded-md bg-brand-100 flex items-center justify-center data-[state=checked]:bg-brand-700 transition-colors outline-none shrink-0 cursor-pointer ${isSidebar ? 'w-4 h-4' : 'w-5 h-5 sm:w-6 sm:h-6 rounded-lg'}`}
                 checked={checked}
                 onCheckedChange={
                   isControlled
@@ -387,7 +387,7 @@ export const FiltersContent = ({
   );
 
   if (isSidebar) {
-    return <div className="space-y-8 sm:y-10">{content}</div>;
+    return <div className="space-y-5">{content}</div>;
   }
 
   return (
