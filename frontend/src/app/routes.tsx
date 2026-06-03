@@ -58,31 +58,31 @@ const HomePage = () => (
     <Hero />
     <Categories />
     <FeaturedSpaces />
-    <section className="py-24 bg-brand-100/30 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-brand-500 rounded-[3rem] p-12 lg:p-24 relative overflow-hidden group">
+    <section className="py-20 bg-brand-100/30 overflow-hidden">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-brand-500 rounded-[2.5rem] p-10 lg:p-16 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block overflow-hidden pointer-events-none">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-brand-200/10 rounded-full blur-[120px] group-hover:bg-brand-200/20 transition-all duration-700" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-brand-200/10 rounded-full blur-[120px] group-hover:bg-brand-200/20 transition-all duration-700" />
           </div>
           
-          <div className="relative z-10 max-w-2xl">
-            <h2 className="text-3xl md:text-5xl font-black text-white mb-8 tracking-tight leading-tight">
+          <div className="relative z-10 max-w-xl">
+            <h2 className="text-3xl md:text-4xl font-black text-white mb-6 tracking-tight leading-tight">
               Have an empty studio <br />
-              <span className="text-brand-200 underline decoration-brand-200 underline-offset-8">earning nothing?</span>
+              <span className="text-brand-200 underline decoration-brand-200 underline-offset-6">earning nothing?</span>
             </h2>
-            <p className="text-brand-100/80 text-lg md:text-xl font-medium mb-12 leading-relaxed">
+            <p className="text-brand-100/80 text-base md:text-lg font-medium mb-10 leading-relaxed">
               Join thousands of hosts worldwide and start earning extra income by listing your creative space on SpaceBook. It's free to list and easy to manage.
             </p>
-            <div className="flex flex-col sm:flex-row gap-6">
+            <div className="flex flex-col sm:flex-row gap-4">
               <Link 
                 to="/list-your-space"
-                className="px-10 py-4.5 bg-brand-200 hover:bg-white text-brand-700 font-black text-lg rounded-2xl transition-all shadow-xl shadow-black/10 active:scale-95 cursor-pointer text-center"
+                className="px-8 py-3.5 bg-brand-200 hover:bg-white text-brand-700 font-black text-base rounded-2xl transition-all shadow-xl shadow-black/10 active:scale-95 cursor-pointer text-center"
               >
                 Start Listing Today
               </Link>
               <Link 
                 to="/earnings-calculator"
-                className="px-10 py-4.5 border-2 border-white/30 hover:border-white text-white font-black text-lg rounded-2xl transition-all active:scale-95 cursor-pointer text-center"
+                className="px-8 py-3.5 border-2 border-white/30 hover:border-white text-white font-black text-base rounded-2xl transition-all active:scale-95 cursor-pointer text-center"
               >
                 See How Much You Can Earn
               </Link>
@@ -92,20 +92,20 @@ const HomePage = () => (
       </div>
     </section>
     <HowItWorks />
-    <section className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-12 border-2 border-brand-100 rounded-[3rem] p-12 hover:border-brand-300 transition-all duration-500 shadow-sm hover:shadow-2xl">
+    <section className="py-20 bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-10 border-2 border-brand-100 rounded-[2.5rem] p-10 hover:border-brand-300 transition-all duration-500 shadow-sm hover:shadow-2xl">
           <div className="text-center md:text-left">
-            <h3 className="text-3xl font-black text-brand-700 mb-4">Stay in the loop</h3>
-            <p className="text-brand-500 font-medium text-lg">Subscribe to get notified about new unique spaces and exclusive offers.</p>
+            <h3 className="text-2xl md:text-3xl font-black text-brand-700 mb-3">Stay in the loop</h3>
+            <p className="text-brand-500 font-medium text-base">Subscribe to get notified about new unique spaces and exclusive offers.</p>
           </div>
-          <div className="w-full md:max-w-md flex flex-col sm:flex-row gap-4">
+          <div className="w-full md:max-w-md flex flex-col sm:flex-row gap-3">
             <input 
               type="email" 
               placeholder="Enter your email" 
-              className="flex-1 px-6 py-4 bg-brand-100 border-none rounded-2xl focus:ring-2 focus:ring-brand-400 focus:outline-none text-brand-700 font-medium text-lg placeholder:text-brand-400/70"
+              className="flex-1 px-5 py-3 bg-brand-100 border-none rounded-xl focus:ring-2 focus:ring-brand-400 focus:outline-none text-brand-700 font-medium text-base placeholder:text-brand-400/70"
             />
-            <button className="px-8 py-4 bg-brand-700 hover:bg-brand-600 text-white font-black text-lg rounded-2xl transition-all active:scale-95 shadow-lg shadow-brand-700/20 cursor-pointer">
+            <button className="px-6 py-3 bg-brand-700 hover:bg-brand-600 text-white font-black text-base rounded-xl transition-all active:scale-95 shadow-lg shadow-brand-700/20 cursor-pointer">
               Subscribe
             </button>
           </div>

@@ -33,10 +33,13 @@ export const Footer = () => {
             <ul className="space-y-4">
               {['How it works', 'Trust and safety', 'Community', 'Help Center', 'Blog'].map((item, idx) => (
                 <li key={idx}>
-                  <a href="#" className="text-brand-500 font-medium hover:text-brand-700 transition-colors flex items-center gap-2 group">
+                  <button
+                    type="button"
+                    className="text-brand-500 font-medium hover:text-brand-700 transition-colors flex items-center gap-2 group bg-transparent border-0 p-0 cursor-default"
+                  >
                     <span className="w-1.5 h-1.5 bg-brand-200 rounded-full group-hover:bg-brand-400 transition-colors" />
                     {item}
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -47,10 +50,13 @@ export const Footer = () => {
             <ul className="space-y-4">
               {['About us', 'Careers', 'Terms of service', 'Privacy policy', 'Contact'].map((item, idx) => (
                 <li key={idx}>
-                  <a href="#" className="text-brand-500 font-medium hover:text-brand-700 transition-colors flex items-center gap-2 group">
+                  <button
+                    type="button"
+                    className="text-brand-500 font-medium hover:text-brand-700 transition-colors flex items-center gap-2 group bg-transparent border-0 p-0 cursor-default"
+                  >
                     <span className="w-1.5 h-1.5 bg-brand-200 rounded-full group-hover:bg-brand-400 transition-colors" />
                     {item}
-                  </a>
+                  </button>
                 </li>
               ))}
             </ul>
@@ -84,8 +90,8 @@ export const Footer = () => {
         <div className="pt-10 border-t border-brand-200 flex flex-col md:flex-row items-center justify-between gap-6">
           <p className="text-brand-400 text-sm font-medium">© 2026 SpaceBook Inc. All rights reserved.</p>
           <div className="flex gap-8">
-            <a href="#" className="text-brand-400 text-sm font-medium hover:text-brand-700 transition-colors">English (US)</a>
-            <a href="#" className="text-brand-400 text-sm font-medium hover:text-brand-700 transition-colors">USD ($)</a>
+            <button type="button" className="text-brand-400 text-sm font-medium hover:text-brand-700 transition-colors bg-transparent border-0 p-0 cursor-default">English (US)</button>
+            <button type="button" className="text-brand-400 text-sm font-medium hover:text-brand-700 transition-colors bg-transparent border-0 p-0 cursor-default">USD ($)</button>
           </div>
         </div>
       </div>

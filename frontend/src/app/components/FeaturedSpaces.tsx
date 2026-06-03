@@ -48,23 +48,23 @@ export const FeaturedSpaces = () => {
   }, [token, favoriteIds]);
 
   return (
-    <section className="py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-4xl font-extrabold text-brand-700 mb-4 tracking-tight">Featured spaces this week</h2>
-            <p className="text-brand-500 font-medium text-lg leading-relaxed">These spaces are currently trending in the creative community. Book them while they're available!</p>
+    <section className="py-20 bg-white">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-5">
+          <div className="max-w-xl">
+            <h2 className="text-2xl md:text-3xl font-extrabold text-brand-700 mb-3 tracking-tight">Featured spaces this week</h2>
+            <p className="text-brand-500 font-medium text-base leading-relaxed">These spaces are currently trending in the creative community. Book them while they're available!</p>
           </div>
           <button
             type="button"
             onClick={() => navigate('/find')}
-            className="px-8 py-3.5 border-2 border-brand-200 hover:border-brand-500 hover:bg-brand-500 hover:text-white text-brand-500 font-bold rounded-xl transition-all active:scale-95"
+            className="px-6 py-3 border-2 border-brand-200 hover:border-brand-500 hover:bg-brand-500 hover:text-white text-brand-500 text-sm font-bold rounded-xl transition-all active:scale-95"
           >
             View All Spaces
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {loading ? (
             <div className="col-span-full text-center py-12 text-brand-500 font-medium">Loading...</div>
           ) : (
@@ -83,6 +83,7 @@ export const FeaturedSpaces = () => {
                 isInstantBookable={space.isInstantBookable}
                 isFavorite={favoriteIds.has(space.id)}
                 onFavoriteClick={handleFavoriteClick}
+                compact
               />
             ))
           )}
