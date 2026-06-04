@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
-import { Decimal } from '@prisma/client/runtime/library';
 import {
   parseTimeToMinutes,
   resolveBookingMinutes,
   isPostgresExclusionViolation,
   BOOKING_SLOT_CONFLICT_MESSAGE,
 } from '../lib/bookingTime.js';
+import { lockSpaceRow, validateBookingAgainstSpace } from '../lib/bookingRules.js';
 import { createNotification } from './notifications.js';
 import { prisma } from '../lib/prisma.js';
 
@@ -18,6 +18,15 @@ function isBookingStartInPast(booking) {
   const startM = parseTimeToMinutes(booking.startTime);
   const bookingStartMs = booking.date.getTime() + (startM != null ? startM : 0) * 60 * 1000;
   return bookingStartMs <= Date.now();
+}
+
+function bookingRequestDates(dateInput) {
+  const d = new Date(dateInput);
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  const requestDate = new Date(d);
+  requestDate.setUTCHours(0, 0, 0, 0);
+  return { d, today, requestDate };
 }
 
 router.get('/', authMiddleware, async (req, res, next) => {
@@ -97,120 +106,48 @@ router.post('/', authMiddleware, async (req, res, next) => {
     if (!spaceId || !date || !startTime || !endTime) {
       return res.status(400).json({ error: 'space_id, date, start_time, end_time required' });
     }
-    const space = await prisma.space.findUnique({
-      where: { id: spaceId },
-    });
-    if (!space) return res.status(404).json({ error: 'Space not found' });
-    if (space.status !== 'active') {
-      return res.status(400).json({ error: 'This space is not currently available for booking' });
-    }
-    if (space.hostId && space.hostId === req.userId) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
 
-    const d = new Date(date);
+    const { d, today, requestDate } = bookingRequestDates(date);
     if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid date' });
 
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-    const requestDate = new Date(d);
-    requestDate.setUTCHours(0, 0, 0, 0);
-
-    if (space.sameDayBookingAllowed === false) {
-      if (requestDate.getTime() === today.getTime()) {
-        return res.status(400).json({ error: 'Same-day booking is not allowed for this space' });
-      }
-    }
-
-    if (space.maxAdvanceBookingDays != null) {
-      const daysDiff = (requestDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000);
-      if (daysDiff > space.maxAdvanceBookingDays) {
-        return res.status(400).json({ error: 'Booking date is beyond the maximum advance booking window' });
-      }
-    }
-
-    if (space.bannedDaysJson) {
-      const bannedDays = JSON.parse(space.bannedDaysJson);
-      if (Array.isArray(bannedDays) && bannedDays.length > 0) {
-        const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const dayName = DAY_NAMES[requestDate.getDay()];
-        if (bannedDays.includes(dayName)) {
-          return res.status(400).json({ error: `This space is not available on ${dayName}s` });
-        }
-      }
-    }
-
-    if (space.blockedDatesJson) {
-      const blockedDates = (() => {
-        try {
-          const a = JSON.parse(space.blockedDatesJson);
-          return Array.isArray(a) ? a : [];
-        } catch {
-          return [];
-        }
-      })();
-      const dateStr = requestDate.toISOString().slice(0, 10);
-      for (const block of blockedDates) {
-        const start = block.startDate || '';
-        const end = block.endDate || block.startDate || '';
-        if (dateStr >= start && dateStr <= end) {
-          return res.status(400).json({ error: 'This date is not available for booking' });
-        }
-      }
-    }
-
-    const minutes = resolveBookingMinutes(startTime, endTime);
-    if (minutes.error) {
-      return res.status(400).json({ error: minutes.error });
-    }
-    const { startMinutes, endMinutes } = minutes;
-    const startM = startMinutes;
-    const endM = endMinutes;
-
-    const windowStart = space.availabilityStartTime ?? null;
-    const windowEnd = space.availabilityEndTime ?? null;
-    if (windowStart != null && windowEnd != null) {
-      const wStartM = parseTimeToMinutes(windowStart);
-      let wEndM = parseTimeToMinutes(windowEnd);
-      if (wEndM === 0) wEndM = 24 * 60;
-      if (wStartM == null || wEndM == null) {
-        return res.status(400).json({ error: 'Space availability window is invalid' });
-      }
-      const inWindow = startM >= wStartM && endM <= wEndM;
-      if (!inWindow) {
-        return res.status(400).json({ error: 'Requested time is outside the space\'s availability window' });
-      }
-    }
-
-    const hours = (endM - startM) / 60;
-    if (space.minDurationHours != null && hours < space.minDurationHours) {
-      return res.status(400).json({ error: `Minimum booking duration is ${space.minDurationHours} hours` });
-    }
-    if (space.maxDurationHours != null && hours > space.maxDurationHours) {
-      return res.status(400).json({ error: `Maximum booking duration is ${space.maxDurationHours} hours` });
-    }
-
-    const cleaningCents = space.cleaningFeeCents ?? 0;
-    const equipmentCents = space.equipmentFeeCents ?? 0;
-    const totalPrice = Number(space.pricePerHour) * hours + cleaningCents / 100 + equipmentCents / 100;
-
-    const booking = await prisma.booking.create({
-      data: {
-        userId: req.userId,
-        spaceId,
-        date: d,
+    const txResult = await prisma.$transaction(async (tx) => {
+      const space = await lockSpaceRow(tx, spaceId);
+      const rules = validateBookingAgainstSpace(space, {
+        bookerUserId: req.userId,
         startTime,
         endTime,
-        startMinutes,
-        endMinutes,
-        status: space.isInstantBookable ? 'confirmed' : 'pending',
-        totalPrice: new Decimal(totalPrice),
-        cleaningFeeCents: cleaningCents,
-        equipmentFeeCents: equipmentCents,
-      },
-      include: { space: true },
+        requestDate,
+        today,
+      });
+      if (!rules.ok) {
+        return { clientError: rules.error, status: rules.status };
+      }
+
+      const booking = await tx.booking.create({
+        data: {
+          userId: req.userId,
+          spaceId,
+          date: d,
+          startTime,
+          endTime,
+          startMinutes: rules.startMinutes,
+          endMinutes: rules.endMinutes,
+          status: space.isInstantBookable ? 'confirmed' : 'pending',
+          totalPrice: rules.totalPrice,
+          cleaningFeeCents: rules.cleaningCents,
+          equipmentFeeCents: rules.equipmentCents,
+        },
+        include: { space: true },
+      });
+
+      return { booking, space };
     });
 
+    if (txResult.clientError) {
+      return res.status(txResult.status).json({ error: txResult.clientError });
+    }
+
+    const { booking, space } = txResult;
     const dateStr = booking.date.toISOString().slice(0, 10);
     if (booking.status === 'confirmed') {
       await createNotification(prisma, {
@@ -299,19 +236,47 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
         if (isBookingStartInPast(booking)) {
           return res.status(400).json({ error: 'Cannot confirm a booking that has already passed.' });
         }
-        let { startMinutes, endMinutes } = booking;
-        if (startMinutes == null || endMinutes == null) {
-          const resolved = resolveBookingMinutes(booking.startTime, booking.endTime);
-          if (resolved.error) {
-            return res.status(400).json({ error: resolved.error });
+
+        const { today, requestDate } = bookingRequestDates(booking.date);
+
+        try {
+          await prisma.$transaction(async (tx) => {
+            const space = await lockSpaceRow(tx, booking.spaceId);
+            const rules = validateBookingAgainstSpace(space, {
+              bookerUserId: booking.userId,
+              startTime: booking.startTime,
+              endTime: booking.endTime,
+              requestDate,
+              today,
+              skipHostSelfCheck: true,
+            });
+            if (!rules.ok) {
+              const err = new Error(rules.error);
+              err.status = rules.status;
+              throw err;
+            }
+
+            let { startMinutes, endMinutes } = booking;
+            if (startMinutes == null || endMinutes == null) {
+              startMinutes = rules.startMinutes;
+              endMinutes = rules.endMinutes;
+            }
+
+            await tx.booking.update({
+              where: { id: req.params.id },
+              data: { status: 'confirmed', startMinutes, endMinutes },
+            });
+          });
+        } catch (e) {
+          if (e.status && e.message) {
+            return res.status(e.status).json({ error: e.message });
           }
-          startMinutes = resolved.startMinutes;
-          endMinutes = resolved.endMinutes;
+          if (isPostgresExclusionViolation(e)) {
+            return res.status(409).json({ error: BOOKING_SLOT_CONFLICT_MESSAGE });
+          }
+          throw e;
         }
-        await prisma.booking.update({
-          where: { id: req.params.id },
-          data: { status: 'confirmed', startMinutes, endMinutes },
-        });
+
         await createNotification(prisma, {
           userId: booking.userId,
           type: 'booking_confirmed',
