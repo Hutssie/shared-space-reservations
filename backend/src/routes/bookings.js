@@ -1,22 +1,18 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import { Decimal } from '@prisma/client/runtime/library';
+import {
+  parseTimeToMinutes,
+  resolveBookingMinutes,
+  isPostgresExclusionViolation,
+  BOOKING_SLOT_CONFLICT_MESSAGE,
+} from '../lib/bookingTime.js';
 import { createNotification } from './notifications.js';
 import { prisma } from '../lib/prisma.js';
 
 const router = Router();
 
 const CANCELLATION_NOTICE_HOURS = { flexible: 24, moderate: 48, strict: 168 };
-
-function parseTimeToMinutes(t) {
-  const match = t.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!match) return null;
-  let h = parseInt(match[1], 10);
-  const m = parseInt(match[2], 10);
-  if (match[3].toUpperCase() === 'PM' && h !== 12) h += 12;
-  if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
-  return h * 60 + m;
-}
 
 function isBookingStartInPast(booking) {
   const startM = parseTimeToMinutes(booking.startTime);
@@ -108,7 +104,6 @@ router.post('/', authMiddleware, async (req, res, next) => {
     if (space.status !== 'active') {
       return res.status(400).json({ error: 'This space is not currently available for booking' });
     }
-    // hosts nu pot sa si rezerve propriile listari.
     if (space.hostId && space.hostId === req.userId) {
       return res.status(403).json({ error: 'Forbidden' });
     }
@@ -164,19 +159,13 @@ router.post('/', authMiddleware, async (req, res, next) => {
       }
     }
 
-    const startM = parseTimeToMinutes(startTime);
-    let endM = parseTimeToMinutes(endTime);
-    if (startM == null || endM == null) {
-      return res.status(400).json({ error: 'Invalid time range' });
+    const minutes = resolveBookingMinutes(startTime, endTime);
+    if (minutes.error) {
+      return res.status(400).json({ error: minutes.error });
     }
-    if (endM <= startM) {
-      // tratam 12am ca ziua urmatoare cand altfel ar da wrap (inclusiv full-day 12 AM -> 12 AM).
-      if (endTime === '12:00 AM') {
-        endM = 24 * 60;
-      } else {
-        return res.status(400).json({ error: 'Invalid time range' });
-      }
-    }
+    const { startMinutes, endMinutes } = minutes;
+    const startM = startMinutes;
+    const endM = endMinutes;
 
     const windowStart = space.availabilityStartTime ?? null;
     const windowEnd = space.availabilityEndTime ?? null;
@@ -205,20 +194,6 @@ router.post('/', authMiddleware, async (req, res, next) => {
     const equipmentCents = space.equipmentFeeCents ?? 0;
     const totalPrice = Number(space.pricePerHour) * hours + cleaningCents / 100 + equipmentCents / 100;
 
-    const existing = await prisma.booking.findMany({
-      // permitem suprapuneri la requests. booking-urile confirmate blocheaza un slot.
-      where: { spaceId, date: d, status: 'confirmed' },
-    });
-    const overlaps = existing.some((b) => {
-      const bStart = parseTimeToMinutes(b.startTime);
-      let bEnd = parseTimeToMinutes(b.endTime);
-      if (bEnd === 0) bEnd = 24 * 60;
-      return startM < bEnd && endM > bStart;
-    });
-    if (overlaps) {
-      return res.status(409).json({ error: 'Time slot is already booked' });
-    }
-
     const booking = await prisma.booking.create({
       data: {
         userId: req.userId,
@@ -226,6 +201,8 @@ router.post('/', authMiddleware, async (req, res, next) => {
         date: d,
         startTime,
         endTime,
+        startMinutes,
+        endMinutes,
         status: space.isInstantBookable ? 'confirmed' : 'pending',
         totalPrice: new Decimal(totalPrice),
         cleaningFeeCents: cleaningCents,
@@ -279,6 +256,9 @@ router.post('/', authMiddleware, async (req, res, next) => {
       totalPrice: Number(booking.totalPrice),
     });
   } catch (e) {
+    if (isPostgresExclusionViolation(e)) {
+      return res.status(409).json({ error: BOOKING_SLOT_CONFLICT_MESSAGE });
+    }
     next(e);
   }
 });
@@ -319,30 +299,18 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
         if (isBookingStartInPast(booking)) {
           return res.status(400).json({ error: 'Cannot confirm a booking that has already passed.' });
         }
-        const startM = parseTimeToMinutes(booking.startTime);
-        let endM = parseTimeToMinutes(booking.endTime);
-        if (endM === 0) endM = 24 * 60;
-        const confirmed = await prisma.booking.findMany({
-          where: {
-            id: { not: booking.id },
-            spaceId: booking.spaceId,
-            date: booking.date,
-            status: 'confirmed',
-          },
-          select: { startTime: true, endTime: true },
-        });
-        const overlaps = confirmed.some((b) => {
-          const bStart = parseTimeToMinutes(b.startTime);
-          let bEnd = parseTimeToMinutes(b.endTime);
-          if (bEnd === 0) bEnd = 24 * 60;
-          return (startM ?? 0) < bEnd && (endM ?? 0) > bStart;
-        });
-        if (overlaps) {
-          return res.status(409).json({ error: 'Time slot is already booked' });
+        let { startMinutes, endMinutes } = booking;
+        if (startMinutes == null || endMinutes == null) {
+          const resolved = resolveBookingMinutes(booking.startTime, booking.endTime);
+          if (resolved.error) {
+            return res.status(400).json({ error: resolved.error });
+          }
+          startMinutes = resolved.startMinutes;
+          endMinutes = resolved.endMinutes;
         }
         await prisma.booking.update({
           where: { id: req.params.id },
-          data: { status: 'confirmed' },
+          data: { status: 'confirmed', startMinutes, endMinutes },
         });
         await createNotification(prisma, {
           userId: booking.userId,
@@ -385,6 +353,9 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
 
     res.status(403).json({ error: 'Forbidden' });
   } catch (e) {
+    if (isPostgresExclusionViolation(e)) {
+      return res.status(409).json({ error: BOOKING_SLOT_CONFLICT_MESSAGE });
+    }
     next(e);
   }
 });

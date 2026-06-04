@@ -1,5 +1,18 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+const BOOKING_SLOT_CONFLICT_MESSAGE = 'Time slot is already booked';
+
+function friendlyApiError(status: number, body: { error?: string }, fallback: string): string {
+  const raw = (body.error || fallback).trim();
+  if (status === 409 && /exclusion constraint|23P01|bookings_no_confirmed_overlap/i.test(raw)) {
+    return BOOKING_SLOT_CONFLICT_MESSAGE;
+  }
+  if (/prisma\.|ConnectorError|Invalid `prisma\./i.test(raw)) {
+    return status >= 500 ? 'Something went wrong. Please try again.' : fallback;
+  }
+  return raw || fallback;
+}
+
 function getToken(): string | null {
   return localStorage.getItem('token');
 }
@@ -23,8 +36,8 @@ export async function api<T>(
     window.dispatchEvent(new Event('auth:logout'));
   }
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error || res.statusText || 'Request failed');
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(friendlyApiError(res.status, body, res.statusText || 'Request failed'));
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
@@ -55,8 +68,8 @@ export async function apiUploadFile(file: File): Promise<{ url: string }> {
     window.location.reload();
   }
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error || res.statusText || 'Upload failed');
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(friendlyApiError(res.status, body, res.statusText || 'Upload failed'));
   }
   return res.json() as Promise<{ url: string }>;
 }

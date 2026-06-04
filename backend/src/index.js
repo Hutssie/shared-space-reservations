@@ -15,6 +15,10 @@ import { messagesRouter } from './routes/messages.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { adminRouter } from './routes/admin.js';
 import { aiSearchRouter } from './routes/ai-search.js';
+import {
+  isPostgresExclusionViolation,
+  BOOKING_SLOT_CONFLICT_MESSAGE,
+} from './lib/bookingTime.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -40,8 +44,14 @@ app.use('/api/ai-search', aiSearchRouter);
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 app.use((err, req, res, next) => {
+  if (isPostgresExclusionViolation(err)) {
+    return res.status(409).json({ error: BOOKING_SLOT_CONFLICT_MESSAGE });
+  }
   console.error(err);
-  res.status(err.status || 500).json({ error: err.message || 'Internal server error' });
+  const status = err.status || 500;
+  const message =
+    status >= 500 ? 'Internal server error' : (err.message || 'Internal server error');
+  res.status(status).json({ error: message });
 });
 
 export { app };

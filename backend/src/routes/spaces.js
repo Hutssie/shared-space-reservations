@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.js';
 import { Decimal } from '@prisma/client/runtime/library';
+import { parseTimeToMinutes } from '../lib/bookingTime.js';
 import { prisma } from '../lib/prisma.js';
 
 const router = Router();
@@ -88,15 +89,7 @@ export function buildSpaceWhereClause({
   return where;
 }
 
-export function parseTimeToMinutes(t) {
-  const match = String(t).match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
-  if (!match) return null;
-  let h = parseInt(match[1], 10);
-  const m = parseInt(match[2], 10);
-  if (match[3].toUpperCase() === 'PM' && h !== 12) h += 12;
-  if (match[3].toUpperCase() === 'AM' && h === 12) h = 0;
-  return h * 60 + m;
-}
+export { parseTimeToMinutes } from '../lib/bookingTime.js';
 
 export function computeIsSpaceAvailableOnDate(space, bookingsForSpace, { dateStr, dayName }) {
   if (!dateStr) return true;

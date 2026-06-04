@@ -6,6 +6,10 @@
     "dev": "node --watch src/index.js",
     "start": "node src/index.js",
     "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:backfill-minutes": "node prisma/backfill-booking-minutes.js",
+    "db:verify-exclusion": "node prisma/verify-booking-exclusion.js",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio"

@@ -13,10 +13,24 @@ Node.js + Express + Prisma + PostgreSQL.
 2. Install and init DB:
    ```bash
    npm install
-   npx prisma generate
-   npx prisma db push
-   npx prisma db seed
+   npm run db:generate
+   npm run db:deploy
+   npm run db:seed
    ```
+
+   **Upgrading an existing database** (created earlier with `db push`, no migration history):
+   ```bash
+   npx prisma db execute --file prisma/migrations/20250604120000_add_booking_minutes/migration.sql
+   npm run db:backfill-minutes
+   npx prisma db execute --file prisma/migrations/20250604120001_booking_exclusion_constraint/migration.sql
+   npx prisma migrate resolve --applied 20250604120000_add_booking_minutes
+   npx prisma migrate resolve --applied 20250604120001_booking_exclusion_constraint
+   npm run db:generate
+   ```
+
+   Confirm the exclusion constraint with `npm run db:verify-exclusion`.
+
+   For local schema experiments only, `npm run db:push` remains available; prefer `npm run db:migrate` for changes that should be committed.
 
 3. Run:
    ```bash

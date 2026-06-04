@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { resolveBookingMinutes } from '../src/lib/bookingTime.js';
 
 const prisma = new PrismaClient();
 
@@ -208,6 +209,7 @@ async function main() {
       where: { userId: guest.id, spaceId: spaces[0].id },
     });
     if (!existingBooking) {
+      const { startMinutes, endMinutes } = resolveBookingMinutes('10:00 AM', '02:00 PM');
       await prisma.booking.create({
         data: {
           userId: guest.id,
@@ -215,6 +217,8 @@ async function main() {
           date: tomorrow,
           startTime: '10:00 AM',
           endTime: '02:00 PM',
+          startMinutes,
+          endMinutes,
           status: 'confirmed',
           totalPrice: 380,
         },
