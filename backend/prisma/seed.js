@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import {
+  normalizeAmenityIds,
+  seedAmenityCatalog,
+  syncSpaceAmenities,
+} from '../src/lib/amenities.js';
 import { resolveBookingMinutes } from '../src/lib/bookingTime.js';
 
 const prisma = new PrismaClient();
@@ -130,15 +135,20 @@ async function main() {
     },
   });
 
+  await seedAmenityCatalog(prisma);
+
   const existingSpaces = await prisma.space.count();
   if (existingSpaces === 0) {
     for (const s of SPACES) {
-      await prisma.space.create({
+      const { amenitiesJson, ...rest } = s;
+      const amenityIds = normalizeAmenityIds(amenitiesJson ? JSON.parse(amenitiesJson) : []);
+      const created = await prisma.space.create({
         data: {
           hostId: host.id,
-          ...s,
+          ...rest,
         },
       });
+      await syncSpaceAmenities(prisma, created.id, amenityIds);
     }
   } else {
     // Completez lat/lng pentru spatiile existente care n-au coordonate
@@ -176,11 +186,11 @@ async function main() {
     const toCreate = targetTestListings - currentCount;
     const imageUrl = 'https://images.unsplash.com/photo-1769488702396-8b68825a4a11?q=80&w=800';
     const imagesJson = JSON.stringify([imageUrl]);
-    const amenitiesJson = JSON.stringify(['wifi', 'ac']);
+    const testAmenityIds = ['wifi', 'ac'];
     for (let i = 0; i < toCreate; i++) {
       const category = categories[i % categories.length];
       const city = cities[i % cities.length];
-      await prisma.space.create({
+      const created = await prisma.space.create({
         data: {
           hostId: host.id,
           category,
@@ -191,12 +201,12 @@ async function main() {
           description: `Pagination test space ${currentCount + i + 1}. ${category} in ${city}.`,
           imageUrl,
           imagesJson,
-          amenitiesJson,
           isInstantBookable: i % 3 !== 0,
           latitude: 40 + (i % 10) * 0.5,
           longitude: -74 - (i % 10) * 0.5,
         },
       });
+      await syncSpaceAmenities(prisma, created.id, testAmenityIds);
     }
     console.log(`Created ${toCreate} test listings for pagination (total spaces: ${targetTestListings}).`);
   }

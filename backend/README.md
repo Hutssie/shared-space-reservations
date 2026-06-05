@@ -26,6 +26,24 @@ Node.js + Express + Prisma + PostgreSQL.
 
 API base: `http://localhost:3000`. Frontend should set `VITE_API_URL=http://localhost:3000`.
 
+## Documentation
+
+- [Booking concurrency](docs/CONCURRENCY.md)
+- [Database design and scalability roadmap](docs/DATABASE_SCALABILITY.md)
+- [Scalability verification (Phase 5)](docs/SCALABILITY_VERIFICATION.md)
+
+After pulling amenity migrations: `npm run db:deploy` then `npm run db:backfill-amenities`.
+
+After pulling search-index migration: `npm run db:deploy`. Optional: `npm run db:explain-search`.
+
+After pulling availability-rules migration: `npm run db:deploy` then `npm run db:backfill-availability-rules`. Optional: `npm run db:verify-availability-rules`.
+
+After pulling drop-json migration (`20250606130000`): `npm run db:deploy` then `npm run db:verify-scalability` and `npm test`.
+
+**Verification:** `npm run db:verify-scalability` · `npm test` · optional `npm run db:explain-scalability -- --save`
+
+**Date availability (`GET /api/spaces?date=YYYY-MM-DD`):** candidates are scanned in batches of 100 (up to 2000 rows) with bookings loaded per batch; only the result page is fully hydrated. If more matching spaces exist beyond the scan cap, the response may include `availabilityScanCapped: true`. See [DATABASE_SCALABILITY.md](docs/DATABASE_SCALABILITY.md) Phase 3.
+
 ## Seed users
 
 - **Host**: `host@example.com` / `password123`

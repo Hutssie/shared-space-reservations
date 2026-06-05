@@ -82,6 +82,24 @@ model Message {
   @@index([senderId])
 }
 
+model Amenity {
+  id     String         @id
+  label  String
+  spaces SpaceAmenity[]
+}
+
+model SpaceAmenity {
+  spaceId   String @map("space_id")
+  amenityId String @map("amenity_id")
+
+  space   Space   @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  amenity Amenity @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@id([spaceId, amenityId])
+  @@index([amenityId])
+  @@map("space_amenity")
+}
+
 model Space {
   id                String   @id @default(cuid())
   hostId            String   @map("host_id")
@@ -94,7 +112,6 @@ model Space {
   description       String   @db.Text
   imageUrl          String?  @map("image_url")
   imagesJson        String?  @map("images_json") @db.Text
-  amenitiesJson     String?  @map("amenities_json") @db.Text
   isInstantBookable Boolean  @default(false) @map("is_instant_bookable")
   availabilityStartTime String? @map("availability_start_time")
   availabilityEndTime   String? @map("availability_end_time")
@@ -105,8 +122,7 @@ model Space {
   cancellationPolicy    String? @map("cancellation_policy")
   cleaningFeeCents      Int?    @map("cleaning_fee_cents")
   equipmentFeeCents     Int?    @map("equipment_fee_cents")
-  bannedDaysJson        String? @map("banned_days_json") @db.Text
-  blockedDatesJson     String? @map("blocked_dates_json") @db.Text
+  weeklyScheduleEnabled Boolean @default(false) @map("weekly_schedule_enabled")
   hostLastSeenBookingsAt DateTime? @map("host_last_seen_bookings_at")
   status            String   @default("active") @map("status")
   latitude          Float?
@@ -114,13 +130,43 @@ model Space {
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
-  host      User       @relation("HostSpaces", fields: [hostId], references: [id], onDelete: Cascade)
+  host      User           @relation("HostSpaces", fields: [hostId], references: [id], onDelete: Cascade)
   bookings  Booking[]
   reviews   Review[]
   favorites Favorite[]
+  amenities    SpaceAmenity[]
+  bannedDays   SpaceBannedDay[]
+  blockedDates SpaceBlockedDate[]
 
-  @@index([category])
   @@index([hostId])
+  @@index([status, category])
+  @@index([status, pricePerHour])
+  @@index([status, capacity])
+  @@index([status, squareMeters])
+  @@index([status, createdAt(sort: Desc)])
+}
+
+model SpaceBannedDay {
+  spaceId   String @map("space_id")
+  dayOfWeek String @map("day_of_week")
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@id([spaceId, dayOfWeek])
+  @@map("space_banned_day")
+}
+
+model SpaceBlockedDate {
+  id        String   @id
+  spaceId   String   @map("space_id")
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+  createdAt DateTime @default(now()) @map("created_at")
+
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+  @@index([spaceId, startDate])
+  @@map("space_blocked_date")
 }
 
 model Booking {

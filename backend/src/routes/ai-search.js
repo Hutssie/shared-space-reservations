@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { buildSpaceWhereClause, spaceToResponse, AMENITY_ID_TO_LABELS, computeIsSpaceAvailableOnDate, computeIsSpaceAvailableInRange } from './spaces.js';
+import { isKnownAmenityId, spaceListInclude } from '../lib/amenities.js';
+import {
+  parseDateFilterQuery,
+  searchSpacesWithDateAvailability,
+} from '../lib/spaceAvailabilitySearch.js';
+import { buildSpaceSearchWhere, spaceToResponse, AMENITY_ID_TO_LABELS } from './spaces.js';
 import { prisma } from '../lib/prisma.js';
 
 const router = Router();
@@ -200,93 +205,13 @@ router.post('/chat', async (req, res, next) => {
 
     let spaces = undefined;
     if (searchParams && typeof searchParams === 'object') {
-      const where = buildSpaceWhereClause({
-        q: searchParams.q,
-        location: searchParams.location,
-        category: searchParams.category,
-        minPrice: searchParams.minPrice,
-        maxPrice: searchParams.maxPrice,
-        minCapacity: searchParams.minCapacity,
-        minSquareMeters: searchParams.minSquareMeters,
-        maxSquareMeters: searchParams.maxSquareMeters,
-      });
-
       const amenityIds = Array.isArray(searchParams.amenities)
-        ? searchParams.amenities.filter((a) => typeof a === 'string' && a in AMENITY_ID_TO_LABELS)
+        ? searchParams.amenities.filter((a) => typeof a === 'string' && isKnownAmenityId(a))
         : [];
 
-      const dateStr = searchParams.date ? String(searchParams.date) : null;
-      let dateStart = null;
-      let dateEnd = null;
-      let dayName = null;
-      if (dateStr) {
-        const parsed = new Date(dateStr);
-        if (!isNaN(parsed.getTime())) {
-          dateStart = new Date(parsed);
-          dateStart.setUTCHours(0, 0, 0, 0);
-          dateEnd = new Date(parsed);
-          dateEnd.setUTCHours(23, 59, 59, 999);
-          const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-          dayName = DAY_NAMES[parsed.getDay()];
-        }
-      }
-
-      const needsDateFilter = dateStart && dateEnd;
-      const needsAmenityFilter = amenityIds.length > 0;
-      const poolSize = (needsDateFilter || needsAmenityFilter) ? 100 : 6;
-
-      let pool = await prisma.space.findMany({
-        where,
-        include: {
-          host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
-          reviews: { select: { rating: true } },
-        },
-        take: poolSize,
-        orderBy: { createdAt: 'desc' },
-      });
-
-      if (needsAmenityFilter) {
-        pool = pool.filter((space) => {
-          const spaceAmenities = space.amenitiesJson ? JSON.parse(space.amenitiesJson) : [];
-          return amenityIds.every((id) => {
-            const labels = AMENITY_ID_TO_LABELS[id];
-            return spaceAmenities.some((a) => a === id || (Array.isArray(labels) && labels.includes(a)));
-          });
-        });
-      }
-
-      if (needsDateFilter) {
-        const ids = pool.map((s) => s.id);
-        const bookings = ids.length > 0
-          ? await prisma.booking.findMany({
-              where: {
-                spaceId: { in: ids },
-                date: { gte: dateStart, lte: dateEnd },
-                status: { in: ['confirmed', 'pending'] },
-              },
-              select: { spaceId: true, startTime: true, endTime: true },
-            })
-          : [];
-        const bySpaceId = new Map();
-        for (const b of bookings) {
-          if (!bySpaceId.has(b.spaceId)) bySpaceId.set(b.spaceId, []);
-          bySpaceId.get(b.spaceId).push(b);
-        }
-        const dateCtx = { dateStr: dateStart.toISOString().slice(0, 10), dayName };
-        const hasTimeRange = searchParams.startTime && searchParams.endTime;
-        if (hasTimeRange) {
-          const rangeCtx = { ...dateCtx, startTime: String(searchParams.startTime), endTime: String(searchParams.endTime) };
-          pool = pool.filter((s) => computeIsSpaceAvailableInRange(s, bySpaceId.get(s.id) ?? [], rangeCtx));
-        } else {
-          pool = pool.filter((s) => computeIsSpaceAvailableOnDate(s, bySpaceId.get(s.id) ?? [], dateCtx));
-        }
-      }
-
-      spaces = pool.slice(0, 6).map(spaceToResponse);
-
-      if (spaces.length === 0) {
-        const broadWhere = buildSpaceWhereClause({
-          q: searchParams.q || searchParams.category,
+      const where = buildSpaceSearchWhere(
+        {
+          q: searchParams.q,
           location: searchParams.location,
           category: searchParams.category,
           minPrice: searchParams.minPrice,
@@ -294,13 +219,63 @@ router.post('/chat', async (req, res, next) => {
           minCapacity: searchParams.minCapacity,
           minSquareMeters: searchParams.minSquareMeters,
           maxSquareMeters: searchParams.maxSquareMeters,
+        },
+        amenityIds
+      );
+
+      const { dateStart, dateEnd, dateCtx } = parseDateFilterQuery(
+        searchParams.date ? String(searchParams.date) : null
+      );
+
+      let pool;
+      if (dateStart && dateEnd && dateCtx) {
+        const timeRange =
+          searchParams.startTime && searchParams.endTime
+            ? {
+                startTime: String(searchParams.startTime),
+                endTime: String(searchParams.endTime),
+              }
+            : null;
+        const result = await searchSpacesWithDateAvailability(prisma, {
+          where,
+          dateStart,
+          dateEnd,
+          dateCtx,
+          skip: 0,
+          take: 6,
+          timeRange,
+          targetAvailable: 6,
+          maxScan: 400,
         });
+        pool = result.spaces;
+      } else {
+        pool = await prisma.space.findMany({
+          where,
+          include: spaceListInclude,
+          take: 6,
+          orderBy: { createdAt: 'desc' },
+        });
+      }
+
+      spaces = pool.map(spaceToResponse);
+
+      if (spaces.length === 0) {
+        const broadWhere = buildSpaceSearchWhere(
+          {
+            q: searchParams.q || searchParams.category,
+            location: searchParams.location,
+            category: searchParams.category,
+            minPrice: searchParams.minPrice,
+            maxPrice: searchParams.maxPrice,
+            minCapacity: searchParams.minCapacity,
+            minSquareMeters: searchParams.minSquareMeters,
+            maxSquareMeters: searchParams.maxSquareMeters,
+          },
+          amenityIds
+        );
         const broadResults = await prisma.space.findMany({
           where: broadWhere,
-          include: {
-            host: { select: { id: true, name: true, avatarUrl: true, createdAt: true } },
-            reviews: { select: { rating: true } },
-          },
+          include: spaceListInclude,
           take: 6,
           orderBy: { createdAt: 'desc' },
         });

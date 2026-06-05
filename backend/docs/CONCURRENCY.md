@@ -38,10 +38,10 @@ This document describes how the API prevents inconsistent bookings when multiple
 
 - `POST /api/bookings` runs inside `prisma.$transaction`:
   1. `SELECT id FROM "Space" WHERE id = $spaceId FOR UPDATE` — locks the listing row until the transaction ends.
-  2. `validateBookingAgainstSpace` — re-checks `status === 'active'`, blocked dates, banned days, availability window, duration, and price.
+  2. `validateBookingAgainstSpace` — re-checks `status === 'active'`, blocked dates and banned weekdays (relational `space_blocked_date` / `space_banned_day`), availability window, duration, and price.
   3. `booking.create` — insert (still subject to the exclusion constraint if status is `confirmed`).
 
-If the host updates `blockedDatesJson`, `status`, or other rules in parallel, their transaction either completes before the guest’s validation (guest sees new rules) or waits until the guest’s booking finishes.
+If the host updates blocked dates, banned days, `status`, or other rules in parallel (PATCH syncs relational rows and legacy JSON via `syncSpaceBlockedDates` / `syncSpaceBannedDays`), their transaction either completes before the guest’s validation (guest sees new rules) or waits until the guest’s booking finishes.
 
 **Code:** [`src/lib/bookingRules.js`](../src/lib/bookingRules.js) (`lockSpaceRow`, `validateBookingAgainstSpace`), [`src/routes/bookings.js`](../src/routes/bookings.js) (`POST /`).
 

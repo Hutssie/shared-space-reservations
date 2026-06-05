@@ -1,7 +1,10 @@
 import { Decimal } from '@prisma/client/runtime/library';
 import { parseTimeToMinutes, resolveBookingMinutes } from './bookingTime.js';
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+import {
+  isDayBanned,
+  isDateBlocked,
+  spaceAvailabilityInclude,
+} from './spaceAvailabilityRules.js';
 
 /** Row lock so host listing edits and guest booking are serialized on the same space. */
 export async function lockSpaceRow(tx, spaceId) {
@@ -9,17 +12,10 @@ export async function lockSpaceRow(tx, spaceId) {
     SELECT id FROM "Space" WHERE id = ${spaceId} FOR UPDATE
   `;
   if (!Array.isArray(locked) || locked.length === 0) return null;
-  return tx.space.findUnique({ where: { id: spaceId } });
-}
-
-function parseBlockedDates(blockedDatesJson) {
-  if (!blockedDatesJson) return [];
-  try {
-    const a = JSON.parse(blockedDatesJson);
-    return Array.isArray(a) ? a : [];
-  } catch {
-    return [];
-  }
+  return tx.space.findUnique({
+    where: { id: spaceId },
+    include: spaceAvailabilityInclude,
+  });
 }
 
 /**
@@ -56,27 +52,15 @@ export function validateBookingAgainstSpace(
     }
   }
 
-  if (space.bannedDaysJson) {
-    try {
-      const bannedDays = JSON.parse(space.bannedDaysJson);
-      if (Array.isArray(bannedDays) && bannedDays.length > 0) {
-        const dayName = DAY_NAMES[requestDate.getDay()];
-        if (bannedDays.includes(dayName)) {
-          return { error: `This space is not available on ${dayName}s`, status: 400 };
-        }
-      }
-    } catch {
-      /* ignore invalid json */
-    }
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = dayNames[requestDate.getDay()];
+  if (isDayBanned(space, dayName)) {
+    return { error: `This space is not available on ${dayName}s`, status: 400 };
   }
 
   const dateStr = requestDate.toISOString().slice(0, 10);
-  for (const block of parseBlockedDates(space.blockedDatesJson)) {
-    const start = block.startDate || '';
-    const end = block.endDate || block.startDate || '';
-    if (dateStr >= start && dateStr <= end) {
-      return { error: 'This date is not available for booking', status: 400 };
-    }
+  if (isDateBlocked(space, dateStr)) {
+    return { error: 'This date is not available for booking', status: 400 };
   }
 
   const minutes = resolveBookingMinutes(startTime, endTime);
