@@ -67,6 +67,13 @@ export function fetchSpaces(
     south?: number;
     east?: number;
     west?: number;
+    sort?: 'recommended';
+    centerLat?: number;
+    centerLng?: number;
+    placeNorth?: number;
+    placeSouth?: number;
+    placeEast?: number;
+    placeWest?: number;
   },
   options?: { signal?: AbortSignal }
 ): Promise<{ spaces: Space[]; total: number }> {
@@ -86,6 +93,13 @@ export function fetchSpaces(
   if (params.south != null) sp.set('south', String(params.south));
   if (params.east != null) sp.set('east', String(params.east));
   if (params.west != null) sp.set('west', String(params.west));
+  if (params.sort) sp.set('sort', params.sort);
+  if (params.centerLat != null) sp.set('centerLat', String(params.centerLat));
+  if (params.centerLng != null) sp.set('centerLng', String(params.centerLng));
+  if (params.placeNorth != null) sp.set('placeNorth', String(params.placeNorth));
+  if (params.placeSouth != null) sp.set('placeSouth', String(params.placeSouth));
+  if (params.placeEast != null) sp.set('placeEast', String(params.placeEast));
+  if (params.placeWest != null) sp.set('placeWest', String(params.placeWest));
   const query = sp.toString();
   return apiGet<{ spaces: Space[]; total: number }>(`/api/spaces${query ? `?${query}` : ''}`, {
     signal: options?.signal,
@@ -118,8 +132,17 @@ export function fetchPopularCategoriesThisWeek(): Promise<{ categories: string[]
   return apiGet<{ categories: string[] }>('/api/spaces/popular-categories-week');
 }
 
+export function fetchFeaturedSpacesThisMonth(): Promise<{ spaces: Space[]; total: number }> {
+  return apiGet<{ spaces: Space[]; total: number }>('/api/spaces/featured-this-month');
+}
+
+/** @deprecated Use fetchFeaturedSpacesThisMonth */
 export function fetchFeaturedSpacesThisWeek(): Promise<{ spaces: Space[]; total: number }> {
-  return apiGet<{ spaces: Space[]; total: number }>('/api/spaces/featured-this-week');
+  return fetchFeaturedSpacesThisMonth();
+}
+
+export function fetchRecommendedSpaces(): Promise<{ spaces: Space[]; total: number }> {
+  return apiGet<{ spaces: Space[]; total: number }>('/api/spaces/recommended');
 }
 
 export type BookedRange = { start: string; end: string };

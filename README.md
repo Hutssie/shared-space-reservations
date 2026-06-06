@@ -70,4 +70,17 @@ Remove-Item Env:PGPASSWORD
 - `backend/` – Express app, Prisma schema, auth (JWT), routes: auth, users, spaces, bookings, reviews, favorites, host.
 - `frontend/` – React app, Tailwind + Radix UI, API client and auth context, pages wired to the backend.
 
+## Hybrid recommendations
+
+The app includes a hybrid recommendation system (popularity + content + collaborative filtering + location boost) for the home page and Find a Space grid. See [RECOMMENDATIONS.md](RECOMMENDATIONS.md) for architecture, formulas, and geo behavior.
+
+**API:** `GET /api/spaces/recommended`, `GET /api/spaces/featured-this-month`, `GET /api/spaces?sort=recommended`
+
+**Evaluation (thesis):**
+
+```bash
+cd backend
+npm run db:evaluate-recommendations
+```
+
 ---

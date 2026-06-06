@@ -158,3 +158,67 @@ export async function searchSpacesWithDateAvailability(
     availabilityScanCapped: scanCapped,
   };
 }
+
+/**
+ * Collect every space id that passes date availability (full scan, no page early exit).
+ * Used by ranked search so totals and sort order are correct across pages.
+ */
+export async function collectAllAvailableSpaceIds(
+  prisma,
+  {
+    where,
+    dateStart,
+    dateEnd,
+    dateCtx,
+    timeRange = null,
+    batchSize = DATE_FILTER_BATCH_SIZE,
+    maxScan = Number.MAX_SAFE_INTEGER,
+  }
+) {
+  const scanWhere = {
+    AND: [where, dateAvailabilitySqlWhere(dateCtx, dateStart, dateEnd)],
+  };
+
+  const availableIds = [];
+  let dbSkip = 0;
+  let scanned = 0;
+  let dbExhausted = false;
+
+  while (scanned < maxScan) {
+    const batch = await prisma.space.findMany({
+      where: scanWhere,
+      select: spaceSelectForAvailability,
+      take: batchSize,
+      skip: dbSkip,
+      orderBy: { createdAt: 'desc' },
+    });
+    if (batch.length === 0) {
+      dbExhausted = true;
+      break;
+    }
+    scanned += batch.length;
+    dbSkip += batch.length;
+
+    const bySpaceId = await loadBookingsBySpaceId(
+      prisma,
+      batch.map((s) => s.id),
+      dateStart,
+      dateEnd
+    );
+
+    for (const space of batch) {
+      const bookings = bySpaceId.get(space.id) ?? [];
+      if (isSpaceAvailable(space, bookings, dateCtx, timeRange)) {
+        availableIds.push(space.id);
+      }
+    }
+
+    if (batch.length < batchSize) {
+      dbExhausted = true;
+      break;
+    }
+  }
+
+  const scanCapped = !dbExhausted && scanned >= maxScan;
+  return { ids: availableIds, scanCapped };
+}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { SpaceCard } from './SpaceCard';
-import { fetchFeaturedSpacesThisWeek } from '../api/spaces';
+import { fetchRecommendedSpaces, fetchFeaturedSpacesThisMonth } from '../api/spaces';
 import { fetchFavorites, addFavorite, removeFavorite } from '../api/favorites';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router';
@@ -14,11 +14,13 @@ export const FeaturedSpaces = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchFeaturedSpacesThisWeek()
+    setLoading(true);
+    const fetcher = token ? fetchRecommendedSpaces : fetchFeaturedSpacesThisMonth;
+    fetcher()
       .then((res) => setSpaces(res.spaces))
       .catch(() => setSpaces([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     if (!token) {
@@ -47,13 +49,18 @@ export const FeaturedSpaces = () => {
     }
   }, [token, favoriteIds]);
 
+  const title = token ? 'Recommended for you' : 'Trending this month';
+  const subtitle = token
+    ? 'Spaces we think you would love.'
+    : 'Discover what the community is booking right now.';
+
   return (
     <section className="py-20 bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-5">
           <div className="max-w-xl">
-            <h2 className="text-2xl md:text-3xl font-extrabold text-brand-700 mb-3 tracking-tight">Featured spaces this week</h2>
-            <p className="text-brand-500 font-medium text-base leading-relaxed">These spaces are currently trending in the creative community. Book them while they're available!</p>
+            <h2 className="text-2xl md:text-3xl font-extrabold text-brand-700 mb-3 tracking-tight">{title}</h2>
+            <p className="text-brand-500 font-medium text-base leading-relaxed">{subtitle}</p>
           </div>
           <button
             type="button"

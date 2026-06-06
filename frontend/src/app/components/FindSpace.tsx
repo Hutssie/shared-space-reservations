@@ -38,6 +38,18 @@ export const FindSpace = () => {
   });
 
   const locationParam = searchParams.get('location') || '';
+  const centerLatParam = searchParams.get('centerLat');
+  const centerLngParam = searchParams.get('centerLng');
+  const centerLat = centerLatParam != null ? parseFloat(centerLatParam) : undefined;
+  const centerLng = centerLngParam != null ? parseFloat(centerLngParam) : undefined;
+  const placeNorthParam = searchParams.get('placeNorth');
+  const placeSouthParam = searchParams.get('placeSouth');
+  const placeEastParam = searchParams.get('placeEast');
+  const placeWestParam = searchParams.get('placeWest');
+  const placeNorth = placeNorthParam != null ? parseFloat(placeNorthParam) : undefined;
+  const placeSouth = placeSouthParam != null ? parseFloat(placeSouthParam) : undefined;
+  const placeEast = placeEastParam != null ? parseFloat(placeEastParam) : undefined;
+  const placeWest = placeWestParam != null ? parseFloat(placeWestParam) : undefined;
   const categoryParam = searchParams.get('category') || '';
   const selectedCategories = categoryParam ? categoryParam.split(',') : [];
   const pageParam = searchParams.get('page');
@@ -115,28 +127,61 @@ export const FindSpace = () => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('location', location);
     newParams.delete('page');
+    if (suggestion.latitude != null && suggestion.longitude != null) {
+      newParams.set('centerLat', String(suggestion.latitude));
+      newParams.set('centerLng', String(suggestion.longitude));
+      setMapInitialCenter({ lat: suggestion.latitude, lng: suggestion.longitude });
+      setMapInitialZoom(12);
+    } else {
+      newParams.delete('centerLat');
+      newParams.delete('centerLng');
+    }
+    if (
+      suggestion.north != null &&
+      suggestion.south != null &&
+      suggestion.east != null &&
+      suggestion.west != null
+    ) {
+      newParams.set('placeNorth', String(suggestion.north));
+      newParams.set('placeSouth', String(suggestion.south));
+      newParams.set('placeEast', String(suggestion.east));
+      newParams.set('placeWest', String(suggestion.west));
+    } else {
+      newParams.delete('placeNorth');
+      newParams.delete('placeSouth');
+      newParams.delete('placeEast');
+      newParams.delete('placeWest');
+    }
     setSearchParams(newParams);
     setLocationInput('');
     setShowSuggestions(false);
     setSuggestions([]);
-    if (suggestion.latitude != null && suggestion.longitude != null) {
-      setMapInitialCenter({ lat: suggestion.latitude, lng: suggestion.longitude });
-      setMapInitialZoom(12);
-    }
   }, [searchParams, setSearchParams]);
 
   const handleClearLocation = useCallback(() => {
     const newParams = new URLSearchParams(searchParams);
     newParams.delete('location');
+    newParams.delete('centerLat');
+    newParams.delete('centerLng');
+    newParams.delete('placeNorth');
+    newParams.delete('placeSouth');
+    newParams.delete('placeEast');
+    newParams.delete('placeWest');
     newParams.delete('page');
     setSearchParams(newParams);
     setLocationInput('');
     setShowSuggestions(false);
   }, [searchParams, setSearchParams]);
 
-  const mapFilterParams = useMemo(
+  const baseFilterParams = useMemo(
     () => ({
       location: locationParam || undefined,
+      centerLat: centerLat != null && !Number.isNaN(centerLat) ? centerLat : undefined,
+      centerLng: centerLng != null && !Number.isNaN(centerLng) ? centerLng : undefined,
+      placeNorth: placeNorth != null && !Number.isNaN(placeNorth) ? placeNorth : undefined,
+      placeSouth: placeSouth != null && !Number.isNaN(placeSouth) ? placeSouth : undefined,
+      placeEast: placeEast != null && !Number.isNaN(placeEast) ? placeEast : undefined,
+      placeWest: placeWest != null && !Number.isNaN(placeWest) ? placeWest : undefined,
       category: selectedCategories.length > 0 ? selectedCategories.join(',') : undefined,
       date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined,
       minPrice: appliedPriceRange?.[0],
@@ -146,6 +191,12 @@ export const FindSpace = () => {
     }),
     [
       locationParam,
+      centerLat,
+      centerLng,
+      placeNorth,
+      placeSouth,
+      placeEast,
+      placeWest,
       selectedCategories.join(','),
       selectedDate,
       appliedPriceRange,
@@ -153,6 +204,13 @@ export const FindSpace = () => {
       appliedAmenityIds,
     ]
   );
+
+  const gridFilterParams = useMemo(
+    () => ({ ...baseFilterParams, sort: 'recommended' as const }),
+    [baseFilterParams]
+  );
+
+  const mapFilterParams = baseFilterParams;
 
   const fetchMapSpacesForBounds = useCallback(
     (bounds: MapBounds) => {
@@ -205,7 +263,7 @@ export const FindSpace = () => {
     setLoading(true);
     const offset = (currentPage - 1) * perPage;
     fetchSpaces({
-      ...mapFilterParams,
+      ...gridFilterParams,
       limit: perPage,
       offset,
     })
@@ -218,7 +276,7 @@ export const FindSpace = () => {
         setTotalSpaces(0);
       })
       .finally(() => setLoading(false));
-  }, [view, mapFilterParams, currentPage]);
+  }, [view, gridFilterParams, currentPage]);
 
   useEffect(() => {
     if (view !== 'map') return;
@@ -545,8 +603,12 @@ export const FindSpace = () => {
             <div className="flex items-center justify-between mb-5 gap-4">
               <div className="min-w-0">
                 <h1 className="text-lg lg:text-xl font-black text-brand-700 truncate">
-                  {displayTotal} {displayTotal === 1 ? 'space' : 'spaces'} found {locationParam ? `in ${locationParam}` : ''}
-                  {view === 'map' ? ' in this area' : ''}
+                  {displayTotal} {displayTotal === 1 ? 'space' : 'spaces'} found{' '}
+                  {view === 'map'
+                    ? 'in this area'
+                    : locationParam
+                      ? `in ${locationParam}`
+                      : 'nearby'}
                 </h1>
                 <p className="text-brand-400 font-medium text-xs sm:text-sm">Prices may vary depending on date and time</p>
               </div>

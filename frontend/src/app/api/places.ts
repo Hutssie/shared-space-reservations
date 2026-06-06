@@ -9,6 +9,10 @@ export type PlaceSuggestion = {
   country?: string;
   latitude?: number;
   longitude?: number;
+  north?: number;
+  south?: number;
+  east?: number;
+  west?: number;
 };
 
 export function fetchPlaceSuggestions(query: string): Promise<{ suggestions: PlaceSuggestion[] }> {

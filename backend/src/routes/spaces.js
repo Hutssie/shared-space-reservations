@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authMiddleware } from '../middleware/auth.js';
+import { authMiddleware, optionalAuthMiddleware } from '../middleware/auth.js';
 import { Decimal } from '@prisma/client/runtime/library';
 import {
   AMENITY_ID_TO_LABELS,
@@ -25,6 +25,13 @@ import {
   syncSpaceBlockedDates,
 } from '../lib/spaceAvailabilityRules.js';
 import { prisma } from '../lib/prisma.js';
+import { HOME_RECOMMENDATION_LIMIT } from '../lib/recommendationConfig.js';
+import {
+  geoContextForLocationSearch,
+  mergeWhereWithGeo,
+  resolveGeoContext,
+  searchSpacesRanked,
+} from '../lib/rankedSpaceSearch.js';
 
 const router = Router();
 
@@ -268,59 +275,87 @@ router.get('/popular-categories-week', async (req, res, next) => {
   }
 });
 
-router.get('/featured-this-week', async (req, res, next) => {
+async function featuredThisMonthHandler(req, res, next) {
   try {
-    const startDate = new Date();
-    startDate.setUTCDate(startDate.getUTCDate() - 6);
-    startDate.setUTCHours(0, 0, 0, 0);
+    const geoContext = await resolveGeoContext({ geoMode: 'home_boost' });
+    const limit = Math.min(
+      parseInt(req.query.limit, 10) || HOME_RECOMMENDATION_LIMIT,
+      HOME_RECOMMENDATION_LIMIT
+    );
 
-    const bookings = await prisma.booking.findMany({
-      where: { status: 'confirmed', date: { gte: startDate } },
-      select: { spaceId: true },
+    const { spaces, total } = await searchSpacesRanked(prisma, {
+      buildWhere: () => ({ status: 'active' }),
+      geoContext,
+      userId: null,
+      offset: 0,
+      limit,
+      forceColdStart: true,
     });
 
-    const countBySpaceId = {};
-    for (const b of bookings) {
-      const sid = b.spaceId;
-      countBySpaceId[sid] = (countBySpaceId[sid] || 0) + 1;
-    }
+    res.json({ spaces: spaces.map(spaceToResponse), total });
+  } catch (e) {
+    next(e);
+  }
+}
 
-    // aleg candidati mai multi ca sa pot completa pana la 6 cand unele spatii top sunt inactive
-    const CANDIDATE_SIZE = 15;
-    const candidateIds = Object.entries(countBySpaceId)
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .slice(0, CANDIDATE_SIZE)
-      .map(([id]) => id);
+router.get('/featured-this-month', featuredThisMonthHandler);
 
-    if (candidateIds.length === 0) {
-      return res.json({ spaces: [], total: 0 });
-    }
+router.get('/featured-this-week', featuredThisMonthHandler);
 
-    const spacesRaw = await prisma.space.findMany({
-      where: { id: { in: candidateIds }, status: 'active' },
-      include: spaceListInclude,
+router.get('/recommended', optionalAuthMiddleware, async (req, res, next) => {
+  try {
+    const geoContext = await resolveGeoContext({ geoMode: 'home_boost' });
+    const limit = Math.min(
+      parseInt(req.query.limit, 10) || HOME_RECOMMENDATION_LIMIT,
+      HOME_RECOMMENDATION_LIMIT
+    );
+
+    const { spaces, total } = await searchSpacesRanked(prisma, {
+      buildWhere: () => ({ status: 'active' }),
+      geoContext,
+      userId: req.userId ?? null,
+      offset: 0,
+      limit,
+      forceColdStart: false,
     });
 
-    const byId = new Map(spacesRaw.map((s) => [s.id, s]));
-    // pastrez ordinea dupa numarul de rezervari: ia primele 6 active din lista de candidati
-    const spaces = candidateIds.map((id) => byId.get(id)).filter(Boolean).slice(0, 6);
-    res.json({ spaces: spaces.map(spaceToResponse), total: spaces.length });
+    res.json({ spaces: spaces.map(spaceToResponse), total });
   } catch (e) {
     next(e);
   }
 });
 
-router.get('/', async (req, res, next) => {
+router.get('/', optionalAuthMiddleware, async (req, res, next) => {
   try {
-    const { q, location, category, date, minPrice, maxPrice, minCapacity, amenities: amenitiesParam, limit = 50, offset = 0, featured, north, south, east, west } = req.query;
+    const {
+      q,
+      location,
+      category,
+      date,
+      minPrice,
+      maxPrice,
+      minCapacity,
+      amenities: amenitiesParam,
+      limit = 50,
+      offset = 0,
+      featured,
+      north,
+      south,
+      east,
+      west,
+      sort,
+      centerLat,
+      centerLng,
+      geoMode,
+      placeNorth,
+      placeSouth,
+      placeEast,
+      placeWest,
+    } = req.query;
     const bounds = parseMapBounds({ north, south, east, west });
     const amenityIds = amenitiesParam
       ? String(amenitiesParam).split(',').map((a) => a.trim()).filter(Boolean)
       : [];
-    const where = buildSpaceSearchWhere(
-      { q, location, category, minPrice, maxPrice, minCapacity, bounds },
-      amenityIds
-    );
 
     const skip = bounds ? 0 : (parseInt(offset, 10) || 0);
     const defaultLimit = bounds ? 150 : 50;
@@ -328,6 +363,58 @@ router.get('/', async (req, res, next) => {
     const requestedTake = Math.min(parseInt(limit, 10) || defaultLimit, maxLimit);
 
     const { dateStart, dateEnd, dateCtx } = parseDateFilterQuery(date);
+
+    if (sort === 'recommended') {
+      const inferredGeoMode = geoMode || (location ? 'city' : 'nearby');
+      const geoContext = await resolveGeoContext({
+        location,
+        centerLat,
+        centerLng,
+        geoMode: inferredGeoMode,
+        placeNorth,
+        placeSouth,
+        placeEast,
+        placeWest,
+      });
+
+      const searchLocation = inferredGeoMode === 'city' ? undefined : location;
+
+      const { spaces, total } = await searchSpacesRanked(prisma, {
+        buildWhere: () =>
+          buildSpaceSearchWhere(
+            { q, location: searchLocation, category, minPrice, maxPrice, minCapacity, bounds },
+            amenityIds
+          ),
+        geoContext,
+        userId: req.userId ?? null,
+        dateStart,
+        dateEnd,
+        dateCtx,
+        offset: skip,
+        limit: requestedTake,
+      });
+
+      res.json({ spaces: spaces.map(spaceToResponse), total });
+      return;
+    }
+
+    const locationGeo = await geoContextForLocationSearch({
+      location,
+      centerLat,
+      centerLng,
+      placeNorth,
+      placeSouth,
+      placeEast,
+      placeWest,
+    });
+    const searchLocation = locationGeo ? undefined : location;
+    let where = buildSpaceSearchWhere(
+      { q, location: searchLocation, category, minPrice, maxPrice, minCapacity, bounds },
+      amenityIds
+    );
+    if (locationGeo) {
+      where = mergeWhereWithGeo(where, locationGeo);
+    }
 
     if (dateStart && dateEnd && dateCtx) {
       const { spaces, total, availabilityScanCapped } = await searchSpacesWithDateAvailability(

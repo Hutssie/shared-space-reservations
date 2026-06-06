@@ -20,6 +20,7 @@
     "db:verify-search-totals": "node prisma/verify-search-totals.js",
     "test": "node --require ./tests/setup.cjs --test tests/**/*.test.js",
     "db:bench-search": "node prisma/bench-spaces-search.js",
+    "db:evaluate-recommendations": "node prisma/evaluate-recommendations.js",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio"

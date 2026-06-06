@@ -3,26 +3,49 @@ import { prisma } from '../lib/prisma.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
-export async function authMiddleware(req, res, next) {
+async function attachUserIdFromToken(req) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return null;
   }
   const token = authHeader.slice(7);
   try {
     const payload = jwt.verify(token, JWT_SECRET);
-    req.userId = payload.userId;
     const user = await prisma.user.findUnique({
-      where: { id: req.userId },
+      where: { id: payload.userId },
       select: { bannedAt: true },
     });
     if (user?.bannedAt) {
-      return res.status(403).json({ error: 'Account suspended' });
+      return { banned: true };
     }
-    next();
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return { userId: payload.userId };
+  } catch {
+    return null;
   }
+}
+
+export async function authMiddleware(req, res, next) {
+  const result = await attachUserIdFromToken(req);
+  if (!result) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  if (result.banned) {
+    return res.status(403).json({ error: 'Account suspended' });
+  }
+  req.userId = result.userId;
+  next();
+}
+
+/** Sets req.userId when a valid token is present; continues without error when absent. */
+export async function optionalAuthMiddleware(req, res, next) {
+  const result = await attachUserIdFromToken(req);
+  if (result?.banned) {
+    return res.status(403).json({ error: 'Account suspended' });
+  }
+  if (result?.userId) {
+    req.userId = result.userId;
+  }
+  next();
 }
 
 export async function attachUser(req, res, next) {
