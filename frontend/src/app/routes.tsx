@@ -11,6 +11,8 @@ import { FindSpace } from "./components/FindSpace";
 import { ListSpace } from "./components/ListSpace";
 import { Auth } from "./components/Auth";
 import { ResetPassword } from "./components/ResetPassword";
+import { VerifyEmail } from "./components/VerifyEmail";
+import { NewsletterSubscribe } from "./components/NewsletterSubscribe";
 import { Onboarding } from "./components/Onboarding";
 import { EarningEstimator } from "./components/EarningEstimator";
 import { SpaceDetails } from "./components/SpaceDetails";
@@ -92,26 +94,7 @@ const HomePage = () => (
       </div>
     </section>
     <HowItWorks />
-    <section className="py-20 bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-10 border-2 border-brand-100 rounded-[2.5rem] p-10 hover:border-brand-300 transition-all duration-500 shadow-sm hover:shadow-2xl">
-          <div className="text-center md:text-left">
-            <h3 className="text-2xl md:text-3xl font-black text-brand-700 mb-3">Stay in the loop</h3>
-            <p className="text-brand-500 font-medium text-base">Subscribe to get notified about new unique spaces and exclusive offers.</p>
-          </div>
-          <div className="w-full md:max-w-md flex flex-col sm:flex-row gap-3">
-            <input 
-              type="email" 
-              placeholder="Enter your email" 
-              className="flex-1 px-5 py-3 bg-brand-100 border-none rounded-xl focus:ring-2 focus:ring-brand-400 focus:outline-none text-brand-700 font-medium text-base placeholder:text-brand-400/70"
-            />
-            <button className="px-6 py-3 bg-brand-700 hover:bg-brand-600 text-white font-black text-base rounded-xl transition-all active:scale-95 shadow-lg shadow-brand-700/20 cursor-pointer">
-              Subscribe
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
+    <NewsletterSubscribe />
   </>
 );
 
@@ -195,6 +178,10 @@ export const router = createBrowserRouter([
       {
         path: "auth/reset-password",
         element: <ResetPassword />,
+      },
+      {
+        path: "auth/verify-email",
+        element: <VerifyEmail />,
       },
       {
         path: "auth/onboarding",

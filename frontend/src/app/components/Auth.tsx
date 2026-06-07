@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, User, ArrowRight, Chrome, Eye, EyeOff, CheckCircle2, X } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Chrome, Eye, EyeOff, CheckCircle2, X, ShieldCheck } from 'lucide-react';
 import AppleIcon from '@mui/icons-material/Apple';
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
@@ -20,6 +20,8 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [verifyEmailSent, setVerifyEmailSent] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
   const { setAuth } = useAuth();
@@ -55,10 +57,9 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
         const from = (location.state as { from?: { pathname?: string } })?.from?.pathname || '/dashboard';
         navigate(from, { replace: true });
       } else {
-        const { token, user } = await registerApi(email, password, name);
-        saveAuth(token, user);
-        setAuth(token, user);
-        navigate('/auth/onboarding', { replace: true });
+        await registerApi(email, password, name);
+        setRegisteredEmail(email.trim());
+        setVerifyEmailSent(true);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Something went wrong');
@@ -127,6 +128,36 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
             <Link to="/" className="text-2xl font-black text-brand-700">SPACE<span className="text-brand-400">BOOK</span></Link>
           </div>
 
+          <AnimatePresence mode="wait">
+            {verifyEmailSent ? (
+              <motion.div
+                key="verify"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="flex flex-col items-center text-center py-8"
+              >
+                <div className="w-20 h-20 bg-brand-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
+                  <ShieldCheck className="w-10 h-10 text-brand-500" />
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black text-brand-700 mb-3">Check your inbox</h1>
+                <p className="text-brand-400 font-medium mb-2 max-w-sm">
+                  We sent a verification link to
+                </p>
+                <p className="text-brand-600 font-black mb-6 break-all">{registeredEmail}</p>
+                <p className="text-brand-300 text-sm font-medium max-w-xs mb-8">
+                  Click the link in the email to activate your account. It may take a minute or two to arrive.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setVerifyEmailSent(false); setMode('login'); }}
+                  className="text-sm font-bold text-brand-400 hover:text-brand-700 underline underline-offset-4 transition-colors cursor-pointer"
+                >
+                  Back to sign in
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <div className="mb-10">
             <h1 className="text-3xl md:text-4xl font-black text-brand-700 mb-2">
               {mode === 'login' ? 'Sign In' : 'Create Account'}
@@ -250,6 +281,9 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
           <p className="mt-10 text-center text-xs text-brand-300 font-medium px-8 leading-relaxed">
             By continuing, you agree to SpaceBook's <a href="#" className="underline">Terms of Service</a> and <a href="#" className="underline">Privacy Policy</a>.
           </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

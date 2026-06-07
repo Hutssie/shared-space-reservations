@@ -103,36 +103,40 @@ const SPACES = [
 
 async function main() {
   const hash = await bcrypt.hash('Password123', 10);
+  const verifiedAt = new Date();
   const host = await prisma.user.upsert({
     where: { email: 'host@example.com' },
-    update: {},
+    update: { emailVerifiedAt: verifiedAt },
     create: {
       email: 'host@example.com',
       passwordHash: hash,
       name: 'Sarah Chen',
       avatarUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=200',
+      emailVerifiedAt: verifiedAt,
     },
   });
 
   const guest = await prisma.user.upsert({
     where: { email: 'guest@example.com' },
-    update: {},
+    update: { emailVerifiedAt: verifiedAt },
     create: {
       email: 'guest@example.com',
       passwordHash: hash,
       name: 'Guest User',
       avatarUrl: null,
+      emailVerifiedAt: verifiedAt,
     },
   });
 
   await prisma.user.upsert({
     where: { email: 'admin@example.com' },
-    update: { role: 'admin', passwordHash: hash },
+    update: { role: 'admin', passwordHash: hash, emailVerifiedAt: verifiedAt },
     create: {
       email: 'admin@example.com',
       passwordHash: hash,
       name: 'Admin',
       role: 'admin',
+      emailVerifiedAt: verifiedAt,
     },
   });
 

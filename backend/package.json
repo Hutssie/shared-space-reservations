@@ -23,6 +23,7 @@
     "test": "node --require ./tests/setup.cjs --test tests/**/*.test.js",
     "db:bench-search": "node prisma/bench-spaces-search.js",
     "db:evaluate-recommendations": "node prisma/evaluate-recommendations.js",
+    "db:backfill-email-verified": "node prisma/backfill-email-verified.js",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio"
@@ -39,6 +40,7 @@
     "express": "^4.21.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
+    "nodemailer": "^8.0.10",
     "pg": "^8.13.0"
   },
   "devDependencies": {

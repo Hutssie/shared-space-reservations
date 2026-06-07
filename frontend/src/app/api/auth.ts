@@ -15,12 +15,22 @@ export type AuthResponse = {
   user: User;
 };
 
+export type RegisterResponse = {
+  success: boolean;
+  message: string;
+  email: string;
+};
+
 export async function login(email: string, password: string): Promise<AuthResponse> {
   return apiPost<AuthResponse>('/api/auth/login', { email, password });
 }
 
-export async function register(email: string, password: string, name: string): Promise<AuthResponse> {
-  return apiPost<AuthResponse>('/api/auth/register', { email, password, name });
+export async function register(email: string, password: string, name: string): Promise<RegisterResponse> {
+  return apiPost<RegisterResponse>('/api/auth/register', { email, password, name });
+}
+
+export async function verifyEmail(token: string): Promise<{ success: boolean; message: string }> {
+  return apiGet<{ success: boolean; message: string }>(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
 }
 
 export async function requestPasswordReset(email: string): Promise<{ success: boolean }> {

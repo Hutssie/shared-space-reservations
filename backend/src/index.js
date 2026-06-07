@@ -15,6 +15,7 @@ import { messagesRouter } from './routes/messages.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { adminRouter } from './routes/admin.js';
 import { aiSearchRouter } from './routes/ai-search.js';
+import { newsletterRouter } from './routes/newsletter.js';
 import {
   isPostgresExclusionViolation,
   BOOKING_SLOT_CONFLICT_MESSAGE,
@@ -40,6 +41,7 @@ app.use('/api/messages', messagesRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/ai-search', aiSearchRouter);
+app.use('/api/newsletter', newsletterRouter);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
