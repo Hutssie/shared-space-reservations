@@ -26,6 +26,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   results?: Space[];
+  resultType?: 'clarify' | 'exact' | 'close' | 'none';
   followUp?: string;
   bookingPrefill?: BookingPrefill;
 }
@@ -172,6 +173,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
         role: 'assistant',
         content: response.message,
         results: response.spaces,
+        resultType: response.searchMeta?.resultType,
         followUp: response.followUp,
         bookingPrefill: response.bookingPrefill,
       };
@@ -282,17 +284,26 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                     {msg.results && msg.results.length > 0 && (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full mt-1">
-                          {msg.results.map((space) => (
+                          {msg.results.map((space, index) => {
+                            const isMostRecommended = index === 0 && msg.resultType === 'exact';
+                            return (
                             <motion.div
                               key={space.id}
                               initial={{ opacity: 0, scale: 0.95 }}
                               animate={{ opacity: 1, scale: 1 }}
                               transition={{ delay: 0.1 }}
+                              className="relative"
                             >
+                              {isMostRecommended && (
+                                <div className="absolute -top-2.5 left-4 z-10 flex items-center gap-1 bg-amber-500 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full shadow-lg shadow-amber-500/30">
+                                  <Sparkles className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                                  Most recommended!
+                                </div>
+                              )}
                               <Link 
                                 to={`/space/${space.id}`}
                                 onClick={handleClose}
-                                className="group flex flex-col bg-white rounded-[1.25rem] md:rounded-2xl overflow-hidden border border-brand-100 shadow-md hover:shadow-2xl hover:border-brand-400 transition-all p-2 md:p-3.5"
+                                className={`group flex flex-col bg-white rounded-[1.25rem] md:rounded-2xl overflow-hidden border shadow-md hover:shadow-2xl transition-all p-2 md:p-3.5 ${isMostRecommended ? 'border-amber-300 hover:border-amber-400' : 'border-brand-100 hover:border-brand-400'}`}
                               >
                                 <div className="h-31 md:h-35 rounded-xl md:rounded-2xl overflow-hidden mb-2 md:mb-2.5 relative">
                                   <ImageWithFallback src={space.image ?? space.images?.[0] ?? ''} alt={space.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
@@ -316,7 +327,8 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                                 </div>
                               </Link>
                             </motion.div>
-                          ))}
+                            );
+                          })}
                         </div>
 
                         {/* Prompt-ul pentru booking */}
