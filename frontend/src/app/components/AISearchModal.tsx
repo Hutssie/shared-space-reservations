@@ -26,6 +26,7 @@ interface Message {
   role: 'user' | 'assistant';
   content: string;
   results?: Space[];
+  followUp?: string;
   bookingPrefill?: BookingPrefill;
 }
 
@@ -171,6 +172,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
         role: 'assistant',
         content: response.message,
         results: response.spaces,
+        followUp: response.followUp,
         bookingPrefill: response.bookingPrefill,
       };
       setMessages((prev) => [...prev, aiMessage]);
@@ -387,6 +389,12 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                             </motion.div>
                           )}
                         </AnimatePresence>
+
+                        {msg.followUp && (
+                          <div className="p-4 md:p-5 rounded-xl md:rounded-2xl bg-brand-50 border border-brand-100 text-sm md:text-[15px] text-brand-600 w-full">
+                            <p className="font-medium leading-relaxed whitespace-pre-line">{formatMessage(msg.followUp)}</p>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>

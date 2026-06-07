@@ -46,7 +46,7 @@ function pop30dStartDate() {
   return d;
 }
 
-async function loadPop30dCounts(prisma, spaceIds) {
+export async function loadPop30dRawCounts(prisma, spaceIds) {
   if (spaceIds.length === 0) return new Map();
 
   const startDate = pop30dStartDate();
@@ -64,7 +64,11 @@ async function loadPop30dCounts(prisma, spaceIds) {
   for (const row of bookings) {
     counts.set(row.spaceId, row._count.spaceId);
   }
-  return minMaxNormalize(counts);
+  return counts;
+}
+
+async function loadPop30dCounts(prisma, spaceIds) {
+  return minMaxNormalize(await loadPop30dRawCounts(prisma, spaceIds));
 }
 
 async function loadUserProfileFromSpaceIds(prisma, spaceIds) {

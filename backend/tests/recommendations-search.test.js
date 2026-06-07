@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import { app } from '../src/index.js';
 import { DEFAULT_CITY_LAT, DEFAULT_CITY_LNG } from '../src/lib/recommendationConfig.js';
 import { haversineKm } from '../src/lib/geoSearch.js';
+import { locationNormFromDisplay } from '../src/lib/textNormalize.js';
 
 const prisma = new PrismaClient();
 const FIXTURE_PREFIX = 'RecSearch_';
@@ -18,6 +19,7 @@ async function createGeoFixture(hostId, title, { latitude, longitude, location }
       category: 'Photo Studio',
       title: `${FIXTURE_PREFIX}${title}`,
       location,
+      locationNorm: locationNormFromDisplay(location),
       capacity: 10,
       pricePerHour: new Decimal(100),
       description: 'Recommendation search fixture',

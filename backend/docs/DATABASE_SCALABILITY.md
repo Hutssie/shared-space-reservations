@@ -50,14 +50,14 @@ model SpaceAmenity {
 }
 ```
 
-Seed `Amenity` from `AMENITY_ID_TO_LABELS` in `spaces.js` (single source of truth).
+Seed `Amenity` from `AMENITY_ID_TO_LABELS` in [`amenities.js`](../src/lib/amenities.js) — one label per id, aligned with frontend `AmenitiesList` in `FilterDropdowns.tsx`.
 
 ### 1.2 Backfill
 
 Script `prisma/backfill-space-amenities.js`:
 
 - Parse each `amenitiesJson` array entry.
-- Resolve to canonical `amenityId` (match id or label via `AMENITY_ID_TO_LABELS`).
+- Resolve to canonical `amenityId` (id, catalog label, or `AMENITY_LEGACY_LABEL_ALIASES`).
 - `INSERT` into `SpaceAmenity` (idempotent).
 
 ### 1.3 Query pattern (AND semantics)
@@ -115,6 +115,10 @@ Dropped legacy single-column `category` index (superseded by `(status, category)
 **Verify:** `npm run db:explain-search` (prints `EXPLAIN ANALYZE` for sample queries).
 
 Optional (not implemented): `pg_trgm` GIN on `location` / `title` for `ILIKE '%…%'` — text search remains sequential scan by design until needed.
+
+**Location diacritics (Phase D4):** `Space.location_norm` stores a folded lowercase copy of `location` for accent-insensitive search (Romanian `ăâîșț` and general Latin accents). Index `(status, location_norm)`. Chosen over PostgreSQL `unaccent()` for Prisma-native queries. Commands: `npm run db:backfill-location-norm`, `npm run db:verify-location-norm`.
+
+**Location segment matching (Phase D4.1):** Structured location filters use segment-exact Prisma predicates (`buildLocationNormExactFilter` in [`textNormalize.js`](../src/lib/textNormalize.js)) — whole comma-separated parts only, preventing substring false positives (`roma`/`rome` vs `…, romania`). Autocomplete uses prefix mode (`buildLocationNormPrefixFilter`); free-text `q` OR search keeps substring `contains`. Same helpers used in AI search, browse, and geo text fallback. Optional future: `pg_trgm` / geocoder aliases for typo tolerance and Rome/Roma spelling variants — not required for substring bugs.
 
 **Booking** already has `@@index([spaceId, date])` — keep using it for date-filter booking fetches; restrict `spaceId: { in: ids }` to **paginated candidate ids only** (after Phase 1), not 1000 arbitrary rows.
 

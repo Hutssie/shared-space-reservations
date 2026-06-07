@@ -16,10 +16,9 @@ export const allSpaces = [
     amenities: [
       { name: 'High-speed WiFi', icon: Zap },
       { name: 'Natural Light', icon: Zap },
-      { name: 'Professional Sound System', icon: Zap },
+      { name: 'Pro Sound System', icon: Zap },
       { name: 'Full Kitchen', icon: Zap },
-      { name: 'Freight Elevator', icon: Zap },
-      { name: 'AC & Heating', icon: Zap },
+      { name: 'Air Conditioning', icon: Zap },
     ],
     images: [
       'https://images.unsplash.com/photo-1716703433576-13ff2922db95?q=80&w=1200',
@@ -47,7 +46,7 @@ export const allSpaces = [
     isPopular: true,
     isInstantBookable: false,
     description: 'Professional grade recording studio with high-end outboard gear and isolated vocal booth. Perfect for solo artists and small bands looking for high-quality production.',
-    amenities: [{ name: 'Sound Isolation', icon: Zap }, { name: 'Pro Tools HD', icon: Zap }],
+    amenities: [{ name: 'Soundproofed', icon: Zap }, { name: 'Recording Gear', icon: Zap }],
     images: ['https://images.unsplash.com/photo-1688670097051-26b24bb30ec1?q=80&w=1200'],
     host: {
       name: 'Marcus Bell',
@@ -68,7 +67,7 @@ export const allSpaces = [
     price: 200,
     isInstantBookable: true,
     description: 'Perfect for art exhibitions and high-end brand launches. Features clean white walls and professional gallery lighting.',
-    amenities: [{ name: 'Track Lighting', icon: Zap }, { name: 'White Walls', icon: Zap }],
+    amenities: [{ name: 'Art Easels', icon: Zap }],
     images: ['https://images.unsplash.com/photo-1767294274414-5e1e6c3974e9?q=80&w=1200'],
     host: {
       name: 'Elena Rossi',
@@ -90,7 +89,7 @@ export const allSpaces = [
     isPopular: true,
     isInstantBookable: false,
     description: 'Corporate executive suite with sweeping views of the Chicago skyline. Designed for high-level meetings and presentations.',
-    amenities: [{ name: 'Video Conferencing', icon: Zap }, { name: 'Board Table', icon: Zap }],
+    amenities: [{ name: 'Video Conferencing', icon: Zap }, { name: 'Dual Monitors', icon: Zap }],
     images: ['https://images.unsplash.com/photo-1765366417044-9e84ce8ec942?q=80&w=1200'],
     host: {
       name: 'Corporate Rentals',
@@ -111,7 +110,7 @@ export const allSpaces = [
     price: 130,
     isInstantBookable: true,
     description: 'Fully functional kitchen studio with professional appliances and natural light. Ideal for food photography and video production.',
-    amenities: [{ name: 'Double Ovens', icon: Zap }, { name: 'Commercial Range', icon: Zap }],
+    amenities: [{ name: 'Chef-grade Oven', icon: Zap }],
     images: ['https://images.unsplash.com/photo-1708915965975-2a950db0e215?q=80&w=1200'],
     host: {
       name: 'Austin Culinary',
@@ -132,7 +131,7 @@ export const allSpaces = [
     price: 80,
     isInstantBookable: false,
     description: 'Spacious dance studio with floor-to-ceiling mirrors and sprung wood floors. Perfect for rehearsals and workshops.',
-    amenities: [{ name: 'Sprung Floors', icon: Zap }, { name: 'Full Mirrors', icon: Zap }],
+    amenities: [{ name: 'Full-length Mirrors', icon: Zap }],
     images: ['https://images.unsplash.com/photo-1740813402046-08ec3e0ce5d2?q=80&w=1200'],
     host: {
       name: 'Dance LA',

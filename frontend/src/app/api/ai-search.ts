@@ -6,9 +6,19 @@ export interface AIChatMessage {
   content: string;
 }
 
+export interface AISearchMeta {
+  resultType: 'clarify' | 'exact' | 'close' | 'none';
+  knownFilters: Record<string, unknown>;
+  missingForCards?: string[];
+  suggestFollowUp: boolean;
+  missingRefinements?: string[];
+}
+
 export interface AIChatResponse {
   message: string;
   spaces?: Space[];
+  followUp?: string;
+  searchMeta?: AISearchMeta;
   bookingPrefill?: {
     date?: string | null;
     startTime?: string | null;

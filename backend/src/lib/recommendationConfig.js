@@ -22,3 +22,18 @@ export const COLD_START_WEIGHTS = {
 export function defaultRankingCenter() {
   return { lat: DEFAULT_CITY_LAT, lng: DEFAULT_CITY_LNG };
 }
+
+export const RAG_RETRIEVAL_LIMIT = parseInt(process.env.RAG_RETRIEVAL_LIMIT || '10', 10);
+export const RAG_CANDIDATE_POOL = parseInt(process.env.RAG_CANDIDATE_POOL || '80', 10);
+export const RAG_RELEVANCE_WEIGHT = parseFloat(process.env.RAG_RELEVANCE_WEIGHT || '0.45');
+export const RAG_HYBRID_WEIGHT = parseFloat(process.env.RAG_HYBRID_WEIGHT || '0.35');
+export const RAG_POP_WEIGHT = parseFloat(process.env.RAG_POP_WEIGHT || '0.20');
+export const RAG_PERSONALIZED_RELEVANCE_WEIGHT = parseFloat(
+  process.env.RAG_PERSONALIZED_RELEVANCE_WEIGHT || '0.35'
+);
+export const RAG_PERSONALIZED_HYBRID_WEIGHT = parseFloat(
+  process.env.RAG_PERSONALIZED_HYBRID_WEIGHT || '0.45'
+);
+export const RAG_FALLBACK_LIMIT = parseInt(process.env.RAG_FALLBACK_LIMIT || '3', 10);
+export const AI_SEARCH_POOL_SIZE = parseInt(process.env.AI_SEARCH_POOL_SIZE || '30', 10);
+export const AI_SEARCH_DISPLAY_LIMIT = parseInt(process.env.AI_SEARCH_DISPLAY_LIMIT || '6', 10);

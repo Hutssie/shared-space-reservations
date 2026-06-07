@@ -102,6 +102,10 @@ Methodology:
 - Compare hybrid top-5 vs popularity-only baseline
 - Reports precision@5 and recall@5
 
+## AI search (RAG)
+
+Personalized retrieval for the AI assistant reuses `scoreSpaces()` to blend query relevance with hybrid scores before augmenting the Gemini prompt. See [AI_RAG.md](AI_RAG.md).
+
 ## Key source files
 
 - [`backend/src/lib/recommendations.js`](backend/src/lib/recommendations.js) — scoring engine

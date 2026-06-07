@@ -9,7 +9,12 @@ import {
   spaceListInclude,
   syncSpaceAmenities,
 } from '../lib/amenities.js';
-import { parseTimeToMinutes } from '../lib/bookingTime.js';
+import {
+  normalizeForSearch,
+  locationNormFromDisplay,
+  buildLocationNormExactFilter,
+  buildLocationNormPrefixFilter,
+} from '../lib/textNormalize.js';
 import {
   parseDateFilterQuery,
   searchSpacesWithDateAvailability,
@@ -69,12 +74,13 @@ export function buildSpaceWhereClause({
     where.longitude = { not: null, gte: bounds.west, lte: bounds.east };
   }
   if (location) {
-    where.location = { contains: String(location), mode: 'insensitive' };
+    Object.assign(where, buildLocationNormExactFilter(location));
   } else if (q) {
+    const qNorm = normalizeForSearch(q);
     where.OR = [
       { title: { contains: q, mode: 'insensitive' } },
       { description: { contains: q, mode: 'insensitive' } },
-      { location: { contains: q, mode: 'insensitive' } },
+      { locationNorm: { contains: qNorm } },
       { category: { contains: q, mode: 'insensitive' } },
     ];
   }
@@ -191,7 +197,9 @@ router.get('/locations', async (req, res, next) => {
     const { q } = req.query;
     const baseWhere = { status: 'active' };
     const spaces = await prisma.space.findMany({
-      where: q ? { ...baseWhere, location: { contains: String(q), mode: 'insensitive' } } : baseWhere,
+      where: q
+        ? { ...baseWhere, ...buildLocationNormPrefixFilter(String(q)) }
+        : baseWhere,
       select: { location: true },
       orderBy: { location: 'asc' },
     });
@@ -688,6 +696,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
           category,
           title,
           location,
+          locationNorm: locationNormFromDisplay(location),
           capacity: parseInt(capacity, 10),
           pricePerHour: new Decimal(parseFloat(pricePerHour)),
           description,
@@ -776,6 +785,9 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
             return res.status(400).json({ error: 'status must be active, maintenance, or inactive' });
           }
           data[key] = val ?? 'active';
+        } else if (key === 'location') {
+          data.location = body[key];
+          data.locationNorm = locationNormFromDisplay(body[key]);
         } else if (key === 'cleaningFeeCents' || key === 'equipmentFeeCents') {
           const v = body[key];
           if (v == null) data[key] = null;

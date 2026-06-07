@@ -1,4 +1,5 @@
 import { CITY_BBOX_BUFFER_PCT } from './recommendationConfig.js';
+import { buildLocationNormExactFilter } from './textNormalize.js';
 
 const EARTH_RADIUS_KM = 6371;
 
@@ -109,8 +110,10 @@ export function buildGeoCandidateFilter({
   const name = cityName?.trim();
   if (name) {
     clauses.push({
-      OR: [{ latitude: null }, { longitude: null }],
-      location: { contains: name, mode: 'insensitive' },
+      AND: [
+        { OR: [{ latitude: null }, { longitude: null }] },
+        buildLocationNormExactFilter(name),
+      ],
     });
   }
 

@@ -106,6 +106,7 @@ model Space {
   category          String
   title             String
   location          String
+  locationNorm      String   @default("") @map("location_norm")
   capacity          Int
   pricePerHour      Decimal  @map("price_per_hour") @db.Decimal(10, 2)
   squareMeters      Int?     @map("square_meters")
@@ -143,6 +144,7 @@ model Space {
   @@index([status, pricePerHour])
   @@index([status, capacity])
   @@index([status, squareMeters])
+  @@index([status, locationNorm])
   @@index([status, createdAt(sort: Desc)])
 }
 

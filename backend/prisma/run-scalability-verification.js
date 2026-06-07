@@ -7,6 +7,7 @@ const root = path.join(__dirname, '..');
 
 const steps = [
   ['verify-space-amenities.js', 'Amenity relations'],
+  ['verify-space-location-norm.js', 'Location norm column'],
   ['verify-space-availability-rules.js', 'Availability rules'],
   ['verify-search-totals.js', 'Search totals vs API'],
   ['verify-booking-exclusion.js', 'Booking exclusion constraint'],

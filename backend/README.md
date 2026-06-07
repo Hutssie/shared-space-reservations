@@ -31,6 +31,7 @@ API base: `http://localhost:3000`. Frontend should set `VITE_API_URL=http://loca
 - [Booking concurrency](docs/CONCURRENCY.md)
 - [Database design and scalability roadmap](docs/DATABASE_SCALABILITY.md)
 - [Scalability verification (Phase 5)](docs/SCALABILITY_VERIFICATION.md)
+- [AI search RAG](docs/AI_RAG.md)
 
 After pulling amenity migrations: `npm run db:deploy` then `npm run db:backfill-amenities`.
 

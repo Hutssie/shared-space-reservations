@@ -6,6 +6,7 @@ import {
   syncSpaceAmenities,
 } from '../src/lib/amenities.js';
 import { resolveBookingMinutes } from '../src/lib/bookingTime.js';
+import { locationNormFromDisplay } from '../src/lib/textNormalize.js';
 
 const prisma = new PrismaClient();
 
@@ -23,7 +24,7 @@ const SPACES = [
       'https://images.unsplash.com/photo-1769488702396-8b68825a4a11?q=80&w=800',
       'https://images.unsplash.com/photo-1688670097051-26b24bb30ec1?q=80&w=800',
     ]),
-    amenitiesJson: JSON.stringify(['High-speed WiFi', 'Natural Light', 'Professional Sound System', 'Full Kitchen', 'Freight Elevator', 'AC & Heating']),
+    amenitiesJson: JSON.stringify(['wifi', 'light', 'audio', 'kitchen', 'ac']),
     isInstantBookable: true,
     latitude: 40.6782,
     longitude: -73.9442,
@@ -37,7 +38,7 @@ const SPACES = [
     description: 'Professional grade recording studio with high-end outboard gear and isolated vocal booth.',
     imageUrl: 'https://images.unsplash.com/photo-1688670097051-26b24bb30ec1?q=80&w=800',
     imagesJson: JSON.stringify(['https://images.unsplash.com/photo-1688670097051-26b24bb30ec1?q=80&w=1200']),
-    amenitiesJson: JSON.stringify(['Sound Isolation', 'Pro Tools HD']),
+    amenitiesJson: JSON.stringify(['sound', 'mics']),
     isInstantBookable: false,
     latitude: 36.1627,
     longitude: -86.7816,
@@ -51,7 +52,7 @@ const SPACES = [
     description: 'Perfect for art exhibitions and high-end brand launches. Features clean white walls and professional gallery lighting.',
     imageUrl: 'https://images.unsplash.com/photo-1767294274414-5e1e6c3974e9?q=80&w=800',
     imagesJson: JSON.stringify(['https://images.unsplash.com/photo-1767294274414-5e1e6c3974e9?q=80&w=1200']),
-    amenitiesJson: JSON.stringify(['Track Lighting', 'White Walls']),
+    amenitiesJson: JSON.stringify(['easels']),
     isInstantBookable: true,
     latitude: 40.7465,
     longitude: -74.0014,
@@ -65,7 +66,7 @@ const SPACES = [
     description: 'Corporate executive suite with sweeping views of the Chicago skyline. Designed for high-level meetings and presentations.',
     imageUrl: 'https://images.unsplash.com/photo-1765366417044-9e84ce8ec942?q=80&w=800',
     imagesJson: JSON.stringify(['https://images.unsplash.com/photo-1765366417044-9e84ce8ec942?q=80&w=1200']),
-    amenitiesJson: JSON.stringify(['Video Conferencing', 'Board Table']),
+    amenitiesJson: JSON.stringify(['conferencing', 'monitors']),
     isInstantBookable: false,
     latitude: 41.8781,
     longitude: -87.6298,
@@ -79,7 +80,7 @@ const SPACES = [
     description: 'Fully functional kitchen studio with professional appliances and natural light. Ideal for food photography and video production.',
     imageUrl: 'https://images.unsplash.com/photo-1708915965975-2a950db0e215?q=80&w=800',
     imagesJson: JSON.stringify(['https://images.unsplash.com/photo-1708915965975-2a950db0e215?q=80&w=1200']),
-    amenitiesJson: JSON.stringify(['Double Ovens', 'Commercial Range']),
+    amenitiesJson: JSON.stringify(['chef']),
     isInstantBookable: true,
     latitude: 30.2672,
     longitude: -97.7431,
@@ -93,7 +94,7 @@ const SPACES = [
     description: 'Spacious dance studio with floor-to-ceiling mirrors and sprung wood floors. Perfect for rehearsals and workshops.',
     imageUrl: 'https://images.unsplash.com/photo-1740813402046-08ec3e0ce5d2?q=80&w=800',
     imagesJson: JSON.stringify(['https://images.unsplash.com/photo-1740813402046-08ec3e0ce5d2?q=80&w=1200']),
-    amenitiesJson: JSON.stringify(['Sprung Floors', 'Full Mirrors']),
+    amenitiesJson: JSON.stringify(['mirrors']),
     isInstantBookable: false,
     latitude: 34.0522,
     longitude: -118.2437,
@@ -146,6 +147,7 @@ async function main() {
         data: {
           hostId: host.id,
           ...rest,
+          locationNorm: locationNormFromDisplay(rest.location),
         },
       });
       await syncSpaceAmenities(prisma, created.id, amenityIds);
@@ -196,6 +198,7 @@ async function main() {
           category,
           title: `Test Listing #${currentCount + i + 1} – ${category}`,
           location: city,
+          locationNorm: locationNormFromDisplay(city),
           capacity: 5 + (i % 20),
           pricePerHour: 50 + (i % 150),
           description: `Pagination test space ${currentCount + i + 1}. ${category} in ${city}.`,

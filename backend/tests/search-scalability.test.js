@@ -14,6 +14,7 @@ import {
   syncSpaceBannedDays,
   syncSpaceBlockedDates,
 } from '../src/lib/spaceAvailabilityRules.js';
+import { locationNormFromDisplay } from '../src/lib/textNormalize.js';
 
 const prisma = new PrismaClient();
 const FIXTURE_PREFIX = 'ScalVerify_';
@@ -32,6 +33,7 @@ async function createFixtureSpace(hostId, title, { bannedDay = null, blockedDate
       category: 'Photo Studio',
       title: `${FIXTURE_PREFIX}${title}`,
       location: 'Test City',
+      locationNorm: locationNormFromDisplay('Test City'),
       capacity: 10,
       pricePerHour: new Decimal(100),
       description: 'Scalability test fixture',
