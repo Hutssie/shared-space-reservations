@@ -42,6 +42,73 @@ import type { Space } from '../api/spaces';
 
 type BlockedDate = { id: string; startDate: string; endDate: string; createdAt: string };
 
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function dateToDayName(dateStr: string): string {
+  return DAY_NAMES[new Date(`${dateStr}T12:00:00`).getDay()];
+}
+
+function hasBookingsOnWeekday(bookedDates: string[], dayName: string): boolean {
+  return bookedDates.some((d) => dateToDayName(d) === dayName);
+}
+
+function rangeOverlapsBooked(start: string, end: string, bookedDates: string[]): boolean {
+  return bookedDates.some((bd) => bd >= start && bd <= end);
+}
+
+function getNewBlockedRanges(
+  blockedDates: BlockedDate[],
+  initialBlockedDates: BlockedDate[] | null
+): BlockedDate[] {
+  if (!initialBlockedDates) return blockedDates;
+  const initialKeys = new Set(initialBlockedDates.map((b) => `${b.startDate}|${b.endDate}`));
+  return blockedDates.filter((b) => !initialKeys.has(`${b.startDate}|${b.endDate}`));
+}
+
+function getNewlyActiveBannedDays(
+  bannedDays: string[],
+  initialOperatingDays: { hasWeeklySchedule: boolean; bannedDays: string[] } | null,
+  hasWeeklySchedule: boolean
+): string[] {
+  if (!hasWeeklySchedule || !initialOperatingDays) return [];
+  if (!initialOperatingDays.hasWeeklySchedule) return bannedDays;
+  return bannedDays.filter((d) => !initialOperatingDays.bannedDays.includes(d));
+}
+
+function hasNewBlockingBookingConflict(
+  bookedDates: string[],
+  blockedDates: BlockedDate[],
+  initialBlockedDates: BlockedDate[] | null,
+  bannedDays: string[],
+  initialOperatingDays: { hasWeeklySchedule: boolean; bannedDays: string[] } | null,
+  hasWeeklySchedule: boolean
+): boolean {
+  const newRanges = getNewBlockedRanges(blockedDates, initialBlockedDates);
+  const rangeConflict = newRanges.some((r) =>
+    rangeOverlapsBooked(r.startDate, r.endDate, bookedDates)
+  );
+  const newDays = getNewlyActiveBannedDays(bannedDays, initialOperatingDays, hasWeeklySchedule);
+  const dayConflict = newDays.some((d) => hasBookingsOnWeekday(bookedDates, d));
+  return rangeConflict || dayConflict;
+}
+
+function isAvailabilityDirty(
+  hasWeeklySchedule: boolean,
+  bannedDays: string[],
+  initialOperatingDays: { hasWeeklySchedule: boolean; bannedDays: string[] } | null,
+  blockedDates: BlockedDate[],
+  initialBlockedDates: BlockedDate[] | null
+): boolean {
+  const operatingDaysDirty =
+    !!initialOperatingDays &&
+    (hasWeeklySchedule !== initialOperatingDays.hasWeeklySchedule ||
+      JSON.stringify(bannedDays) !== JSON.stringify(initialOperatingDays.bannedDays));
+  const blockedDirty =
+    !!initialBlockedDates &&
+    JSON.stringify(blockedDates) !== JSON.stringify(initialBlockedDates);
+  return operatingDaysDirty || blockedDirty;
+}
+
 const sections = [
   { id: 'details', label: 'Basic Details', icon: Info },
   { id: 'photos', label: 'Photo Gallery', icon: Camera },
@@ -101,6 +168,8 @@ export const EditSpace = () => {
   const [activeSection, setActiveSection] = useState('details');
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [showDiscardModal, setShowDiscardModal] = useState(false);
+  const [showBlockingModal, setShowBlockingModal] = useState(false);
+  const [blockingAcknowledged, setBlockingAcknowledged] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteInProgress, setDeleteInProgress] = useState(false);
   const [deleteBlockedByBookings, setDeleteBlockedByBookings] = useState<number | null>(null);
@@ -216,9 +285,8 @@ export const EditSpace = () => {
 
   if (!listing) return null;
 
-  const handleSave = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!id || !listing) return;
+  const executeSave = async (): Promise<boolean> => {
+    if (!id || !listing) return false;
     setIsSaving(true);
     try {
       const cleaningFee = Number(listing.bookingSettings?.cleaningFee);
@@ -254,14 +322,55 @@ export const EditSpace = () => {
         blockedDatesJson: blockedDates.length > 0 ? blockedDates : null,
         status: STATUS_UI_TO_API[listing.status ?? 'Active'] ?? 'active',
       });
-    toast.success('All changes saved successfully!');
-    setInitialListing(JSON.parse(JSON.stringify(listing)));
+      toast.success('All changes saved successfully!');
+      setInitialListing(JSON.parse(JSON.stringify(listing)));
       setInitialOperatingDays({ hasWeeklySchedule, bannedDays: [...bannedDays] });
       setInitialBlockedDates([...blockedDates]);
+      return true;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save');
+      return false;
     } finally {
-    setIsSaving(false);
+      setIsSaving(false);
+    }
+  };
+
+  const handleSave = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!id || !listing) return;
+
+    const availabilityDirty = isAvailabilityDirty(
+      hasWeeklySchedule,
+      bannedDays,
+      initialOperatingDays,
+      blockedDates,
+      initialBlockedDates
+    );
+    if (
+      availabilityDirty &&
+      hasNewBlockingBookingConflict(
+        bookedDates,
+        blockedDates,
+        initialBlockedDates,
+        bannedDays,
+        initialOperatingDays,
+        hasWeeklySchedule
+      )
+    ) {
+      setBlockingAcknowledged(false);
+      setShowBlockingModal(true);
+      return;
+    }
+
+    await executeSave();
+  };
+
+  const handleBlockingConfirm = async () => {
+    if (!blockingAcknowledged) return;
+    const success = await executeSave();
+    if (success) {
+      setShowBlockingModal(false);
+      setBlockingAcknowledged(false);
     }
   };
 
@@ -345,7 +454,8 @@ export const EditSpace = () => {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4 shrink-0">
-            <button 
+            <button
+              type="button"
               onClick={handleSave}
               disabled={isSaving || !isDirty}
               className={`px-4 md:px-6 py-2.5 text-xs md:text-sm font-black rounded-xl transition-all cursor-pointer flex items-center gap-2 md:gap-2.5 ${
@@ -1038,7 +1148,6 @@ export const EditSpace = () => {
                         onSelect={setSelectedRange}
                         disabled={[
                           { before: (() => { const t = new Date(); t.setHours(0, 0, 0, 0); return t; })() },
-                          ...bookedDates.map((d) => new Date(d + 'T12:00:00')),
                           ...blockedDates.flatMap((b) => {
                             const dates: Date[] = [];
                             const start = new Date(b.startDate + 'T12:00:00');
@@ -1072,14 +1181,6 @@ export const EditSpace = () => {
                         const to = selectedRange.to || selectedRange.from!;
                         const startStr = format(from, 'yyyy-MM-dd');
                         const endStr = format(to, 'yyyy-MM-dd');
-                        const hasBooked = bookedDates.some((bd) => {
-                          const d = bd;
-                          return d >= startStr && d <= endStr;
-                        });
-                        if (hasBooked) {
-                          toast.error('Cannot block dates that have existing bookings');
-                          return;
-                        }
                         const newBlock: BlockedDate = {
                           id: Date.now().toString(),
                           startDate: startStr,
@@ -1295,6 +1396,97 @@ export const EditSpace = () => {
           </main>
         </div>
       </div>
+
+      {/* modal confirmare blocare cu rezervari existente */}
+      <AnimatePresence>
+        {showBlockingModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isSaving) {
+                  setShowBlockingModal(false);
+                  setBlockingAcknowledged(false);
+                }
+              }}
+              className="absolute inset-0 bg-brand-900/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 max-w-md w-full shadow-2xl border border-brand-100 space-y-6"
+            >
+              <div className="w-14 h-14 md:w-16 md:h-16 bg-amber-50 rounded-2xl flex items-center justify-center">
+                <CalendarX className="w-7 h-7 md:w-8 md:h-8 text-amber-500" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-xl md:text-2xl font-black text-brand-700 tracking-tight">Heads up before you block</h3>
+                <p className="text-sm md:text-base text-brand-500 font-medium leading-relaxed">
+                  You have existing bookings on one or more of the days you&apos;re blocking. Blocking only prevents{' '}
+                  <span className="text-brand-700 font-bold">new</span> bookings — it doesn&apos;t cancel anything already confirmed.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={blockingAcknowledged}
+                aria-label="I understand that existing bookings are still active and I'm responsible for fulfilling them."
+                onClick={() => setBlockingAcknowledged((v) => !v)}
+                className={`w-full flex items-start gap-3 p-4 rounded-2xl border-2 transition-all cursor-pointer text-left group ${
+                  blockingAcknowledged
+                    ? 'border-brand-700 bg-brand-50'
+                    : 'border-brand-100 bg-white hover:border-brand-300'
+                }`}
+              >
+                <div
+                  className={`w-5 h-5 rounded-md border-2 shrink-0 mt-0.5 flex items-center justify-center transition-all ${
+                    blockingAcknowledged ? 'bg-brand-700 border-brand-700' : 'border-brand-300'
+                  }`}
+                >
+                  {blockingAcknowledged && <Check className="w-3 h-3 text-white" />}
+                </div>
+                <span className="text-sm font-bold text-brand-600 leading-snug">
+                  I understand that existing bookings are still active and I&apos;m responsible for fulfilling them.
+                </span>
+              </button>
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={handleBlockingConfirm}
+                  disabled={!blockingAcknowledged || isSaving}
+                  className="w-full py-4 md:py-5 bg-brand-700 text-white font-black rounded-xl md:rounded-2xl hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer shadow-lg shadow-brand-700/20 border-none"
+                >
+                  {isSaving ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Saving...
+                    </span>
+                  ) : (
+                    'Confirm & Save'
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isSaving) {
+                      setShowBlockingModal(false);
+                      setBlockingAcknowledged(false);
+                    }
+                  }}
+                  disabled={isSaving}
+                  className="w-full py-4 md:py-5 bg-brand-50 text-brand-700 font-black rounded-xl md:rounded-2xl hover:bg-brand-100 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer border-none"
+                >
+                  Go Back
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* modal de renuntare la modificari */}
       <AnimatePresence>

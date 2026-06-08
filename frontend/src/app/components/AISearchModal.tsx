@@ -276,7 +276,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                   <div className={`w-8 h-8 md:w-11 md:h-11 rounded-lg md:rounded-xl flex items-center justify-center shrink-0 shadow-md border border-brand-100/50 ${msg.role === 'assistant' ? 'bg-brand-700 text-white' : 'bg-white text-brand-700'}`}>
                     {msg.role === 'assistant' ? <Bot className="w-4 h-4 md:w-5 md:h-5" /> : <User className="w-4 h-4 md:w-5 md:h-5" />}
                   </div>
-                  <div className={`flex flex-col gap-2.5 md:gap-4 max-w-[85%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-col gap-2.5 md:gap-4 max-w-[85%] md:max-w-[80%] ${msg.role === 'user' ? 'items-end' : 'items-start'} ${msg.results && msg.results.length > 0 ? 'w-full' : ''}`}>
                     <div className={`p-4 md:p-6 rounded-xl md:rounded-2xl shadow-sm relative text-sm md:text-[15px] md:leading-relaxed ${msg.role === 'assistant' ? 'bg-white rounded-tl-none border border-brand-100 text-brand-700' : 'bg-brand-700 text-white rounded-tr-none'}`}>
                       <p className="font-medium leading-relaxed whitespace-pre-line">{formatMessage(msg.content)}</p>
                     </div>
@@ -285,7 +285,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 w-full mt-1">
                           {msg.results.map((space, index) => {
-                            const isMostRecommended = index === 0 && msg.resultType === 'exact';
+                            const isMostRecommended = index === 0 && msg.resultType === 'exact' && msg.results.length > 1;
                             return (
                             <motion.div
                               key={space.id}

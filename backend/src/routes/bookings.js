@@ -3,6 +3,7 @@ import { authMiddleware } from '../middleware/auth.js';
 import {
   parseTimeToMinutes,
   resolveBookingMinutes,
+  rangesOverlap,
   isPostgresExclusionViolation,
   BOOKING_SLOT_CONFLICT_MESSAGE,
 } from '../lib/bookingTime.js';
@@ -33,6 +34,46 @@ function bookingRequestDates(dateInput) {
   const requestDate = new Date(d);
   requestDate.setUTCHours(0, 0, 0, 0);
   return { d, today, requestDate };
+}
+
+function getBookingMinuteRange(booking) {
+  if (booking.startMinutes != null && booking.endMinutes != null) {
+    return { startMinutes: booking.startMinutes, endMinutes: booking.endMinutes };
+  }
+  const resolved = resolveBookingMinutes(booking.startTime, booking.endTime);
+  if (resolved.error) return null;
+  return { startMinutes: resolved.startMinutes, endMinutes: resolved.endMinutes };
+}
+
+function findOverlappingPendingBookings(pendingBookings, confirmedRange, excludeId) {
+  const { startMinutes, endMinutes } = confirmedRange;
+  return pendingBookings.filter((b) => {
+    if (b.id === excludeId) return false;
+    const range = getBookingMinuteRange(b);
+    if (!range) return false;
+    return rangesOverlap(startMinutes, endMinutes, range.startMinutes, range.endMinutes);
+  });
+}
+
+async function declineBookingByHost(booking, { spaceTitle, dateStr }) {
+  if (stripe) {
+    try {
+      await cancelBookingPayment(booking.id);
+    } catch (e) {
+      console.error('Failed to cancel payment for declined booking:', e);
+    }
+  }
+  await prisma.booking.update({
+    where: { id: booking.id },
+    data: { status: 'cancelled' },
+  });
+  await createNotification(prisma, {
+    userId: booking.userId,
+    type: 'booking_cancelled',
+    title: 'Booking Cancelled',
+    message: `Your reservation at ${spaceTitle} for ${dateStr} was cancelled by the host.`,
+    data: { bookingId: booking.id, spaceId: booking.spaceId, spaceTitle },
+  });
 }
 
 router.get('/', authMiddleware, async (req, res, next) => {
@@ -269,24 +310,7 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
 
     if (isHost && (status === 'confirmed' || status === 'cancelled')) {
       if (status === 'cancelled') {
-        if (stripe) {
-          try {
-            await cancelBookingPayment(booking.id);
-          } catch (e) {
-            console.error('Failed to cancel payment for declined booking:', e);
-          }
-        }
-        await prisma.booking.update({
-          where: { id: req.params.id },
-          data: { status: 'cancelled' },
-        });
-        await createNotification(prisma, {
-          userId: booking.userId,
-          type: 'booking_cancelled',
-          title: 'Booking Cancelled',
-          message: `Your reservation at ${spaceTitle} for ${dateStr} was cancelled by the host.`,
-          data: { bookingId: booking.id, spaceId: booking.spaceId, spaceTitle },
-        });
+        await declineBookingByHost(booking, { spaceTitle, dateStr });
         return res.json({ id: booking.id, status: 'cancelled' });
       }
       if (status === 'confirmed') {
@@ -295,6 +319,7 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
         }
 
         const { today, requestDate } = bookingRequestDates(booking.date);
+        let confirmedRange = null;
 
         try {
           await prisma.$transaction(async (tx) => {
@@ -323,6 +348,8 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
               where: { id: req.params.id },
               data: { status: 'confirmed', startMinutes, endMinutes },
             });
+
+            confirmedRange = { startMinutes, endMinutes };
           });
         } catch (e) {
           if (e.status && e.message) {
@@ -350,6 +377,24 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
           message: `Your reservation at ${spaceTitle} is confirmed for ${dateStr} at ${booking.startTime}.`,
           data: { bookingId: booking.id, spaceId: booking.spaceId, spaceTitle },
         });
+
+        const pendingOnSameDate = await prisma.booking.findMany({
+          where: {
+            spaceId: booking.spaceId,
+            date: booking.date,
+            status: 'pending',
+            id: { not: booking.id },
+          },
+        });
+        const declinedOverlapping = findOverlappingPendingBookings(
+          pendingOnSameDate,
+          confirmedRange,
+          booking.id
+        );
+        for (const declined of declinedOverlapping) {
+          await declineBookingByHost(declined, { spaceTitle, dateStr });
+        }
+
         return res.json({ id: booking.id, status: 'confirmed' });
       }
     }

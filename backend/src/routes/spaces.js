@@ -825,23 +825,6 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
       if (!normalized.ok) {
         return res.status(normalized.status ?? 400).json({ error: normalized.error });
       }
-      const bookingsOnBlocked = await prisma.booking.findMany({
-        where: { spaceId: req.params.id, status: { not: 'cancelled' } },
-        select: { date: true },
-      });
-      const bookedDateStrs = new Set(bookingsOnBlocked.map((b) => b.date.toISOString().slice(0, 10)));
-      for (const block of normalized.blocks) {
-        const start = new Date(block.startDate);
-        const end = new Date(block.endDate);
-        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const ds = d.toISOString().slice(0, 10);
-          if (bookedDateStrs.has(ds)) {
-            return res.status(400).json({
-              error: `Cannot block dates that have existing bookings (e.g. ${ds})`,
-            });
-          }
-        }
-      }
     }
 
     const amenitiesPayload = body.amenitiesJson;
