@@ -5,8 +5,7 @@ const router = Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    // "users" here represents hosts: distinct users who have at least one active space.
-    const [spacesCount, hostsGroup, locationsGroup] = await Promise.all([
+    const [spacesCount, hostsGroup, locationsGroup, creatorsCount] = await Promise.all([
       prisma.space.count({ where: { status: 'active' } }),
       prisma.space.groupBy({
         by: ['hostId'],
@@ -18,12 +17,18 @@ router.get('/', async (req, res, next) => {
         where: { status: 'active' },
         _count: { id: true },
       }),
+      prisma.user.count({
+        where: {
+          emailVerifiedAt: { not: null },
+          bannedAt: null,
+        },
+      }),
     ]);
 
     const cities = locationsGroup.length;
-    const usersCount = hostsGroup.length;
+    const hostsCount = hostsGroup.length;
 
-    res.json({ spaces: spacesCount, users: usersCount, cities });
+    res.json({ spaces: spacesCount, cities, hosts: hostsCount, creators: creatorsCount });
   } catch (e) {
     next(e);
   }

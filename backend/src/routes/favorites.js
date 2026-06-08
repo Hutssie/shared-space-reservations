@@ -8,6 +8,7 @@ router.get('/', authMiddleware, async (req, res, next) => {
   try {
     const favs = await prisma.favorite.findMany({
       where: { userId: req.userId },
+      orderBy: { createdAt: 'desc' },
       include: {
         space: {
           include: {
@@ -31,6 +32,7 @@ router.get('/', authMiddleware, async (req, res, next) => {
         reviews: s.reviews?.length ?? 0,
         price: Number(s.pricePerHour),
         image: s.imageUrl,
+        favoritedAt: f.createdAt.toISOString(),
       };
     });
     res.json(list);
@@ -45,10 +47,11 @@ router.post('/', authMiddleware, async (req, res, next) => {
     if (!spaceId) return res.status(400).json({ error: 'space_id required' });
     const space = await prisma.space.findUnique({ where: { id: spaceId } });
     if (!space) return res.status(404).json({ error: 'Space not found' });
+    const favoritedAt = new Date();
     await prisma.favorite.upsert({
       where: { userId_spaceId: { userId: req.userId, spaceId } },
-      create: { userId: req.userId, spaceId },
-      update: {},
+      create: { userId: req.userId, spaceId, createdAt: favoritedAt },
+      update: { createdAt: favoritedAt },
     });
     res.status(201).json({ spaceId });
   } catch (e) {

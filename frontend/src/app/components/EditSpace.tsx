@@ -1088,7 +1088,6 @@ export const EditSpace = () => {
                         };
                         setBlockedDates((prev) => [...prev, newBlock].sort((a, b) => a.startDate.localeCompare(b.startDate)));
                         setSelectedRange(undefined);
-                        toast.success('Dates blocked successfully');
                       }}
                       disabled={!selectedRange?.from}
                       className="w-full px-5 py-3 md:py-3.5 bg-brand-700 text-white font-black uppercase tracking-wider rounded-[1.25rem] md:rounded-[1.5rem] transition-all hover:bg-brand-800 disabled:opacity-40 disabled:cursor-not-allowed text-sm md:text-base shadow-lg shadow-brand-700/20"
@@ -1136,7 +1135,6 @@ export const EditSpace = () => {
                                 type="button"
                                 onClick={() => {
                                   setBlockedDates((prev) => prev.filter((b) => b.id !== block.id));
-                                  toast.success('Blocked date removed');
                                 }}
                                 className="p-2 hover:bg-red-100 rounded-xl transition-all opacity-0 group-hover:opacity-100"
                                 title="Remove blocked date"

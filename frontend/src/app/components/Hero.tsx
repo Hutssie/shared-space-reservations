@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { DateDropdown } from './FilterDropdowns';
 import { format } from 'date-fns';
-import { fetchPlaceSuggestions, type PlaceSuggestion } from '../api/places';
+import { fetchPlaceSuggestions, locationFromPlaceSuggestion, type PlaceSuggestion } from '../api/places';
 import { fetchPopularCategoriesThisWeek } from '../api/spaces';
 
 export const Hero = () => {
@@ -71,10 +71,7 @@ export const Hero = () => {
   }, [locationInput]);
 
   const handleSelectLocation = useCallback((suggestion: PlaceSuggestion) => {
-    const city = suggestion.city ?? '';
-    const region = suggestion.state ?? '';
-    const country = suggestion.country ?? '';
-    const location = [city, region, country].filter(Boolean).join(', ') || suggestion.label;
+    const location = locationFromPlaceSuggestion(suggestion);
     skipNextShowRef.current = true;
     setLocationInput(location);
     setShowSuggestions(false);
@@ -180,7 +177,7 @@ export const Hero = () => {
             <div className="flex-1">
               <DateDropdown 
                 value={selectedDate}
-                onChange={setSelectedDate}
+                onApply={setSelectedDate}
                 trigger={
                   <button className="w-full relative group cursor-pointer">
                     <div className="absolute left-3.5 md:left-4 top-1/2 -translate-y-1/2 z-10">

@@ -16,6 +16,8 @@ import { NewsletterSubscribe } from "./components/NewsletterSubscribe";
 import { Onboarding } from "./components/Onboarding";
 import { EarningEstimator } from "./components/EarningEstimator";
 import { SpaceDetails } from "./components/SpaceDetails";
+import { BookingCheckout } from "./components/BookingCheckout";
+import { BookingConfirmation } from "./components/BookingConfirmation";
 import { Dashboard } from "./components/Dashboard";
 import { HostPortal } from "./components/HostPortal";
 import { ManageListings } from "./components/ManageListings";
@@ -25,6 +27,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { AdminRoute } from "./components/AdminRoute";
 import { Admin } from "./components/Admin";
 import { AISearchModal } from "./components/AISearchModal";
+import { NavigationBridge } from "./components/NavigationBridge";
 import { useUnreadBookings } from "./contexts/UnreadBookingsContext";
 
 const MainLayout = () => {
@@ -44,6 +47,7 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-brand-200 selection:text-brand-700">
+      <NavigationBridge />
       <ScrollToTop />
       {!isAuthPage && <Navbar onOpenAI={() => setIsAIModalOpen(true)} />}
       <main>
@@ -114,6 +118,22 @@ export const router = createBrowserRouter([
       {
         path: "space/:id",
         Component: SpaceDetails,
+      },
+      {
+        path: "space/:id/checkout",
+        element: (
+          <ProtectedRoute>
+            <BookingCheckout />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "space/:id/confirmation",
+        element: (
+          <ProtectedRoute>
+            <BookingConfirmation />
+          </ProtectedRoute>
+        ),
       },
       {
         path: "list-your-space",

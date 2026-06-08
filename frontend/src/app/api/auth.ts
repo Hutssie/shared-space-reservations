@@ -7,6 +7,7 @@ export type User = {
   avatarUrl: string | null;
   professionalTitle?: string | null;
   bio?: string | null;
+  passwordChangedAt?: string | null;
   role?: 'user' | 'admin';
 };
 
@@ -41,8 +42,15 @@ export async function resetPassword(token: string, newPassword: string): Promise
   await apiPost<{ success: boolean }>('/api/auth/reset-password', { token, newPassword });
 }
 
-export function fetchPublicStats(): Promise<{ spaces: number; users: number; cities: number }> {
-  return apiGet<{ spaces: number; users: number; cities: number }>('/api/stats');
+export type PublicStats = {
+  spaces: number;
+  cities: number;
+  hosts: number;
+  creators: number;
+};
+
+export function fetchPublicStats(): Promise<PublicStats> {
+  return apiGet<PublicStats>('/api/stats');
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {

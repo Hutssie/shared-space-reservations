@@ -380,10 +380,10 @@ export function ListingMap({
     googleMapsApiKey: API_KEY,
   });
 
-  // If parent doesn't control `center` yet, keep the camera on the placed pin
-  // instead of snapping back to the default location on re-render.
+  // Prefer the placed pin over a geocoded city/area center so clicking the map
+  // zooms to the pin instead of snapping back to the searched location.
   const mapCenter = useMemo(
-    () => center ?? pin ?? WORLD_DEFAULT_CENTER,
+    () => pin ?? center ?? WORLD_DEFAULT_CENTER,
     [center, pin]
   );
   const zoom = useMemo(() => {

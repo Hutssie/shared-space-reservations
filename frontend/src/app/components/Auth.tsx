@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { ImageWithFallback } from './ImageWithFallback';
 import { useNavigate, useLocation, Link } from 'react-router';
 import { useAuth } from '../context/AuthContext';
-import { login, register as registerApi, saveAuth, requestPasswordReset, fetchPublicStats } from '../api/auth';
+import { login, register as registerApi, saveAuth, requestPasswordReset, fetchPublicStats, type PublicStats } from '../api/auth';
 import { validatePassword } from '../utils/passwordValidation';
 
 export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'register' }) => {
@@ -25,7 +25,7 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
   const navigate = useNavigate();
   const location = useLocation();
   const { setAuth } = useAuth();
-  const [stats, setStats] = useState<{ spaces: number; users: number; cities: number } | null>(null);
+  const [stats, setStats] = useState<PublicStats | null>(null);
 
   useEffect(() => {
     fetchPublicStats()
@@ -108,7 +108,7 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
           </div>
           <div className="flex flex-col gap-2">
             <span className="text-brand-200 text-2xl font-black">
-              {stats ? formatCount(stats.users) : '—'}
+              {stats ? formatCount(stats.creators) : '—'}
             </span>
             <span>Creators</span>
           </div>

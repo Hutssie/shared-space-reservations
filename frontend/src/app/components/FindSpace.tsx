@@ -6,7 +6,7 @@ import { useSearchParams, useNavigate } from 'react-router';
 import { format } from 'date-fns';
 import { fetchSpaces, type MapBounds } from '../api/spaces';
 import { geocodeAddress } from '../utils/geocode';
-import { fetchPlaceSuggestions, type PlaceSuggestion } from '../api/places';
+import { fetchPlaceSuggestions, locationFromPlaceSuggestion, type PlaceSuggestion } from '../api/places';
 import { fetchFavorites, addFavorite, removeFavorite } from '../api/favorites';
 import { useAuth } from '../context/AuthContext';
 import type { Space } from '../api/spaces';
@@ -18,6 +18,10 @@ export const FindSpace = () => {
   const [view, setView] = React.useState<'grid' | 'map'>('grid');
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const hasLoadedSpacesRef = React.useRef(false);
+  const gridAbortRef = React.useRef<AbortController | null>(null);
+  const gridRequestIdRef = React.useRef(0);
   const [mapSpaces, setMapSpaces] = useState<Space[]>([]);
   const [mapTotal, setMapTotal] = useState(0);
   const [mapInitialCenter, setMapInitialCenter] = useState<{ lat: number; lng: number } | null>(null);
@@ -28,14 +32,12 @@ export const FindSpace = () => {
   const mapRequestIdRef = React.useRef(0);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const { token } = useAuth();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(() => {
-    const dateParam = searchParams.get('date');
-    if (dateParam) {
-      const parsed = new Date(dateParam);
-      return isNaN(parsed.getTime()) ? null : parsed;
-    }
-    return null;
-  });
+  const dateParam = searchParams.get('date') || '';
+  const appliedDate = useMemo(() => {
+    if (!dateParam) return null;
+    const parsed = new Date(dateParam);
+    return isNaN(parsed.getTime()) ? null : parsed;
+  }, [dateParam]);
 
   const locationParam = searchParams.get('location') || '';
   const centerLatParam = searchParams.get('centerLat');
@@ -59,10 +61,13 @@ export const FindSpace = () => {
   const minPriceParam = searchParams.get('minPrice');
   const maxPriceParam = searchParams.get('maxPrice');
   const minCapacityParam = searchParams.get('minCapacity');
-  const appliedPriceRange: [number, number] | null =
-    minPriceParam != null && maxPriceParam != null
-      ? [parseInt(minPriceParam, 10), parseInt(maxPriceParam, 10)]
-      : null;
+  const appliedPriceRange = useMemo((): [number, number] | null => {
+    if (minPriceParam == null || maxPriceParam == null) return null;
+    const min = parseInt(minPriceParam, 10);
+    const max = parseInt(maxPriceParam, 10);
+    if (Number.isNaN(min) || Number.isNaN(max)) return null;
+    return [min, max];
+  }, [minPriceParam, maxPriceParam]);
   const appliedMinCapacity = minCapacityParam != null ? parseInt(minCapacityParam, 10) : null;
 
   const amenitiesParam = searchParams.get('amenities') || '';
@@ -120,10 +125,7 @@ export const FindSpace = () => {
   }, [locationInput]);
 
   const handleSelectLocation = useCallback((suggestion: PlaceSuggestion) => {
-    const city = suggestion.city ?? '';
-    const region = suggestion.state ?? '';
-    const country = suggestion.country ?? '';
-    const location = [city, region, country].filter(Boolean).join(', ') || suggestion.label;
+    const location = locationFromPlaceSuggestion(suggestion);
     const newParams = new URLSearchParams(searchParams);
     newParams.set('location', location);
     newParams.delete('page');
@@ -183,7 +185,7 @@ export const FindSpace = () => {
       placeEast: placeEast != null && !Number.isNaN(placeEast) ? placeEast : undefined,
       placeWest: placeWest != null && !Number.isNaN(placeWest) ? placeWest : undefined,
       category: selectedCategories.length > 0 ? selectedCategories.join(',') : undefined,
-      date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined,
+      date: appliedDate ? format(appliedDate, 'yyyy-MM-dd') : undefined,
       minPrice: appliedPriceRange?.[0],
       maxPrice: appliedPriceRange?.[1],
       minCapacity: appliedMinCapacity ?? undefined,
@@ -198,8 +200,9 @@ export const FindSpace = () => {
       placeEast,
       placeWest,
       selectedCategories.join(','),
-      selectedDate,
-      appliedPriceRange,
+      appliedDate,
+      minPriceParam,
+      maxPriceParam,
       appliedMinCapacity,
       appliedAmenityIds,
     ]
@@ -260,22 +263,45 @@ export const FindSpace = () => {
 
   useEffect(() => {
     if (view !== 'grid') return;
-    setLoading(true);
+
+    gridAbortRef.current?.abort();
+    const controller = new AbortController();
+    gridAbortRef.current = controller;
+    const requestId = ++gridRequestIdRef.current;
+
+    if (hasLoadedSpacesRef.current) {
+      setIsRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
     const offset = (currentPage - 1) * perPage;
-    fetchSpaces({
-      ...gridFilterParams,
-      limit: perPage,
-      offset,
-    })
+    fetchSpaces(
+      {
+        ...gridFilterParams,
+        limit: perPage,
+        offset,
+      },
+      { signal: controller.signal }
+    )
       .then((res) => {
+        if (requestId !== gridRequestIdRef.current) return;
         setSpaces(res.spaces);
         setTotalSpaces(res.total);
+        hasLoadedSpacesRef.current = true;
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        if (err instanceof Error && err.name === 'AbortError') return;
+        if (requestId !== gridRequestIdRef.current) return;
         setSpaces([]);
         setTotalSpaces(0);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (requestId !== gridRequestIdRef.current) return;
+        setLoading(false);
+        setIsRefreshing(false);
+      });
   }, [view, gridFilterParams, currentPage]);
 
   useEffect(() => {
@@ -306,6 +332,7 @@ export const FindSpace = () => {
     return () => {
       if (mapFetchDebounceRef.current) clearTimeout(mapFetchDebounceRef.current);
       mapAbortRef.current?.abort();
+      gridAbortRef.current?.abort();
     };
   }, []);
 
@@ -349,14 +376,14 @@ export const FindSpace = () => {
     }
   }, [token, favoriteIds]);
 
-  const handleDateChange = (date: Date | null) => {
-    setSelectedDate(date);
+  const handleDateApply = (date: Date | null) => {
     const newParams = new URLSearchParams(searchParams);
     if (date) {
       newParams.set('date', format(date, 'yyyy-MM-dd'));
     } else {
       newParams.delete('date');
     }
+    newParams.delete('page');
     setSearchParams(newParams);
   };
 
@@ -517,12 +544,12 @@ export const FindSpace = () => {
               }
             />
             <DateDropdown 
-              value={selectedDate}
-              onChange={handleDateChange}
+              value={appliedDate}
+              onApply={handleDateApply}
               trigger={
-                <button className={`flex items-center gap-1.5 px-2.5 py-1.5 border rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedDate ? 'bg-brand-700 border-brand-700 text-white' : 'border-brand-200 text-brand-600 hover:bg-brand-100'}`}>
-                  <Calendar className={`w-3.5 h-3.5 ${selectedDate ? 'text-brand-200' : 'text-brand-400'}`} /> 
-                  {selectedDate ? format(selectedDate, 'MMM d') : 'Date'} 
+                <button className={`flex items-center gap-1.5 px-2.5 py-1.5 border rounded-lg text-xs font-bold transition-all cursor-pointer ${appliedDate ? 'bg-brand-700 border-brand-700 text-white' : 'border-brand-200 text-brand-600 hover:bg-brand-100'}`}>
+                  <Calendar className={`w-3.5 h-3.5 ${appliedDate ? 'text-brand-200' : 'text-brand-400'}`} /> 
+                  {appliedDate ? format(appliedDate, 'MMM d') : 'Date'} 
                   <ChevronDown className="w-3.5 h-3.5" />
                 </button>
               } 
@@ -609,6 +636,9 @@ export const FindSpace = () => {
                     : locationParam
                       ? `in ${locationParam}`
                       : 'nearby'}
+                  {isRefreshing && (
+                    <span className="ml-2 inline-block w-3.5 h-3.5 border-2 border-brand-300 border-t-brand-600 rounded-full animate-spin align-middle" aria-hidden />
+                  )}
                 </h1>
                 <p className="text-brand-400 font-medium text-xs sm:text-sm">Prices may vary depending on date and time</p>
               </div>
@@ -630,8 +660,13 @@ export const FindSpace = () => {
             </div>
 
             {view === 'grid' ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
-                {loading ? (
+              <div
+                className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5 transition-opacity duration-200 ${
+                  isRefreshing ? 'opacity-70 pointer-events-none' : ''
+                }`}
+                aria-busy={isRefreshing}
+              >
+                {loading && filteredSpaces.length === 0 ? (
                   <div className="col-span-full py-16 text-center">
                     <div className="text-brand-500 font-medium text-sm">Loading spaces...</div>
                   </div>
@@ -639,7 +674,6 @@ export const FindSpace = () => {
                   filteredSpaces.map((space) => (
                     <div key={space.id} data-space-id={space.id}>
                     <SpaceCard
-                      key={space.id}
                       compact
                       id={space.id}
                       image={space.image ?? ''}
@@ -670,7 +704,7 @@ export const FindSpace = () => {
                   initialCenter={mapInitialCenter}
                   initialZoom={mapInitialZoom}
                   onBoundsChange={handleMapBoundsChange}
-                  dateParam={selectedDate ? format(selectedDate, 'yyyy-MM-dd') : undefined}
+                  dateParam={appliedDate ? format(appliedDate, 'yyyy-MM-dd') : undefined}
                   className="absolute inset-0 w-full h-full"
                   favoriteIds={favoriteIds}
                   onFavoriteClick={handleFavoriteClick}

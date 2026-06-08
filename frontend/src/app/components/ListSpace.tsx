@@ -53,7 +53,7 @@ import { ImageWithFallback } from './ImageWithFallback';
 import { AmenitiesList } from './FilterDropdowns';
 import { createSpace } from '../api/spaces';
 import { apiUploadFile } from '../api/client';
-import { fetchPublicStats } from '../api/auth';
+import { fetchPublicStats, type PublicStats } from '../api/auth';
 import { fetchPlaceSuggestions, type PlaceSuggestion } from '../api/places';
 import { geocodeAddress, reverseGeocodeLatLng } from '../utils/geocode';
 import { toast } from 'sonner';
@@ -78,7 +78,7 @@ export const ListSpace = () => {
   const [step, setStep] = useState(1);
   const [isStarted, setIsStarted] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [stats, setStats] = useState<{ spaces: number; users: number; cities: number } | null>(null);
+  const [stats, setStats] = useState<PublicStats | null>(null);
   const [formData, setFormData] = useState<{
     title: string;
     country: string;
@@ -403,7 +403,7 @@ export const ListSpace = () => {
                 <span className="text-brand-200">their next masterpiece.</span>
               </h1>
               <p className="text-brand-100 text-sm sm:text-base md:text-lg font-medium mb-6 md:mb-8 leading-relaxed">
-                Turn your creative studio, meeting room, or vacant office into a thriving business. Join {stats ? `${formatCount(stats.users)}+` : '—+'} hosts worldwide.
+                Turn your creative studio, meeting room, or vacant office into a thriving business. Join {stats ? `${formatCount(stats.hosts)}+` : '—+'} hosts worldwide.
               </p>
               <button 
                 type="button"
@@ -907,7 +907,7 @@ export const ListSpace = () => {
                 </div>
                 <h2 className="text-3xl font-black text-brand-700 mb-3 tracking-tight">Your space is ready!</h2>
                 <p className="text-brand-500 font-medium text-base mb-10 max-w-sm mx-auto leading-relaxed">
-                  Excellent work! Your listing is now being reviewed. We'll have you hosting in no time.
+                  Excellent work! Your listing is now being reviewed. We&apos;ll have you hosting in no time.
                 </p>
                 <button 
                   onClick={() => {

@@ -33,13 +33,14 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ImageWithFallback } from './ImageWithFallback';
 import { MarkdownContent } from './MarkdownContent';
 import { fetchBookings, cancelBooking } from '../api/bookings';
-import { fetchFavorites, addFavorite, removeFavorite } from '../api/favorites';
+import { fetchFavorites, addFavorite, removeFavorite, sortFavoritesByRecent } from '../api/favorites';
 import { useAuth } from '../context/AuthContext';
 import { createSpaceReview, updateReview, deleteReview } from '../api/spaces';
 import { fetchMyReviews, searchUsers, updateMe } from '../api/users';
 import type { UserSearchResult } from '../api/users';
-import { apiUploadFile } from '../api/client';
-import { getStoredToken, saveAuth, changePassword } from '../api/auth';
+import { apiGet, apiUploadFile } from '../api/client';
+import { getStoredToken, saveAuth, changePassword, type User as AuthUser } from '../api/auth';
+import { formatDistanceToNow } from 'date-fns';
 import { validatePassword } from '../utils/passwordValidation';
 import { toast } from 'sonner';
 import type { Booking } from '../api/bookings';
@@ -2102,6 +2103,8 @@ const SettingsTab = () => {
     try {
       await changePassword(current, newPw);
       setActiveSecurityAction(null);
+      const updatedUser = await apiGet<AuthUser>('/api/users/me');
+      setUser(updatedUser);
       await refresh();
       toast.success('Your password has changed successfully');
     } catch (e: unknown) {
@@ -2401,7 +2404,11 @@ const SettingsTab = () => {
               </div>
               <div className="min-w-0">
                 <p className="font-black text-brand-700 text-sm md:text-[15px]">Password</p>
-                <p className="text-xs md:text-sm text-brand-400 font-bold">Last changed 3 months ago</p>
+                <p className="text-xs md:text-sm text-brand-400 font-bold">
+                  {user?.passwordChangedAt
+                    ? `Last changed ${formatDistanceToNow(new Date(user.passwordChangedAt), { addSuffix: true })}`
+                    : 'Password set at registration'}
+                </p>
               </div>
             </div>
             <button 
@@ -2463,7 +2470,6 @@ const SettingsTab = () => {
 export const Dashboard = () => {
   const { user, logout } = useAuth();
   const { hasUnreadBookings, markBookingsAsRead, newestBookingId, clearNewestBooking } = useUnreadBookings();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'My Bookings';
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -2476,7 +2482,7 @@ export const Dashboard = () => {
       .then(setBookings)
       .catch(() => setBookings([]));
     fetchFavorites()
-      .then(setFavorites)
+      .then((list) => setFavorites(sortFavoritesByRecent(list)))
       .catch(() => setFavorites([]));
   }, []);
 
@@ -2486,6 +2492,14 @@ export const Dashboard = () => {
       fetchBookings()
         .then(setBookings)
         .catch(() => setBookings([]));
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'Favorites') {
+      fetchFavorites()
+        .then((list) => setFavorites(sortFavoritesByRecent(list)))
+        .catch(() => setFavorites([]));
     }
   }, [activeTab]);
 
@@ -2513,11 +2527,14 @@ export const Dashboard = () => {
     if (isFav) {
       removeFavorite(spaceId).then(() => setRemovedFromFavorites((prev) => new Set(prev).add(spaceId))).catch(() => {});
     } else {
-      addFavorite(spaceId).then(() => setRemovedFromFavorites((prev) => {
-        const next = new Set(prev);
-        next.delete(spaceId);
-        return next;
-      })).catch(() => {});
+      addFavorite(spaceId).then(() => {
+        setRemovedFromFavorites((prev) => {
+          const next = new Set(prev);
+          next.delete(spaceId);
+          return next;
+        });
+        return fetchFavorites().then((list) => setFavorites(sortFavoritesByRecent(list)));
+      }).catch(() => {});
     }
   };
 
@@ -2584,7 +2601,7 @@ export const Dashboard = () => {
 
               <div className="mt-4 lg:mt-8 pt-4 lg:pt-8 border-t border-brand-100 hidden lg:block shrink-0">
                 <button
-                  onClick={() => { logout(); navigate('/'); }}
+                  onClick={() => logout()}
                   className="w-full flex items-center gap-3 p-4 rounded-2xl font-bold text-red-500 hover:bg-red-50 transition-all cursor-pointer"
                 >
                   <LogOut className="w-5 h-5" />

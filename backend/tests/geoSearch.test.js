@@ -1,12 +1,63 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { parsePhotonExtent } from '../src/lib/photonClient.js';
+import { parsePhotonExtent, parsePhotonFeature } from '../src/lib/photonClient.js';
 import {
   expandBounds,
   isPointInBounds,
   filterSpacesByGeo,
   haversineKm,
 } from '../src/lib/geoSearch.js';
+
+describe('photonClient parsePhotonFeature', () => {
+  it('maps county/region features to state (e.g. Dolj, Romania)', () => {
+    const parsed = parsePhotonFeature({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [23.8, 44.3] },
+      properties: {
+        name: 'Dolj',
+        country: 'Romania',
+        osm_value: 'county',
+        type: 'county',
+      },
+    });
+    assert.equal(parsed.primary, 'Dolj');
+    assert.equal(parsed.state, 'Dolj');
+    assert.equal(parsed.country, 'Romania');
+    assert.equal(parsed.city, undefined);
+  });
+
+  it('keeps country-only suggestions without a spurious state', () => {
+    const parsed = parsePhotonFeature({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [25.0, 45.9] },
+      properties: {
+        name: 'Romania',
+        country: 'Romania',
+        osm_value: 'country',
+        type: 'country',
+      },
+    });
+    assert.equal(parsed.primary, 'Romania');
+    assert.equal(parsed.state, undefined);
+    assert.equal(parsed.country, 'Romania');
+  });
+
+  it('keeps city suggestions unchanged', () => {
+    const parsed = parsePhotonFeature({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [23.8, 44.3] },
+      properties: {
+        name: 'Craiova',
+        country: 'Romania',
+        osm_value: 'city',
+        type: 'city',
+      },
+    });
+    assert.equal(parsed.city, 'Craiova');
+    assert.equal(parsed.state, undefined);
+    assert.equal(parsed.country, 'Romania');
+  });
+});
 
 describe('photonClient parsePhotonExtent', () => {
   it('parses Photon extent order minLon maxLat maxLon minLat', () => {

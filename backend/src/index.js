@@ -16,6 +16,8 @@ import { notificationsRouter } from './routes/notifications.js';
 import { adminRouter } from './routes/admin.js';
 import { aiSearchRouter } from './routes/ai-search.js';
 import { newsletterRouter } from './routes/newsletter.js';
+import { paymentsRouter } from './routes/payments.js';
+import { webhooksRouter } from './routes/webhooks.js';
 import {
   isPostgresExclusionViolation,
   BOOKING_SLOT_CONFLICT_MESSAGE,
@@ -25,6 +27,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || 'http://localhost:5173', credentials: true }));
+app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }), webhooksRouter);
 app.use(express.json());
 
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -32,6 +35,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/spaces', spacesRouter);
 app.use('/api/bookings', bookingsRouter);
+app.use('/api/payments', paymentsRouter);
 app.use('/api/favorites', favoritesRouter);
 app.use('/api/host', hostRouter);
 app.use('/api/upload', uploadRouter);

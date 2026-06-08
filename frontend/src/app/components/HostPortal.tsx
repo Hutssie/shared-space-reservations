@@ -42,7 +42,6 @@ export const HostPortal = () => {
   const [chartView, setChartView] = React.useState<'weekly' | 'monthly'>('weekly');
   const [listings, setListings] = useState<HostListing[]>([]);
   const [bookings, setBookings] = useState<HostBooking[]>([]);
-
   React.useEffect(() => {
     setIsMounted(true);
   }, []);

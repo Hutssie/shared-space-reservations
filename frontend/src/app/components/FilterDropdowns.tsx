@@ -411,9 +411,14 @@ export const MoreFiltersDropdown = ({ trigger }: any) => {
   );
 };
 
-export const DateDropdown = ({ trigger, value, onChange }: any) => {
+export const DateDropdown = ({ trigger, value, onApply, onChange }: any) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [isOpen, setIsOpen] = useState(false);
+  const [localDate, setLocalDate] = useState<Date | null>(value ?? null);
+
+  React.useEffect(() => {
+    if (isOpen) setLocalDate(value ?? null);
+  }, [isOpen, value]);
 
   const daysInMonth = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -428,7 +433,16 @@ export const DateDropdown = ({ trigger, value, onChange }: any) => {
 
   const handleDateClick = (date: Date) => {
     if (isPast(date) && !isSameDay(date, new Date())) return;
-    onChange?.(date);
+    setLocalDate(date);
+  };
+
+  const handleApply = () => {
+    if (onApply) {
+      onApply(localDate);
+    } else {
+      onChange?.(localDate);
+    }
+    setIsOpen(false);
   };
 
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
@@ -468,7 +482,7 @@ export const DateDropdown = ({ trigger, value, onChange }: any) => {
               <div key={`empty-${i}`} />
             ))}
             {daysInMonth.map((date) => {
-              const isSelected = value && isSameDay(date, value);
+              const isSelected = localDate && isSameDay(date, localDate);
               const isToday = isSameDay(date, new Date());
               const isDisabled = isPast(date) && !isToday;
 
@@ -502,7 +516,7 @@ export const DateDropdown = ({ trigger, value, onChange }: any) => {
 
         <div className="p-4 bg-brand-50 border-t border-brand-100 shrink-0">
           <button 
-            onClick={() => setIsOpen(false)}
+            onClick={handleApply}
             className="w-full py-3 sm:py-4 bg-brand-700 text-white font-black text-xs sm:text-sm rounded-xl sm:rounded-2xl shadow-xl shadow-brand-700/20 hover:bg-brand-600 transition-all active:scale-95 cursor-pointer"
           >
             Apply Search Date

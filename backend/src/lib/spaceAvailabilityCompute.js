@@ -1,5 +1,10 @@
 import { parseTimeToMinutes } from './bookingTime.js';
-import { isDayBanned, isDateBlocked } from './spaceAvailabilityRules.js';
+import {
+  getTodayDateStrUtc,
+  isDateBookableByHostRules,
+  isDayBanned,
+  isDateBlocked,
+} from './spaceAvailabilityRules.js';
 
 export const TIME_SLOTS = [
   '12:00 AM', '01:00 AM', '02:00 AM', '03:00 AM', '04:00 AM', '05:00 AM', '06:00 AM', '07:00 AM',
@@ -8,9 +13,11 @@ export const TIME_SLOTS = [
   '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM',
 ];
 
-export function computeIsSpaceAvailableOnDate(space, bookingsForSpace, { dateStr, dayName }) {
+export function computeIsSpaceAvailableOnDate(space, bookingsForSpace, { dateStr, dayName, todayStr }) {
   if (!dateStr) return true;
 
+  const today = todayStr ?? getTodayDateStrUtc();
+  if (!isDateBookableByHostRules(space, dateStr, today)) return false;
   if (isDayBanned(space, dayName)) return false;
   if (isDateBlocked(space, dateStr)) return false;
 
@@ -46,9 +53,11 @@ export function computeIsSpaceAvailableOnDate(space, bookingsForSpace, { dateStr
   return TIME_SLOTS.some((s) => !bookedSet.has(s) && !unavailableSet.has(s));
 }
 
-export function computeIsSpaceAvailableInRange(space, bookingsForSpace, { dateStr, dayName, startTime, endTime }) {
+export function computeIsSpaceAvailableInRange(space, bookingsForSpace, { dateStr, dayName, startTime, endTime, todayStr }) {
   if (!dateStr || !startTime || !endTime) return true;
 
+  const today = todayStr ?? getTodayDateStrUtc();
+  if (!isDateBookableByHostRules(space, dateStr, today)) return false;
   if (isDayBanned(space, dayName)) return false;
   if (isDateBlocked(space, dateStr)) return false;
 

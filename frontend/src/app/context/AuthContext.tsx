@@ -2,14 +2,17 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import type { User } from '../api/auth';
 import { getStoredToken, getStoredUser, clearAuth } from '../api/auth';
 import { apiGet } from '../api/client';
+import { appNavigate } from '../navigation';
 
 type AuthContextValue = {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  pendingLogout: boolean;
   setUser: (user: User | null) => void;
   setAuth: (token: string, user: User) => void;
   logout: () => void;
+  finalizeLogout: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -18,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUserState] = useState<User | null>(getStoredUser);
   const [token, setToken] = useState<string | null>(getStoredToken);
   const [isLoading, setIsLoading] = useState(!!getStoredToken());
+  const [pendingLogout, setPendingLogout] = useState(false);
 
   const setUser = useCallback((u: User | null) => {
     setUserState(u);
@@ -29,10 +33,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserState(u);
   }, []);
 
-  const logout = useCallback(() => {
+  const clearSession = useCallback(() => {
     clearAuth();
     setUserState(null);
     setToken(null);
+  }, []);
+
+  const finalizeLogout = useCallback(() => {
+    setPendingLogout(false);
+    clearSession();
+  }, [clearSession]);
+
+  const logout = useCallback(() => {
+    setPendingLogout(true);
+    appNavigate('/', { replace: true });
   }, []);
 
   useEffect(() => {
@@ -46,26 +60,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(token);
       })
       .catch(() => {
-        clearAuth();
-        setUserState(null);
-        setToken(null);
+        clearSession();
       })
       .finally(() => setIsLoading(false));
-  }, [token]);
+  }, [token, clearSession]);
 
   useEffect(() => {
-    const onLogout = () => logout();
-    window.addEventListener('auth:logout', onLogout);
-    return () => window.removeEventListener('auth:logout', onLogout);
-  }, [logout]);
+    const onForcedLogout = () => clearSession();
+    window.addEventListener('auth:logout', onForcedLogout);
+    return () => window.removeEventListener('auth:logout', onForcedLogout);
+  }, [clearSession]);
 
   const value: AuthContextValue = {
     user,
     token,
     isLoading,
+    pendingLogout,
     setUser,
     setAuth,
     logout,
+    finalizeLogout,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

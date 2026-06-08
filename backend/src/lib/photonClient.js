@@ -25,12 +25,23 @@ export function parsePhotonFeature(feature) {
   if (p.country) parts.push(p.country);
   const secondary = parts.join(', ') || '';
   const label = secondary ? `${name}, ${secondary}` : name;
+  const osmValue = String(p.osm_value || '').toLowerCase();
+  const placeType = String(p.type || '').toLowerCase();
+  const isCountry = osmValue === 'country' || placeType === 'country';
   const city =
     p.city ||
-    (p.type === 'city' || p.osm_value === 'city' || p.osm_value === 'town' || p.osm_value === 'village'
+    (placeType === 'city' ||
+    osmValue === 'city' ||
+    osmValue === 'town' ||
+    osmValue === 'village'
       ? name
       : '');
-  const state = p.state || p.county || '';
+  const isCityLike = Boolean(city);
+  let state = p.state || p.county || '';
+  // Counties/regions (e.g. Dolj) are the feature name, not p.county — avoid losing them on select.
+  if (!state && !isCityLike && !isCountry && name) {
+    state = name;
+  }
   const country = p.country || '';
   const coords =
     feature?.geometry?.coordinates?.length >= 2 ? feature.geometry.coordinates : null;

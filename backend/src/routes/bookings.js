@@ -7,6 +7,12 @@ import {
   BOOKING_SLOT_CONFLICT_MESSAGE,
 } from '../lib/bookingTime.js';
 import { lockSpaceRow, validateBookingAgainstSpace } from '../lib/bookingRules.js';
+import { stripe } from '../lib/stripe.js';
+import {
+  verifyPaymentIntentForBooking,
+  captureBookingPayment,
+  cancelBookingPayment,
+} from '../lib/paymentHelpers.js';
 import { createNotification } from './notifications.js';
 import { prisma } from '../lib/prisma.js';
 
@@ -102,13 +108,23 @@ router.get('/:id', authMiddleware, async (req, res, next) => {
 
 router.post('/', authMiddleware, async (req, res, next) => {
   try {
-    const { space_id: spaceId, date, start_time: startTime, end_time: endTime } = req.body;
+    const {
+      space_id: spaceId,
+      date,
+      start_time: startTime,
+      end_time: endTime,
+      payment_intent_id: paymentIntentId,
+    } = req.body;
     if (!spaceId || !date || !startTime || !endTime) {
       return res.status(400).json({ error: 'space_id, date, start_time, end_time required' });
+    }
+    if (stripe && !paymentIntentId) {
+      return res.status(400).json({ error: 'payment_intent_id required' });
     }
 
     const { d, today, requestDate } = bookingRequestDates(date);
     if (isNaN(d.getTime())) return res.status(400).json({ error: 'Invalid date' });
+    const dateStr = requestDate.toISOString().slice(0, 10);
 
     const txResult = await prisma.$transaction(async (tx) => {
       const space = await lockSpaceRow(tx, spaceId);
@@ -121,6 +137,19 @@ router.post('/', authMiddleware, async (req, res, next) => {
       });
       if (!rules.ok) {
         return { clientError: rules.error, status: rules.status };
+      }
+
+      if (paymentIntentId) {
+        await verifyPaymentIntentForBooking({
+          paymentIntentId,
+          userId: req.userId,
+          spaceId,
+          date: dateStr,
+          startTime,
+          endTime,
+          isInstantBookable: space.isInstantBookable,
+          expectedAmountCents: rules.totalCents,
+        });
       }
 
       const booking = await tx.booking.create({
@@ -136,9 +165,31 @@ router.post('/', authMiddleware, async (req, res, next) => {
           totalPrice: rules.totalPrice,
           cleaningFeeCents: rules.cleaningCents,
           equipmentFeeCents: rules.equipmentCents,
+          serviceFeeCents: rules.serviceFeeCents,
         },
         include: { space: true },
       });
+
+      if (paymentIntentId) {
+        const payment = await tx.payment.findUnique({
+          where: { stripePaymentIntentId: paymentIntentId },
+        });
+        if (!payment || payment.userId !== req.userId) {
+          const err = new Error('Payment record not found');
+          err.status = 400;
+          throw err;
+        }
+        if (payment.bookingId) {
+          const err = new Error('Payment has already been used for a booking');
+          err.status = 409;
+          throw err;
+        }
+        const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+        await tx.payment.update({
+          where: { id: payment.id },
+          data: { bookingId: booking.id, status: pi.status },
+        });
+      }
 
       return { booking, space };
     });
@@ -148,7 +199,6 @@ router.post('/', authMiddleware, async (req, res, next) => {
     }
 
     const { booking, space } = txResult;
-    const dateStr = booking.date.toISOString().slice(0, 10);
     if (booking.status === 'confirmed') {
       await createNotification(prisma, {
         userId: booking.userId,
@@ -219,6 +269,13 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
 
     if (isHost && (status === 'confirmed' || status === 'cancelled')) {
       if (status === 'cancelled') {
+        if (stripe) {
+          try {
+            await cancelBookingPayment(booking.id);
+          } catch (e) {
+            console.error('Failed to cancel payment for declined booking:', e);
+          }
+        }
         await prisma.booking.update({
           where: { id: req.params.id },
           data: { status: 'cancelled' },
@@ -277,6 +334,15 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
           throw e;
         }
 
+        if (stripe) {
+          try {
+            await captureBookingPayment(booking.id);
+          } catch (e) {
+            console.error('Failed to capture payment for confirmed booking:', e);
+            return res.status(502).json({ error: 'Booking confirmed but payment capture failed. Contact support.' });
+          }
+        }
+
         await createNotification(prisma, {
           userId: booking.userId,
           type: 'booking_confirmed',
@@ -301,6 +367,13 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
         return res.status(400).json({
           error: `Cancellation is not allowed. This booking requires ${noticeText} notice.`,
         });
+      }
+      if (stripe && booking.status === 'pending') {
+        try {
+          await cancelBookingPayment(booking.id);
+        } catch (e) {
+          console.error('Failed to cancel payment for guest-cancelled booking:', e);
+        }
       }
       await prisma.booking.update({
         where: { id: req.params.id },

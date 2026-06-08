@@ -41,7 +41,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "nodemailer": "^8.0.10",
-    "pg": "^8.13.0"
+    "pg": "^8.13.0",
+    "stripe": "^22.2.0"
   },
   "devDependencies": {
     "prisma": "^5.22.0",

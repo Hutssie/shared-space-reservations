@@ -212,9 +212,8 @@ export const Navbar = ({ onOpenAI }: { onOpenAI: () => void }) => {
                       </Link>
                       <button 
                         onClick={() => {
-                          logout();
                           setIsMobileMenuOpen(false);
-                          navigate('/');
+                          logout();
                         }}
                         className="w-full flex items-center gap-4 p-4 rounded-2xl font-black text-red-500 hover:bg-red-50 text-left cursor-pointer"
                       >

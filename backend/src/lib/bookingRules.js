@@ -1,4 +1,8 @@
 import { Decimal } from '@prisma/client/runtime/library';
+
+/** Platform service fee as a percentage of hourly subtotal only (basis points: 1200 = 12%). */
+export const PLATFORM_SERVICE_FEE_BPS = 1200;
+export const PLATFORM_SERVICE_FEE_PERCENT = PLATFORM_SERVICE_FEE_BPS / 100;
 import { parseTimeToMinutes, resolveBookingMinutes } from './bookingTime.js';
 import {
   isDayBanned,
@@ -105,8 +109,10 @@ export function validateBookingAgainstSpace(
 
   const cleaningCents = space.cleaningFeeCents ?? 0;
   const equipmentCents = space.equipmentFeeCents ?? 0;
-  const totalPrice =
-    Number(space.pricePerHour) * hours + cleaningCents / 100 + equipmentCents / 100;
+  const subtotalCents = Math.round(Number(space.pricePerHour) * hours * 100);
+  const serviceFeeCents = Math.round((subtotalCents * PLATFORM_SERVICE_FEE_BPS) / 10000);
+  const totalCents = subtotalCents + cleaningCents + equipmentCents + serviceFeeCents;
+  const totalPrice = totalCents / 100;
 
   return {
     ok: true,
@@ -114,7 +120,11 @@ export function validateBookingAgainstSpace(
     endMinutes,
     hours,
     totalPrice: new Decimal(totalPrice),
+    subtotalCents,
     cleaningCents,
     equipmentCents,
+    serviceFeeCents,
+    serviceFeePercent: PLATFORM_SERVICE_FEE_PERCENT,
+    totalCents,
   };
 }

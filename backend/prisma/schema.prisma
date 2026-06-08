@@ -25,10 +25,13 @@ model User {
   availabilityEndTime    String?   @map("availability_end_time")
   bannedAt               DateTime? @map("banned_at")
   emailVerifiedAt        DateTime? @map("email_verified_at")
+  passwordChangedAt      DateTime? @map("password_changed_at")
+  stripeCustomerId       String?   @unique @map("stripe_customer_id")
   createdAt              DateTime  @default(now()) @map("created_at")
 
   spacesAsHost         Space[]               @relation("HostSpaces")
   bookings             Booking[]
+  payments             Payment[]
   reviews              Review[]
   favorites            Favorite[]
   passwordResetTokens       PasswordResetToken[]
@@ -135,6 +138,7 @@ model Space {
 
   host      User           @relation("HostSpaces", fields: [hostId], references: [id], onDelete: Cascade)
   bookings  Booking[]
+  payments  Payment[]
   reviews   Review[]
   favorites Favorite[]
   amenities    SpaceAmenity[]
@@ -186,13 +190,38 @@ model Booking {
   totalPrice Decimal  @map("total_price") @db.Decimal(10, 2)
   cleaningFeeCents Int? @map("cleaning_fee_cents")
   equipmentFeeCents Int? @map("equipment_fee_cents")
+  serviceFeeCents   Int?     @map("service_fee_cents")
   createdAt  DateTime @default(now()) @map("created_at")
 
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space   Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  payment Payment?
 
   @@index([spaceId, date])
   @@index([userId])
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  userId                String   @map("user_id")
+  spaceId               String   @map("space_id")
+  bookingId             String?  @unique @map("booking_id")
+  stripePaymentIntentId String   @unique @map("stripe_payment_intent_id")
+  status                String
+  amountCents           Int      @map("amount_cents")
+  captureMethod         String   @map("capture_method")
+  date                  DateTime @db.Date
+  startTime             String   @map("start_time")
+  endTime               String   @map("end_time")
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space   Space    @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([spaceId])
+  @@map("payment")
 }
 
 model Review {
@@ -214,14 +243,16 @@ model Review {
 }
 
 model Favorite {
-  userId  String @map("user_id")
-  spaceId String @map("space_id")
+  userId    String   @map("user_id")
+  spaceId   String   @map("space_id")
+  createdAt DateTime @default(now()) @map("created_at")
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   space Space @relation(fields: [spaceId], references: [id], onDelete: Cascade)
 
   @@id([userId, spaceId])
   @@index([userId])
+  @@index([userId, createdAt])
 }
 
 model PasswordResetToken {

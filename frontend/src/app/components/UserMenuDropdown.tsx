@@ -49,10 +49,8 @@ export const UserMenuDropdown = () => {
   };
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
     setIsOpen(false);
-    window.location.reload(); // Force refresh to update navbar state
+    logout();
   };
 
   return (

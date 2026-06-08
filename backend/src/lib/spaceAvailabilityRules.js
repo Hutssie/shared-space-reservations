@@ -210,6 +210,35 @@ export function isDateBlocked(space, dateStr) {
   return false;
 }
 
+/** UTC calendar date (YYYY-MM-DD), aligned with booking request validation. */
+export function getTodayDateStrUtc() {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
+  return today.toISOString().slice(0, 10);
+}
+
+export function isBookingDateToday(dateStr, todayStr = getTodayDateStrUtc()) {
+  return Boolean(dateStr) && dateStr === todayStr;
+}
+
+export function isSameDayBookingBlocked(space, dateStr, todayStr = getTodayDateStrUtc()) {
+  return isBookingDateToday(dateStr, todayStr) && space.sameDayBookingAllowed === false;
+}
+
+export function isBeyondMaxAdvanceBooking(space, dateStr, todayStr = getTodayDateStrUtc()) {
+  if (space.maxAdvanceBookingDays == null || !dateStr) return false;
+  const requestDate = new Date(`${dateStr}T00:00:00.000Z`);
+  const today = new Date(`${todayStr}T00:00:00.000Z`);
+  const daysDiff = (requestDate.getTime() - today.getTime()) / (24 * 60 * 60 * 1000);
+  return daysDiff > space.maxAdvanceBookingDays;
+}
+
+export function isDateBookableByHostRules(space, dateStr, todayStr = getTodayDateStrUtc()) {
+  if (isSameDayBookingBlocked(space, dateStr, todayStr)) return false;
+  if (isBeyondMaxAdvanceBooking(space, dateStr, todayStr)) return false;
+  return true;
+}
+
 /** Prisma include for list/detail reads and booking validation. */
 export const spaceAvailabilityInclude = {
   bannedDays: { select: { dayOfWeek: true }, orderBy: { dayOfWeek: 'asc' } },
@@ -222,32 +251,38 @@ export const spaceAvailabilityInclude = {
 /** Lightweight select for availability scan batches. */
 export const spaceSelectForAvailabilityRules = {
   weeklyScheduleEnabled: true,
+  sameDayBookingAllowed: true,
+  maxAdvanceBookingDays: true,
   bannedDays: { select: { dayOfWeek: true } },
   blockedDates: { select: { startDate: true, endDate: true } },
 };
 
 /**
- * SQL WHERE clauses for date-filtered search (blocked ranges + banned weekdays).
+ * SQL WHERE clauses for date-filtered search (blocked ranges + banned weekdays + host booking rules).
  */
-export function dateAvailabilitySqlWhere(dateCtx, dateStart, dateEnd) {
-  return {
-    AND: [
-      {
-        OR: [
-          { weeklyScheduleEnabled: false },
-          { bannedDays: { none: { dayOfWeek: dateCtx.dayName } } },
-        ],
-      },
-      {
-        blockedDates: {
-          none: {
-            startDate: { lte: dateEnd },
-            endDate: { gte: dateStart },
-          },
+export function dateAvailabilitySqlWhere(dateCtx, dateStart, dateEnd, todayStr = dateCtx.todayStr ?? getTodayDateStrUtc()) {
+  const clauses = [
+    {
+      OR: [
+        { weeklyScheduleEnabled: false },
+        { bannedDays: { none: { dayOfWeek: dateCtx.dayName } } },
+      ],
+    },
+    {
+      blockedDates: {
+        none: {
+          startDate: { lte: dateEnd },
+          endDate: { gte: dateStart },
         },
       },
-    ],
-  };
+    },
+  ];
+
+  if (isBookingDateToday(dateCtx.dateStr, todayStr)) {
+    clauses.push({ NOT: { sameDayBookingAllowed: false } });
+  }
+
+  return { AND: clauses };
 }
 
 /** Parse legacy JSON from DB row (backfill / verify). */

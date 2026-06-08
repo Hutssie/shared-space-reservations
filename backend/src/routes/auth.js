@@ -58,7 +58,13 @@ router.post('/register', async (req, res, next) => {
     if (!pwValidation.valid) return res.status(400).json({ error: pwValidation.error });
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { email: normalizedEmail, passwordHash, name: name.trim(), role: 'user' },
+      data: {
+        email: normalizedEmail,
+        passwordHash,
+        name: name.trim(),
+        role: 'user',
+        passwordChangedAt: new Date(),
+      },
     });
     const token = await createVerificationToken(user.id);
     const verifyLink = `${getFrontendUrl()}/auth/verify-email?token=${token}`;
@@ -182,7 +188,7 @@ router.post('/reset-password', async (req, res, next) => {
     await prisma.$transaction([
       prisma.user.update({
         where: { id: resetToken.userId },
-        data: { passwordHash },
+        data: { passwordHash, passwordChangedAt: new Date() },
       }),
       prisma.passwordResetToken.delete({ where: { id: resetToken.id } }),
     ]);
@@ -226,7 +232,7 @@ router.post('/change-password', authMiddleware, async (req, res, next) => {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: user.id },
-      data: { passwordHash },
+      data: { passwordHash, passwordChangedAt: new Date() },
     });
 
     try {

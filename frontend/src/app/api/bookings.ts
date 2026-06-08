@@ -18,12 +18,19 @@ export function fetchBookings(): Promise<Booking[]> {
   return apiGet<Booking[]>('/api/bookings');
 }
 
-export function createBooking(spaceId: string, date: string, startTime: string, endTime: string): Promise<{ id: string; status: string; totalPrice: number }> {
+export function createBooking(
+  spaceId: string,
+  date: string,
+  startTime: string,
+  endTime: string,
+  paymentIntentId?: string
+): Promise<{ id: string; status: string; totalPrice: number }> {
   return apiPost<{ id: string; status: string; totalPrice: number }>('/api/bookings', {
     space_id: spaceId,
     date,
     start_time: startTime,
     end_time: endTime,
+    ...(paymentIntentId ? { payment_intent_id: paymentIntentId } : {}),
   });
 }
 

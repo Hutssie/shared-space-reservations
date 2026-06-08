@@ -5,6 +5,7 @@ import {
 } from './spaceAvailabilityCompute.js';
 import {
   dateAvailabilitySqlWhere,
+  getTodayDateStrUtc,
   spaceSelectForAvailabilityRules,
 } from './spaceAvailabilityRules.js';
 
@@ -35,9 +36,13 @@ export function parseDateFilterQuery(dateInput) {
   dateStart.setUTCHours(0, 0, 0, 0);
   const dateEnd = new Date(parsed);
   dateEnd.setUTCHours(23, 59, 59, 999);
+  const todayStr = getTodayDateStrUtc();
+  const dateStr = dateStart.toISOString().slice(0, 10);
   const dateCtx = {
-    dateStr: dateStart.toISOString().slice(0, 10),
+    dateStr,
     dayName: DAY_NAMES[parsed.getDay()],
+    todayStr,
+    isToday: dateStr === todayStr,
   };
   return { dateStart, dateEnd, dateCtx };
 }

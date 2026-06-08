@@ -14,7 +14,6 @@ import {
   Plus, 
   Minus, 
   Calendar as CalendarIcon,
-  CheckCircle2,
   ArrowLeft,
   ChevronDown,
   ListFilter,
@@ -30,6 +29,7 @@ import {
 } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { ImageWithFallback } from './ImageWithFallback';
+import { ListingGalleryLightbox } from './ListingGalleryLightbox';
 import { SpaceLocationMap } from './MapView';
 import { motion, AnimatePresence } from 'motion/react';
 import { format, addHours, addDays, differenceInHours, parse } from 'date-fns';
@@ -39,12 +39,11 @@ import { fetchSpace, fetchAvailability, fetchSpaceReviews, shareSpaceLink } from
 import { fetchFavorites, addFavorite, removeFavorite } from '../api/favorites';
 import { AmenitiesList } from './FilterDropdowns';
 import { formatRatingScore } from '../utils/formatRating';
-import { createBooking } from '../api/bookings';
 import { useAuth } from '../context/AuthContext';
-import { useUnreadBookings } from '../contexts/UnreadBookingsContext';
 import { MarkdownContent } from './MarkdownContent';
 import { fetchPublicHostProfile } from '../api/users';
 import type { Space, BookedRange } from '../api/spaces';
+import { calculateServiceFee, PLATFORM_SERVICE_FEE_PERCENT } from '../constants/billing';
 
 // Sloturile zilnice (de la 12 AM la 11 PM), plus miezul noptii din ziua urmatoare.
 const allTimeSlots = [
@@ -205,7 +204,6 @@ export const SpaceDetails = () => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
   const { token, user } = useAuth();
-  const { addNewBooking } = useUnreadBookings();
 
   const [nowMs, setNowMs] = useState(() => Date.now());
   useEffect(() => {
@@ -224,7 +222,6 @@ export const SpaceDetails = () => {
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [unavailableSlots, setUnavailableSlots] = useState<string[]>([]);
   const [reviews, setReviews] = useState<Array<{ id: string; name: string; date: string; timestamp: number; rating: number; avatar: string | null; text: string }>>([]);
-  const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [showHostProfile, setShowHostProfile] = useState(false);
   const [hostProfileLoading, setHostProfileLoading] = useState(false);
   const [hostBio, setHostBio] = useState<string | null>(null);
@@ -263,7 +260,6 @@ export const SpaceDetails = () => {
 
   const [bookedRanges, setBookedRanges] = useState<BookedRange[]>([]);
   const [bookingConflict, setBookingConflict] = useState(false);
-  const [bookingStep, setBookingStep] = useState<'viewing' | 'requesting' | 'confirmed'>('viewing');
   const [isReviewsOpen, setIsReviewsOpen] = useState(false);
   const [isDescriptionOpen, setIsDescriptionOpen] = useState(false);
   const descriptionRef = useRef<HTMLDivElement>(null);
@@ -273,33 +269,6 @@ export const SpaceDetails = () => {
   const reviewsPerPage = 4;
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
-
-  useEffect(() => {
-    if (!galleryOpen) return;
-    const images = spaceDetails?.images?.length ? spaceDetails.images : (spaceDetails?.image ? [spaceDetails.image] : []);
-    const imageCount = images.length;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setGalleryOpen(false);
-        return;
-      }
-      if (imageCount <= 1) return;
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        setGalleryIndex((i) => (i <= 0 ? imageCount - 1 : i - 1));
-      } else if (e.key === 'ArrowRight') {
-        e.preventDefault();
-        setGalleryIndex((i) => (i >= imageCount - 1 ? 0 : i + 1));
-      }
-    };
-    document.addEventListener('keydown', onKey);
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-    };
-  }, [galleryOpen, spaceDetails]);
 
   useEffect(() => {
     if (!showHostProfile) return;
@@ -553,12 +522,6 @@ export const SpaceDetails = () => {
     }
   }, [id, location.hash]);
 
-  useEffect(() => {
-    if (bookingStep === 'confirmed') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  }, [bookingStep]);
-
   const unavailableForGrid = useMemo(() => {
     const start = spaceDetails?.availabilityStartTime ?? null;
     const end = spaceDetails?.availabilityEndTime ?? null;
@@ -582,7 +545,7 @@ export const SpaceDetails = () => {
   const subtotal = (spaceDetails?.price ?? 0) * duration;
   const cleaningFee = duration > 0 ? (spaceDetails?.cleaningFeeCents ?? 0) / 100 : 0;
   const equipmentFee = duration > 0 ? (spaceDetails?.equipmentFeeCents ?? 0) / 100 : 0;
-  const serviceFee = duration > 0 ? 25 : 0;
+  const serviceFee = duration > 0 ? calculateServiceFee(subtotal) : 0;
   const total = subtotal + cleaningFee + equipmentFee + serviceFee;
 
   const minH = spaceDetails?.minDurationHours ?? null;
@@ -601,7 +564,9 @@ export const SpaceDetails = () => {
 
   const isHostOfSpace = Boolean(user?.id && spaceDetails?.host?.id && user.id === spaceDetails?.host?.id);
 
-  const handleBook = async () => {
+  const endTimeForApi = endTime === '12:00 AM+1' ? '12:00 AM' : endTime;
+
+  const handleBook = () => {
     if (!spaceDetails || !id || !startTime || !endTime || duration <= 0 || !durationValid) return;
     if ((spaceDetails?.status ?? 'active') !== 'active') return;
     if (isHostOfSpace) {
@@ -609,21 +574,15 @@ export const SpaceDetails = () => {
       return;
     }
     if (!token) {
-      navigate('/auth/login', { state: { from: { pathname: window.location.pathname } } });
+      navigate('/auth/login', { state: { from: { pathname: window.location.pathname + window.location.search } } });
       return;
     }
-    setBookingSubmitting(true);
-    const endTimeForApi = endTime === '12:00 AM+1' ? '12:00 AM' : endTime;
-    try {
-      const res = await createBooking(id, dateStr, startTime, endTimeForApi);
-      setBookingStep('confirmed');
-      const bookingId = res?.id ?? (res as { id?: string }).id;
-      if (bookingId) addNewBooking(String(bookingId));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Booking failed');
-    } finally {
-      setBookingSubmitting(false);
-    }
+    const params = new URLSearchParams({
+      date: dateStr,
+      startTime,
+      endTime: endTimeForApi,
+    });
+    navigate(`/space/${id}/checkout?${params.toString()}`);
   };
 
   const handleTimeClick = (time: string) => {
@@ -686,61 +645,6 @@ export const SpaceDetails = () => {
           <h2 className="text-2xl font-black text-brand-700 mb-2">Space not found</h2>
           <Link to="/find" className="text-brand-500 font-medium hover:underline">Browse spaces</Link>
         </div>
-      </div>
-    );
-  }
-
-  if (bookingStep === 'confirmed' && spaceDetails) {
-    return (
-      <div data-testid="booking-confirmation" className="pt-24 md:pt-32 pb-12 min-h-screen bg-brand-50 flex items-center justify-center px-4">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-xl w-full bg-white rounded-[1.5rem] md:rounded-[2rem] p-8 md:p-10 text-center shadow-2xl shadow-brand-700/5 border border-brand-200"
-        >
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle2 className="w-10 h-10 text-green-600" />
-          </div>
-          {spaceDetails.isInstantBookable ? (
-            <>
-              <h2 className="text-3xl md:text-4xl font-black text-brand-700 mb-3">Booking Confirmed!</h2>
-              <p className="text-brand-500 font-medium text-base md:text-lg mb-8">
-                Your spot is secured. We've sent a confirmation email to you with the receipt and access instructions.
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 className="text-3xl md:text-4xl font-black text-brand-700 mb-3">Reservation Requested!</h2>
-              <p className="text-brand-500 font-medium text-base md:text-lg mb-8">
-                {spaceDetails.host?.name ?? 'The host'} has been notified. You'll receive an email confirmation once the host approves.
-              </p>
-            </>
-          )}
-          <div className="bg-brand-50 rounded-2xl p-5 md:p-6 mb-8 text-left space-y-4">
-            <div className="flex justify-between items-center border-b border-brand-100 pb-4">
-              <span className="text-brand-400 font-bold uppercase tracking-wider text-xs">Space</span>
-              <span className="text-brand-700 font-bold">{spaceDetails.title}</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-brand-100 pb-4">
-              <span className="text-brand-400 font-bold uppercase tracking-wider text-xs">Date</span>
-              <span className="text-brand-700 font-bold">{selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Tomorrow'}</span>
-            </div>
-            <div className="flex justify-between items-center border-b border-brand-100 pb-4">
-              <span className="text-brand-400 font-bold uppercase tracking-wider text-xs">Time Window</span>
-              <span className="text-brand-700 font-bold">{startTime} — {endTime}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-brand-400 font-bold uppercase tracking-wider text-xs">Total paid</span>
-              <span className="text-brand-700 font-black text-xl">${total}</span>
-            </div>
-          </div>
-          <Link 
-            to="/find"
-            className="block w-full py-4 bg-brand-700 text-white font-black rounded-xl md:rounded-2xl shadow-xl shadow-brand-700/20 hover:bg-brand-600 transition-all active:scale-95 cursor-pointer"
-          >
-            Explore More Spaces
-          </Link>
-        </motion.div>
       </div>
     );
   }
@@ -999,101 +903,21 @@ export const SpaceDetails = () => {
           );
         })()}
 
-        {/* Lightbox pentru imagine la fullscreen */}
-        {spaceDetails && (() => {
-          const images = spaceDetails.images?.length ? spaceDetails.images : (spaceDetails.image ? [spaceDetails.image] : []);
-          if (images.length === 0) return null;
-          const currentIndex = Math.min(galleryIndex, images.length - 1);
-          const prev = () => setGalleryIndex((i) => (i <= 0 ? images.length - 1 : i - 1));
-          const next = () => setGalleryIndex((i) => (i >= images.length - 1 ? 0 : i + 1));
-          return (
-            <AnimatePresence>
-              {galleryOpen && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[100] flex items-center justify-center bg-black"
-                  onClick={() => setGalleryOpen(false)}
-                >
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setGalleryOpen(false); }}
-                    className="absolute top-6 right-6 z-10 w-12 h-12 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-colors cursor-pointer"
-                    aria-label="Close gallery"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 px-6 py-3 bg-white/10 backdrop-blur-sm rounded-full text-white font-bold">
-                    {currentIndex + 1} / {images.length}
-                  </div>
-                  {images.length > 1 && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); prev(); }}
-                        className="absolute left-6 top-1/2 -translate-y-1/2 z-10 w-14 h-14 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-colors cursor-pointer"
-                        aria-label="Previous image"
-                      >
-                        <ChevronLeft className="w-8 h-8" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); next(); }}
-                        className="absolute right-6 top-1/2 -translate-y-1/2 z-10 w-14 h-14 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white transition-colors cursor-pointer"
-                        aria-label="Next image"
-                      >
-                        <ChevronRight className="w-8 h-8" />
-                      </button>
-                    </>
-                  )}
-                  <div
-                    className="relative w-full h-full flex items-center justify-center p-6 md:p-12"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <motion.div
-                      key={currentIndex}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="relative max-w-7xl max-h-full"
-                    >
-                      <ImageWithFallback
-                        src={images[currentIndex]}
-                        alt={`Space ${currentIndex + 1}`}
-                        className="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-2xl shadow-2xl"
-                      />
-                    </motion.div>
-                  </div>
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 md:p-8">
-                    <div className="max-w-7xl mx-auto overflow-x-auto flex gap-3">
-                      {images.map((img, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setGalleryIndex(idx);
-                          }}
-                          className={`relative shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden transition-all cursor-pointer ${
-                            idx === currentIndex ? 'ring-4 ring-white scale-105' : 'opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          <ImageWithFallback
-                            src={img}
-                            alt={`Thumbnail ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          );
-        })()}
+        {spaceDetails && (
+          <ListingGalleryLightbox
+            open={galleryOpen}
+            images={
+              spaceDetails.images?.length
+                ? spaceDetails.images
+                : spaceDetails.image
+                  ? [spaceDetails.image]
+                  : []
+            }
+            activeIndex={galleryIndex}
+            onClose={() => setGalleryOpen(false)}
+            onActiveIndexChange={setGalleryIndex}
+          />
+        )}
 
         {/* Layout-ul continutului */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-8 lg:gap-12">
@@ -1939,7 +1763,7 @@ export const SpaceDetails = () => {
                           </div>
                         )}
                         <div className="flex justify-between items-center text-brand-500 font-medium text-xs md:text-sm">
-                          <span>Service fee</span>
+                          <span>Service fee ({PLATFORM_SERVICE_FEE_PERCENT}%)</span>
                           <span className="font-bold text-brand-700">${serviceFee}</span>
                         </div>
                         <div className="flex justify-between items-center pt-1.5 border-t border-brand-100">
@@ -1959,14 +1783,10 @@ export const SpaceDetails = () => {
 
                 <button 
                   onClick={handleBook}
-                  disabled={bookingSubmitting || !startTime || !endTime || !durationValid || (spaceDetails?.status ?? 'active') !== 'active' || isHostOfSpace}
+                  disabled={!startTime || !endTime || !durationValid || (spaceDetails?.status ?? 'active') !== 'active' || isHostOfSpace}
                   className="w-full py-3 bg-brand-700 text-white font-black text-sm md:text-base rounded-xl shadow-xl shadow-brand-700/30 hover:bg-brand-600 transition-all active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {bookingStep === 'requesting' ? (
-                    <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    isHostOfSpace ? 'Your Space' : (spaceDetails.isInstantBookable ? 'Instant Book' : 'Request to Book')
-                  )}
+                  {isHostOfSpace ? 'Your Space' : (spaceDetails.isInstantBookable ? 'Instant Book' : 'Request to Book')}
                 </button>
 
                 {isHostOfSpace && (
