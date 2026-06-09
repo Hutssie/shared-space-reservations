@@ -1,6 +1,6 @@
-# Scalability verification (Phase 5)
+# Scalability verification
 
-Automated checks that Phases 1–4 behave correctly: SQL-filtered search totals, relational amenities/availability data, and booking exclusion.
+Automated checks that search filters, relational amenities/availability data, and booking exclusion behave correctly at scale.
 
 ## Quick run
 
@@ -35,7 +35,7 @@ npm run db:explain-scalability -- --save
 
 Writes to `docs/appendix/explain-scalability.txt` with `--save`.
 
-Legacy Phase 2 samples: `npm run db:explain-search`.
+Additional index samples: `npm run db:explain-search`.
 
 ## Optional load bench
 
@@ -45,7 +45,7 @@ npm run db:bench-search
 
 30 in-process requests to `amenities=wifi&date=tomorrow`; prints min / p50 / p95 / max. Not a CI gate.
 
-## Upgrading from pre-drop schema
+## Upgrading from legacy JSON columns
 
 If your database still has `amenities_json`, `banned_days_json`, or `blocked_dates_json`:
 

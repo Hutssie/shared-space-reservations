@@ -104,7 +104,7 @@ Methodology:
 
 ## AI search (RAG)
 
-Personalized retrieval for the AI assistant reuses `scoreSpaces()` to blend query relevance with hybrid scores before augmenting the Gemini prompt. See [AI_RAG.md](AI_RAG.md).
+Personalized retrieval for the AI assistant reuses `scoreSpaces()` to blend query relevance with hybrid scores before augmenting the Gemini prompt. When space embeddings exist, a pgvector semantic signal (`RAG_SEMANTIC_WEIGHT`, default 0.30) is blended into the retrieval score; otherwise retrieval falls back to keyword-only. See [AI_RAG.md](AI_RAG.md).
 
 ## Key source files
 

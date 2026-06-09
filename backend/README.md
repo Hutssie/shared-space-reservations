@@ -7,6 +7,8 @@ Node.js + Express + Prisma + PostgreSQL.
 1. Copy `.env.example` to `.env` and set:
   - `DATABASE_URL` — PostgreSQL connection string (e.g. `postgresql://user:password@localhost:5432/space_reservations`)
   - `JWT_SECRET` — secret for signing JWTs
+  - `GEMINI_API_KEY` — required for AI search and semantic embeddings ([Google AI Studio](https://aistudio.google.com/))
+  - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` — required for checkout (see [docs/BILLING.md](docs/BILLING.md))
   - `PORT` — default 3000
   - `CORS_ORIGIN` — default `http://localhost:5173`
 2. Install and init DB:
@@ -15,6 +17,7 @@ Node.js + Express + Prisma + PostgreSQL.
    npm run db:generate
    npm run db:deploy
    npm run db:seed
+   npm run db:backfill-embeddings   # requires GEMINI_API_KEY; semantic AI search
   ```
    **Upgrading an existing database** (created earlier with `db push`, no migration history):
    Confirm the exclusion constraint with `npm run db:verify-exclusion`.
@@ -28,10 +31,14 @@ API base: `http://localhost:3000`. Frontend should set `VITE_API_URL=http://loca
 
 ## Documentation
 
+- [Hybrid recommendations](docs/RECOMMENDATIONS.md)
+- [AI search RAG + semantic retrieval](docs/AI_RAG.md)
+- [Billing (Stripe)](docs/BILLING.md)
 - [Booking concurrency](docs/CONCURRENCY.md)
-- [Database design and scalability roadmap](docs/DATABASE_SCALABILITY.md)
-- [Scalability verification (Phase 5)](docs/SCALABILITY_VERIFICATION.md)
-- [AI search RAG](docs/AI_RAG.md)
+- [Database design and search scalability](docs/DATABASE_SCALABILITY.md)
+- [Scalability verification](docs/SCALABILITY_VERIFICATION.md)
+
+After pulling email verification migration (`20250609140000`): `npm run db:deploy`.
 
 After pulling amenity migrations: `npm run db:deploy` then `npm run db:backfill-amenities`.
 
@@ -45,10 +52,11 @@ After pulling the space-embedding migration (`20250609160000`): `npm run db:depl
 
 **Verification:** `npm run db:verify-scalability` · `npm test` · optional `npm run db:explain-scalability -- --save`
 
-**Date availability (`GET /api/spaces?date=YYYY-MM-DD`):** candidates are scanned in batches of 100 (up to 2000 rows) with bookings loaded per batch; only the result page is fully hydrated. If more matching spaces exist beyond the scan cap, the response may include `availabilityScanCapped: true`. See [DATABASE_SCALABILITY.md](docs/DATABASE_SCALABILITY.md) Phase 3.
+**Date availability (`GET /api/spaces?date=YYYY-MM-DD`):** candidates are scanned in batches of 100 (up to 2000 rows) with bookings loaded per batch; only the result page is fully hydrated. If more matching spaces exist beyond the scan cap, the response may include `availabilityScanCapped: true`. See [DATABASE_SCALABILITY.md](docs/DATABASE_SCALABILITY.md#date-availability-search).
 
 ## Seed users
 
-- **Host**: `host@example.com` / `password123`
-- **Guest**: `guest@example.com` / `password123`
+- **Host**: `host@example.com` / `Password123`
+- **Guest**: `guest@example.com` / `Password123`
+- **Admin**: `admin@example.com` / `Password123`
 

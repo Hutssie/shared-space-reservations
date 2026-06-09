@@ -4,7 +4,7 @@
 
 **RAG = Retrieve → Augment → Generate**
 
-1. **Retrieve** — query PostgreSQL for listings that match the user's conversation (keyword match + hybrid recommender blend).
+1. **Retrieve** — query PostgreSQL for listings that match the user's conversation (keyword match, pgvector semantic similarity, and hybrid recommender blend).
 2. **Augment** — inject those listings into the Gemini system prompt as `RETRIEVED LISTINGS`.
 3. **Generate** — Gemini replies grounded in real data, then calls the `search_spaces` tool for structured search and space cards.
 
@@ -21,6 +21,7 @@ sequenceDiagram
   User->>API: messages + optional Bearer token
   API->>R: buildRetrievalQuery
   R->>DB: keyword candidates up to 80
+  R->>DB: semantic ANN on Space.embedding
   R->>H: hybrid scores when userId set
   R-->>API: top 10 for RAG context
   API->>G: system prompt + RETRIEVED LISTINGS + search_spaces tool
@@ -43,7 +44,7 @@ retrievalScore =
   relevanceWeight * normalize(relevance) +
   hybridWeight * normalize(hybrid) +
   popWeight * normalize(pop30d) +
-  semanticWeight * normalize(semantic) +   // Phase C: only when embeddings exist
+  semanticWeight * normalize(semantic) +   // only when embeddings exist
   rawPop30d * 1e-6   // tie-breaker when counts differ
 ```
 
@@ -55,8 +56,8 @@ retrievalScore =
 When a semantic signal is present (query embedding + embedded candidates), the
 relevance/hybrid/pop weights above are scaled by `(1 - RAG_SEMANTIC_WEIGHT)` and
 the freed share (default **0.30**) is assigned to the semantic signal. With no
-embeddings or no API key the semantic weight is **0** and the blend is identical
-to the pre-Phase-C behavior (keyword-only fallback).
+embeddings or no API key the semantic weight is **0** and the blend falls back to
+keyword-only retrieval.
 
 All weights are env-configurable (`RAG_*_WEIGHT`).
 
@@ -65,11 +66,11 @@ All weights are env-configurable (`RAG_*_WEIGHT`).
 | Relevance | Keyword hits in title (+3), category/location (+2), description (+1) |
 | Hybrid | Existing [`scoreSpaces()`](../src/lib/recommendations.js) — pop30d, content, collab, location |
 | Popularity | Confirmed bookings in the last 30 days (explicit weight + tie-breaker) |
-| Semantic | pgvector cosine similarity between the query embedding and `Space.embedding` (Phase C) |
+| Semantic | pgvector cosine similarity between the query embedding and `Space.embedding` |
 
 Logged-out users use cold-start hybrid (pop + location). Logged-in users with booking/favorite history get full hybrid scores with a higher hybrid weight.
 
-## Semantic retrieval (Phase C)
+## Semantic retrieval
 
 pgvector adds meaning-based recall on top of keyword matching. Each active space
 has a 768-dim `embedding` (gemini-embedding-001) stored in a `vector(768)` column
@@ -106,7 +107,7 @@ The `search_spaces` tool triggers a DB fetch of up to **30** candidates, then **
 
 `POST /api/ai-search/chat` uses `optionalAuthMiddleware`. The frontend already sends `Authorization: Bearer` via [`client.ts`](../../frontend/src/app/api/client.ts); no UI change required.
 
-## Structured search (Phase B)
+## Structured search (function calling)
 
 Gemini function calling replaces the legacy `<<<SEARCH{...}>>>` regex pipeline.
 
@@ -213,16 +214,16 @@ RAG retrieval still grounds Gemini's prose, but **failed searches no longer retu
 | `RAG_POP_WEIGHT` | 0.20 | Popularity weight (30d bookings) |
 | `RAG_PERSONALIZED_RELEVANCE_WEIGHT` | 0.35 | Logged-in relevance weight |
 | `RAG_PERSONALIZED_HYBRID_WEIGHT` | 0.45 | Logged-in hybrid weight |
-| `RAG_SEMANTIC_WEIGHT` | 0.30 | Semantic share when embeddings exist (Phase C) |
-| `EMBEDDING_MODEL` | gemini-embedding-001 | Embedding model (Phase C) |
-| `EMBEDDING_DIMS` | 768 | Embedding dimensionality; must match the `vector(N)` column (Phase C) |
+| `RAG_SEMANTIC_WEIGHT` | 0.30 | Semantic share when embeddings exist |
+| `EMBEDDING_MODEL` | gemini-embedding-001 | Embedding model for query and document vectors |
+| `EMBEDDING_DIMS` | 768 | Embedding dimensionality; must match the `vector(N)` column |
 | `AI_SEARCH_POOL_SIZE` | 30 | Candidates fetched before card re-rank |
 | `AI_SEARCH_DISPLAY_LIMIT` | 6 | Space cards shown in chat |
 | `RAG_FALLBACK_LIMIT` | 3 | (Legacy config; card fallback removed — RAG is context-only) |
 
 ## Committee one-liner
 
-> AI search retrieves listings from PostgreSQL, personalizes retrieval with our hybrid recommender, augments Gemini with that context, then executes a typed `search_spaces` tool call validated by backend policy — it is not prompt-only filter guessing.
+> AI search retrieves listings from PostgreSQL (keyword + pgvector semantic similarity), personalizes retrieval with our hybrid recommender, augments Gemini with that context, then executes a typed `search_spaces` tool call validated by backend policy — it is not prompt-only filter guessing.
 
 ## Key files
 
@@ -233,9 +234,3 @@ RAG retrieval still grounds Gemini's prose, but **failed searches no longer retu
 - [`backend/src/lib/aiSearchPolicy.js`](../src/lib/aiSearchPolicy.js) — conversation gates, templates, follow-up
 - [`backend/src/routes/ai-search.js`](../src/routes/ai-search.js) — RAG injection, tool wiring, search ladder
 - [`RECOMMENDATIONS.md`](../../RECOMMENDATIONS.md) — hybrid recommender used for the blend
-
-## Phase C (delivered)
-
-- pgvector semantic embeddings for retrieval (768-dim `gemini-embedding-001`,
-  HNSW cosine index, query/document embedding, semantic blend with keyword-only
-  fallback, write-time refresh, and a backfill script).
