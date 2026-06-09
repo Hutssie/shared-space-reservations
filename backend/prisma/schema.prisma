@@ -133,6 +133,7 @@ model Space {
   status            String   @default("active") @map("status")
   latitude          Float?
   longitude         Float?
+  embedding         Unsupported("vector(768)")?
   createdAt         DateTime @default(now()) @map("created_at")
   updatedAt         DateTime @updatedAt @map("updated_at")
 
