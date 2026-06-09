@@ -1,5 +1,5 @@
-// Hub minim; extindere pus in to do pentru streaming.
-// ajuta backend-ul sa porneasca chiar si inainte sa fie legat fluxul in timp real.
+// Minimal hub; streaming extension is a future TODO.
+// lets the backend boot even before realtime streaming is wired up
 
 /** @type {Map<string, Set<import('express').Response>>} */
 const streamsByUserId = new Map();
@@ -12,7 +12,7 @@ export function publishToUser(userId, event, data) {
     try {
       res.write(payload);
     } catch {
-      // ignor fluxuri stricate; curatarea se face la handler-ul de close
+      // Ignore broken streams; cleanup happens in the close handler
     }
   }
 }

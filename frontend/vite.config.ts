@@ -10,12 +10,12 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      // alias-ul `@` catre folderul `src`
+      // `@` alias → `src` folder
       '@': path.resolve(__dirname, './src'),
     },
   },
 
-  // Tipurile de fisiere pentru importuri raw. Nu adauga `.css`, `.tsx` sau `.ts` aici.
+  // file types allowed as raw imports — don't add `.css`, `.tsx`, or `.ts` here
   assetsInclude: ['**/*.svg', '**/*.csv'],
   test: {
     environment: 'jsdom',

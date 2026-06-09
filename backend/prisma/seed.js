@@ -157,7 +157,7 @@ async function main() {
       await syncSpaceAmenities(prisma, created.id, amenityIds);
     }
   } else {
-    // Completez lat/lng pentru spatiile existente care n-au coordonate
+    // Backfill lat/lng for existing spaces that lack coordinates
     const locationCoords = {
       'Brooklyn, NY': { latitude: 40.6782, longitude: -73.9442 },
       'Nashville, TN': { latitude: 36.1627, longitude: -86.7816 },

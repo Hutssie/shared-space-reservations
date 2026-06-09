@@ -431,7 +431,7 @@ export const EditSpace = () => {
 
   return (
     <div className="pt-24 pb-12 min-h-screen bg-[#fcfaf9]">
-      {/* header sticky */}
+      {/* sticky header */}
       <div className="fixed top-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-xl border-b border-brand-100/50 h-20 flex items-center shadow-sm">
         <div className="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 md:gap-6 min-w-0">
@@ -478,7 +478,7 @@ export const EditSpace = () => {
         </div>
       </div>
 
-      {/* navigatie pe sectiuni pentru mobile */}
+      {/* mobile section nav */}
       <div className="lg:hidden fixed top-20 left-0 right-0 z-[55] bg-[#fcfaf9]/95 backdrop-blur-md border-b border-brand-100/30 overflow-x-auto custom-scrollbar shadow-sm">
         <div className="flex items-center gap-2 px-4 py-3 min-w-max">
           {sections.map((section) => (
@@ -501,7 +501,7 @@ export const EditSpace = () => {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 lg:mt-10">
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           
-          {/* navigatie sectiuni - bara laterala pentru desktop */}
+          {/* desktop section nav — sidebar */}
           <aside className="hidden lg:block w-56 shrink-0">
             <div className="sticky top-36 space-y-2">
               <p className="text-[10px] font-black text-brand-300 uppercase tracking-[0.25em] mb-5 ml-4">Listing Editor</p>
@@ -535,10 +535,10 @@ export const EditSpace = () => {
             </div>
           </aside>
 
-          {/* zona principala a formularului */}
+          {/* main form area */}
           <main className="flex-1 space-y-8">
             
-            {/* 1. detalii de baza */}
+            {/* 1. basic details */}
             <section id="details" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32 group">
               <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
@@ -650,7 +650,7 @@ export const EditSpace = () => {
               </div>
             </section>
 
-            {/* 2. galerie foto */}
+            {/* 2. photo gallery */}
             <section id="photos" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 md:mb-8">
                 <div className="space-y-1">
@@ -707,7 +707,7 @@ export const EditSpace = () => {
               <input type="file" ref={fileInputRef} hidden multiple accept="image/*" onChange={handleImageUpload} />
             </section>
 
-            {/* 3. capacitate & dimensiuni */}
+            {/* 3. capacity & size */}
             <section id="capacity" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
               <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
@@ -760,7 +760,7 @@ export const EditSpace = () => {
               </div>
             </section>
 
-            {/* 4. facilitati */}
+            {/* 4. amenities */}
             <section id="amenities" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
               <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
@@ -802,7 +802,7 @@ export const EditSpace = () => {
               </div>
             </section>
 
-            {/* 5. setari pentru rezervare */}
+            {/* 5. booking settings */}
             <section id="booking" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
               <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
@@ -812,7 +812,7 @@ export const EditSpace = () => {
                 <Calendar className="hidden xs:block w-7 h-7 md:w-8 md:h-8 text-brand-200" />
               </div>
 
-              {/* comutatoare (toggle-uri) */}
+              {/* toggles */}
               <div className="space-y-4 mb-8">
                 <div className="p-5 md:p-6 bg-gradient-to-br from-brand-50 to-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 hover:border-brand-300 transition-all">
                   <div className="flex items-center justify-between">
@@ -861,7 +861,7 @@ export const EditSpace = () => {
                 </div>
               </div>
 
-              {/* toggle pentru durata si program */}
+              {/* duration + schedule toggles */}
               <div className="mb-6">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Duration & Timing</h4>
                 <div className="p-5 md:p-6 bg-gradient-to-br from-brand-50 to-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 hover:border-brand-300 transition-all mb-6">
@@ -978,7 +978,7 @@ export const EditSpace = () => {
                 </div>
               </div>
 
-              {/* toggle pentru ore de functionare */}
+              {/* operating hours toggle */}
               <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Operating Hours</h4>
                 <div className="p-5 md:p-6 bg-gradient-to-br from-brand-50 to-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 hover:border-brand-300 transition-all mb-6">
@@ -1058,7 +1058,7 @@ export const EditSpace = () => {
                 </div>
               </div>
 
-              {/* zile de functionare */}
+              {/* operating days */}
               <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Operating Days</h4>
                 <div className="p-5 md:p-6 bg-gradient-to-br from-brand-50 to-white rounded-[1.5rem] md:rounded-[2rem] border border-brand-100 hover:border-brand-300 transition-all mb-6">
@@ -1132,7 +1132,7 @@ export const EditSpace = () => {
                 </div>
               </div>
 
-              {/* zile indisponibile */}
+              {/* blocked days */}
               <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-2">Unavailable Dates</h4>
                 <p className="text-xs md:text-sm text-brand-400 font-medium mb-6">
@@ -1250,7 +1250,7 @@ export const EditSpace = () => {
                 </div>
               </div>
 
-              {/* rezervare in avans */}
+              {/* advance booking */}
               <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Advance Booking Window</h4>
                 <div className="p-5 md:p-6 bg-brand-50 rounded-[1.5rem] md:rounded-[2rem] border-2 border-transparent focus-within:border-brand-700 focus-within:bg-white transition-all group shadow-sm max-w-sm">
@@ -1273,7 +1273,7 @@ export const EditSpace = () => {
                 </div>
               </div>
 
-              {/* politica de anulare */}
+              {/* cancellation policy */}
               <div className="mb-8">
                 <h4 className="text-xs font-black text-brand-500 uppercase tracking-[0.25em] mb-6">Cancellation Policy</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
@@ -1354,7 +1354,7 @@ export const EditSpace = () => {
               </div>
             </section>
 
-            {/* 6. status & publicare */}
+            {/* 6. status & publish */}
             <section id="status" className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-100 shadow-xl shadow-brand-700/5 scroll-mt-40 lg:scroll-mt-32">
               <div className="flex items-center justify-between mb-6 md:mb-8">
                 <div className="space-y-1">
@@ -1397,7 +1397,7 @@ export const EditSpace = () => {
         </div>
       </div>
 
-      {/* modal confirmare blocare cu rezervari existente */}
+      {/* confirm block when existing bookings would be affected */}
       <AnimatePresence>
         {showBlockingModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -1488,7 +1488,7 @@ export const EditSpace = () => {
         )}
       </AnimatePresence>
 
-      {/* modal de renuntare la modificari */}
+      {/* discard unsaved changes modal */}
       <AnimatePresence>
         {showDiscardModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -1533,7 +1533,7 @@ export const EditSpace = () => {
         )}
       </AnimatePresence>
 
-      {/* modal de confirmare pentru stergerea anuntului */}
+      {/* delete listing confirmation */}
       <AnimatePresence>
         {showDeleteModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

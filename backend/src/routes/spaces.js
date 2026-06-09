@@ -43,7 +43,7 @@ const router = Router();
 
 /**
  * Best-effort regeneration of a space's semantic embedding. Runs out of band
- * (fire-and-forget) so listing writes never block or fail on embedding errors.
+ * (fire-and-forget) so listing writes are not blocked or failed by embedding errors.
  */
 async function refreshSpaceEmbedding(spaceId) {
   try {
@@ -71,7 +71,7 @@ async function refreshSpaceEmbedding(spaceId) {
   }
 }
 
-/** Listing fields whose changes warrant regenerating the embedding. */
+/** Listing fields whose change warrants regenerating the embedding. */
 const EMBEDDING_RELEVANT_FIELDS = ['title', 'category', 'location', 'description'];
 
 export { TIME_SLOTS, computeIsSpaceAvailableOnDate, computeIsSpaceAvailableInRange } from '../lib/spaceAvailabilityCompute.js';
@@ -252,7 +252,7 @@ router.get('/locations', async (req, res, next) => {
   }
 });
 
-// normalizez categoria la numele complet afisat pentru "Popular this week" (gen slug "photo" -> "Photo Studio").
+// Normalize category to the full display name for "Popular this week" (e.g. slug "photo" -> "Photo Studio").
 const CATEGORY_DISPLAY_NAMES = {
   photo: 'Photo Studio',
   recording: 'Recording Studio',
@@ -597,7 +597,7 @@ router.post('/:id/share', async (req, res, next) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ error: 'Space id is required' });
 
-    // generez un link de frontend si l loghez in consola backend-ului.
+    // Build a frontend link and log it in the backend console.
     const baseUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'http://localhost:5173';
     const shareLink = `${baseUrl}/space/${id}`;
     console.log('[Share] Space link for', id, ':', shareLink);
@@ -671,7 +671,7 @@ router.get('/:id/availability', async (req, res, next) => {
       if (startIdx < endIdx) {
         for (let i = startIdx; i < endIdx; i++) booked.add(slots[i]);
       } else if (startIdx === 0 && endIdx === 0) {
-        // 12:00 AM -> 12:00 AM => toata ziua
+        // 12:00 AM -> 12:00 AM => whole-day booking
         for (let i = 0; i < slots.length; i++) booked.add(slots[i]);
       } else if (endIdx === 0 && startIdx > 0) {
         for (let i = startIdx; i < slots.length; i++) booked.add(slots[i]);

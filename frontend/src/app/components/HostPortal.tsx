@@ -125,7 +125,7 @@ export const HostPortal = () => {
           </Link>
         </div>
 
-        {/* Grila de statistici */}
+        {/* stats grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-5 mb-8">
           {stats.map((stat, idx) => (
             <div key={idx} className="bg-white rounded-2xl p-4 md:p-5 border border-brand-200 shadow-xl shadow-brand-700/5 hover:shadow-2xl transition-all">
@@ -141,7 +141,7 @@ export const HostPortal = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-6 md:gap-8 lg:h-[min(480px,calc(100dvh-24rem))]">
-          {/* Sectiunea cu grafic */}
+          {/* chart section */}
           <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-200 shadow-xl shadow-brand-700/5 flex flex-col min-h-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-5 md:mb-6 gap-3">
               <div>

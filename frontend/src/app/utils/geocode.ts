@@ -13,9 +13,9 @@ export type ReverseGeocodeResult = {
 };
 
 /**
- * Geocode cu Google Geocoding API.
- * returneaza { lat, lng, zoom } sau `null` daca failuieste sau query gol.
- * zoom: ~5 pentru tara, ~12 pentru localitate/oras.
+ * Geocode an address with Google Geocoding API.
+ * Returns { lat, lng, zoom } or null if it fails / query is empty.
+ * Zoom is roughly ~5 for a country, ~13 for a city.
  */
 export async function geocodeAddress(query: string): Promise<GeocodeResult | null> {
   const trimmed = query.trim();
@@ -37,7 +37,7 @@ export async function geocodeAddress(query: string): Promise<GeocodeResult | nul
     if (Number.isNaN(lat) || Number.isNaN(lng)) return null;
 
     const types: string[] = result.types || [];
-    // verificare oras -> tara si zoom in
+    // figure out city vs country and pick a zoom level
     const zoom =
       types.some((t: string) => t === 'locality' || t === 'administrative_area_level_2' || t === 'administrative_area_level_3') ? 13 :
       types.some((t: string) => t === 'administrative_area_level_1') ? 8 :
@@ -64,8 +64,8 @@ function pickFirstComponent(components: any[], types: string[]): string {
 }
 
 /**
- * Reverse-geocode pentru (lat, lng) cu Google Geocoding API.
- * Returneaza { city, region, country } sau `null` daca nu poate determina.
+ * Reverse-geocode (lat, lng) with Google Geocoding API.
+ * Returns { city, region, country } or null if it can't figure it out.
  */
 export async function reverseGeocodeLatLng(lat: number, lng: number): Promise<ReverseGeocodeResult | null> {
   if (!API_KEY) return null;
@@ -81,7 +81,7 @@ export async function reverseGeocodeLatLng(lat: number, lng: number): Promise<Re
     const components = data.results[0]?.address_components ?? [];
     const country = pickComponent(components, 'country');
     const region = pickComponent(components, 'administrative_area_level_1');
-    // Prefer locality, then postal_town (UK), then admin_area_level_2/3 as a fallback.
+    // prefer locality, then postal_town (UK), then admin_area as fallback
     const city = pickFirstComponent(components, ['locality', 'postal_town', 'administrative_area_level_2', 'administrative_area_level_3']);
 
     if (!country && !region && !city) return null;

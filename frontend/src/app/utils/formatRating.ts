@@ -1,4 +1,4 @@
-// format rating 2 decimale dupa virgula
+// show rating with up to 2 decimal places
 export function formatRatingScore(value: number | null | undefined): string {
   if (value == null) return '—';
   const n = Number(value);

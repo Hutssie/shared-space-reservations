@@ -1,4 +1,4 @@
-// validare parola min 8 caractere si un caracter mare
+// password: min 8 chars + at least one uppercase letter
 export const PASSWORD_MIN_LENGTH = 8;
 
 export function validatePassword(password: string): { valid: boolean; error?: string } {

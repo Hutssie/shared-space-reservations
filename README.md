@@ -2,8 +2,8 @@
 
 University project: **Web Application for Intelligent Management of Shared Space Reservations**.
 
-- **Frontend**: React (Vite) in `frontend/` – design done in Figma.
-- **Backend**: Node.js + Express + Prisma + PostgreSQL in `backend/`.
+- **Frontend**: React (Vite).
+- **Backend**: Node.js + Express + Prisma + PostgreSQL.
 
 ## Running the project from GitHub
 

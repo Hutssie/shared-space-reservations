@@ -47,7 +47,7 @@ const SUGGESTION_CHIPS = [
 
 function formatMessage(text: string): React.ReactNode {
   const parts: React.ReactNode[] = [];
-  // Bold prima; pentru italic, nu prind '*' cand e dupa ? sau ! (marcaj de „required field”)
+  // bold first; for italic, skip '*' after ? or ! (required-field marker)
   const regex = /(\*\*(.+?)\*\*|(?<![?!])\*(.+?)\*)/g;
   let lastIndex = 0;
   let match: RegExpExecArray | null;
@@ -114,8 +114,8 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
 
   useEffect(() => {
     if (!isOpen) return;
-    // Cand redeschizi, containerul de scroll s-ar putea sa se monteze dupa renderul asta.
-    // requestAnimationFrame se asigura ca dam scroll dupa layout/paint.
+    // scroll container might mount after this render when reopening
+    // rAF makes sure we scroll after layout/paint
     requestAnimationFrame(() => {
       if (scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -227,7 +227,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
             transition={{ type: 'spring', damping: 30, stiffness: 200 }}
             className="fixed right-0 top-0 bottom-0 w-full md:max-w-[740px] bg-white shadow-[-40px_0_100px_rgba(0,0,0,0.2)] flex flex-col z-[101] h-full"
           >
-            {/* Header-ul */}
+            {/* header */}
             <div className="p-4 md:p-7 border-b border-brand-100 flex items-center justify-between bg-white/90 backdrop-blur-xl sticky top-0 z-20 shrink-0">
               <div className="flex items-center gap-3 md:gap-5">
                 <div
@@ -261,7 +261,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
               </button>
             </div>
 
-            {/* Corpul chat-ului */}
+            {/* chat body */}
             <div 
               ref={scrollRef}
               className="flex-1 overflow-y-auto p-4 md:p-7 space-y-5 md:space-y-9 bg-gradient-to-b from-brand-50/30 to-white scroll-smooth"
@@ -331,7 +331,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
                           })}
                         </div>
 
-                        {/* Prompt-ul pentru booking */}
+                        {/* booking prompt */}
                         <AnimatePresence>
                           {bookingPromptMsgId === msg.id && bookingPromptPhase && (
                             <motion.div
@@ -429,7 +429,7 @@ export const AISearchModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: (
               )}
             </div>
 
-            {/* Footer-ul cu input */}
+            {/* footer input */}
             <div className="p-4 md:p-7 bg-white border-t border-brand-100 shadow-[0_-20px_50px_rgba(0,0,0,0.03)] relative z-20 shrink-0">
               <div className="space-y-3 md:space-y-6 max-w-2xl mx-auto">
                 <div className="flex flex-wrap gap-2">

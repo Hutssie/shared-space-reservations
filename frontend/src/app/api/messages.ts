@@ -105,7 +105,7 @@ export function subscribeToMessageStream(onEvent: (evt: MessageStreamEvent) => v
           else if (event === 'conversation.read') onEvent({ event: 'conversation.read', data });
           else if (event === 'conversation.updated') onEvent({ event: 'conversation.updated', data });
         } catch {
-          // ignor payload-uri malformed
+          // ignore malformed payloads
         }
       };
 
@@ -114,7 +114,7 @@ export function subscribeToMessageStream(onEvent: (evt: MessageStreamEvent) => v
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
-        // evenimentele SSE sunt separate printr-o linie goala
+        // SSE events are separated by a blank line
         while (true) {
           const idx = buffer.indexOf('\n\n');
           if (idx === -1) break;
@@ -132,7 +132,7 @@ export function subscribeToMessageStream(onEvent: (evt: MessageStreamEvent) => v
         }
       }
     } catch {
-      // ignor
+      // ignore
     }
   })();
 

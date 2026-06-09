@@ -70,7 +70,7 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
 
   return (
     <div className="min-h-screen bg-white flex flex-col lg:flex-row">
-      {/* Partea stanga: branding si imagine */}
+      {/* left side: branding + image */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-brand-700 overflow-hidden p-16 flex-col justify-between">
         <div className="absolute inset-0 z-0 opacity-50">
           <ImageWithFallback 
@@ -121,7 +121,7 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
         </div>
       </div>
 
-      {/* Partea dreapta: formularul */}
+      {/* right side: form */}
       <div className="flex-1 flex flex-col justify-center px-6 md:px-12 lg:px-24 py-12 bg-white">
         <div className="max-w-md w-full mx-auto">
           <div className="lg:hidden mb-12">
@@ -287,7 +287,7 @@ export const Auth = ({ initialMode = 'login' }: { initialMode?: 'login' | 'regis
         </div>
       </div>
 
-      {/* Modalul pentru parola uitata */}
+      {/* forgot password modal */}
       <AnimatePresence>
         {showForgotModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

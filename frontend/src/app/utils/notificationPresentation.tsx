@@ -134,7 +134,7 @@ export function getNotificationLink(notif: {
   }
   if (data?.bookingId) return '/dashboard?tab=My%20Bookings';
   if (notif.type === 'message_received' && data?.threadId) {
-    // tab messages foloseste deep link `with=<otherUserId>` ca sa deschida conversatia corecta
+    // messages tab uses deep link `with=<otherUserId>` to open the right thread
     if (data.senderId) return `/dashboard?tab=Messages&with=${encodeURIComponent(data.senderId)}`;
     return '/dashboard?tab=Messages';
   }

@@ -69,8 +69,8 @@ function SidebarProvider({
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
 
-  // starea interna a sidebar-ului
-  // folosim openProp si setOpenProp ca sa controlam din exterior componenta
+  // internal sidebar open state
+  // use openProp/setOpenProp when controlling from outside
   const [_open, _setOpen] = React.useState(defaultOpen);
   const open = openProp ?? _open;
   const setOpen = React.useCallback(
@@ -82,18 +82,18 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      // setam cookie-ul ca sa tinem starea sidebar-ului la reload
+      // persist open/closed in a cookie so reload keeps it
       document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
     },
     [setOpenProp, open],
   );
 
-  // functia helper care face toggle la sidebar
+  // toggle helper
   const toggleSidebar = React.useCallback(() => {
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
   }, [isMobile, setOpen, setOpenMobile]);
 
-  // shortcut pentru toggle sidebar
+  // keyboard shortcut to toggle
   React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (
@@ -109,8 +109,7 @@ function SidebarProvider({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [toggleSidebar]);
 
-  // punem state ca sa putem avea `data-state="expanded"` / `data-state="collapsed"`.
-  // asa e mai usor sa stilizam sidebar-ul cu clase tailwind.
+  // expose expanded/collapsed as data-state for tailwind styling
   const state = open ? "expanded" : "collapsed";
 
   const contextValue = React.useMemo<SidebarContextProps>(
@@ -214,7 +213,7 @@ function Sidebar({
       data-side={side}
       data-slot="sidebar"
     >
-      {/* se ocupa de gap-ul sidebar-ului pe desktop */}
+      {/* desktop sidebar gap spacer */}
       <div
         data-slot="sidebar-gap"
         className={cn(
@@ -233,7 +232,7 @@ function Sidebar({
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
             : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-          // ajustam padding-ul pentru variantele floating si inset
+          // extra padding for floating/inset variants
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
@@ -427,7 +426,7 @@ function SidebarGroupAction({
       data-sidebar="group-action"
       className={cn(
         "text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground absolute top-3.5 right-3 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
-        // marim aria click/touch a butonului pe mobil
+        // bigger tap target on mobile
         "after:absolute after:-inset-2 md:after:hidden",
         "group-data-[collapsible=icon]:hidden",
         className,
@@ -562,7 +561,7 @@ function SidebarMenuAction({
       data-sidebar="menu-action"
       className={cn(
         "text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer-hover/menu-button:text-sidebar-accent-foreground absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
-        // marim aria click/touch a butonului pe mobil
+        // bigger tap target on mobile
         "after:absolute after:-inset-2 md:after:hidden",
         "peer-data-[size=sm]/menu-button:top-1",
         "peer-data-[size=default]/menu-button:top-1.5",
@@ -606,7 +605,7 @@ function SidebarMenuSkeleton({
 }: React.ComponentProps<"div"> & {
   showIcon?: boolean;
 }) {
-  // latime random intre 50% si 90%
+  // random width between 50% and 90%
   const width = React.useMemo(() => {
     return `${Math.floor(Math.random() * 40) + 50}%`;
   }, []);

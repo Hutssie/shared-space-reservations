@@ -112,10 +112,10 @@ export async function fetchKeywordCandidates(prisma, query, { limit = RAG_CANDID
 }
 
 /**
- * Fetch semantically nearest spaces for a query via pgvector cosine distance.
+ * Fetch semantically closest spaces for a query via pgvector cosine distance.
  * Returns { ids, similarity } where similarity maps space id -> cosine similarity
- * in [-1, 1]. Degrades gracefully to an empty result when no API key, no query,
- * or any embedding/DB error occurs (keyword-only fallback upstream).
+ * in [-1, 1]. Degrades gracefully to an empty result when there is no API key, an empty query,
+ * or any embedding/DB error (keyword-only fallback upstream).
  */
 export async function fetchSemanticCandidates(prisma, query, { limit = RAG_CANDIDATE_POOL } = {}) {
   const text = String(query || '').trim();
@@ -181,7 +181,7 @@ export function formatRagContext(spaces) {
   return lines.join('\n');
 }
 
-/** Sort API space cards to match RAG retrieval rank (best match first). */
+/** Sort API space cards by RAG retrieval rank (best match first). */
 export function orderSpacesByRetrieval(spaces, retrieved, limit = 6) {
   if (!spaces?.length) return [];
   if (!retrieved?.length) return spaces.slice(0, limit);

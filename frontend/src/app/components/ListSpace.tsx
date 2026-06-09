@@ -181,8 +181,8 @@ export const ListSpace = () => {
 
   useEffect(() => {
     if (step !== 3) return;
-    // Once a pin is placed, keep the map stable. (Reverse-geocoding may auto-fill
-    // city/region/country, which would otherwise trigger the geocode+recenter flow.)
+    // after placing the pin, keep the map stable (reverse-geocoding fills city/region/country
+    // which would otherwise trigger geocode + recenter)
     if (formData.pinPlaced && formData.latitude != null && formData.longitude != null) return;
     const country = formData.country.trim();
     const city = formData.city.trim();
@@ -253,8 +253,8 @@ export const ListSpace = () => {
   const handlePositionChange = useCallback((lat: number, lng: number) => {
     setFormData((prev) => ({ ...prev, latitude: lat, longitude: lng, pinPlaced: true }));
 
-    // Keep it simple: reverse-geocode and fill City/Region/Country from the pin.
-    // Also avoid spamming the API if the user is dragging and events fire rapidly.
+    // reverse-geocode pin → fill City/Region/Country
+    // throttle API calls when the user drags the pin fast
     const last = lastReverseGeocodeRef.current;
     if (last && Math.abs(last.lat - lat) < 1e-6 && Math.abs(last.lng - lng) < 1e-6) return;
     lastReverseGeocodeRef.current = { lat, lng };
@@ -263,7 +263,7 @@ export const ListSpace = () => {
       if (!r) return;
       setFormData((prev) => ({
         ...prev,
-        // Don't overwrite user input once it's present.
+        // don't overwrite what the user already typed
         country: prev.country ? prev.country : r.country,
         region: prev.region ? prev.region : r.region,
         city: prev.city ? prev.city : r.city,
@@ -364,7 +364,7 @@ export const ListSpace = () => {
       const t = e.target as HTMLElement | null;
       if (t) {
         const tag = t.tagName?.toLowerCase();
-        // Allow newlines / IME behavior in multiline editors.
+        // keep newlines / IME behavior in multiline editors
         if (tag === 'textarea') return;
         if (t.isContentEditable) return;
       }
@@ -380,7 +380,7 @@ export const ListSpace = () => {
   if (!isStarted) {
     return (
       <div className="bg-white min-h-screen">
-        {/* Hero-ul de inceput */}
+        {/* landing hero */}
         <section className="relative min-h-screen flex items-center overflow-hidden pt-20 md:pt-24 pb-10 md:pb-12">
           <div className="absolute inset-0 z-0">
             <ImageWithFallback 
@@ -450,7 +450,7 @@ export const ListSpace = () => {
           </div>
         </section>
 
-        {/* Sectiunea CTA */}
+        {/* CTA section */}
         <section className="pb-20 px-4">
           <div className="max-w-6xl mx-auto bg-brand-700 rounded-[2.5rem] p-10 lg:p-16 text-center overflow-hidden relative">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--brand-200)_1px,_transparent_1px)] [background-size:30px_30px]" />
@@ -482,12 +482,12 @@ export const ListSpace = () => {
             const t = e.target as HTMLElement | null;
             if (!t) return;
 
-            // Don't hijack Enter from multiline editors / contenteditable areas.
+            // don't steal Enter from multiline / contenteditable editors
             const tag = t.tagName?.toLowerCase();
             if (tag === 'textarea') return;
             if (t.isContentEditable) return;
 
-            // Let native "Enter on a button" clicks behave normally.
+            // let native button click + Enter work normally
             if (tag === 'button') return;
 
             if (nextDisabled || submitting) return;
@@ -498,7 +498,7 @@ export const ListSpace = () => {
       <div className={`w-full bg-white rounded-[2.5rem] shadow-2xl border border-brand-100 overflow-hidden flex flex-col max-h-[calc(100dvh-8rem)] ${
         step === 3 ? 'max-w-6xl min-h-[calc(100dvh-8rem)]' : 'max-w-3xl'
       }`}>
-        {/* Bara de progres */}
+        {/* progress bar */}
         <div className="h-2 bg-brand-100 w-full flex shrink-0">
           {[1, 2, 3, 4, 5, 6].map((s) => (
             <div 

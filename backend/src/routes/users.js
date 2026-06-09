@@ -141,7 +141,7 @@ router.patch('/me', authMiddleware, async (req, res, next) => {
   }
 });
 
-// GET pentru /api/users/me/notification-preferences
+// GET /api/users/me/notification-preferences
 router.get('/me/notification-preferences', authMiddleware, async (req, res, next) => {
   try {
     const prefs = await fetchNotificationPrefsRaw(prisma, req.userId);
@@ -151,7 +151,7 @@ router.get('/me/notification-preferences', authMiddleware, async (req, res, next
   }
 });
 
-// PATCH pentru /api/users/me/notification-preferences
+// PATCH /api/users/me/notification-preferences
 router.patch('/me/notification-preferences', authMiddleware, async (req, res, next) => {
   try {
     const current = await fetchNotificationPrefsRaw(prisma, req.userId);
@@ -176,7 +176,7 @@ router.patch('/me/notification-preferences', authMiddleware, async (req, res, ne
   }
 });
 
-// profil public de host folosit pe pagina de detalii a spatiului
+// Public host profile used on the space details page
 router.get('/:id/public', async (req, res, next) => {
   try {
     const id = String(req.params.id ?? '').trim();

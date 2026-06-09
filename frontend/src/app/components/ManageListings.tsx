@@ -58,7 +58,7 @@ export const ManageListings = () => {
   return (
     <div className="pt-24 md:pt-24 pb-12 min-h-screen bg-brand-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header-ul */}
+        {/* page header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div className="space-y-2">
             <Link 
@@ -73,7 +73,7 @@ export const ManageListings = () => {
           </div>
         </div>
 
-        {/* Filtrele si cautarea */}
+        {/* filters + search */}
         <div className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-4 md:p-5 border border-brand-200 shadow-xl shadow-brand-700/5 mb-8 flex flex-col md:flex-row gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-300" />
@@ -87,7 +87,7 @@ export const ManageListings = () => {
           </div>
         </div>
 
-        {/* Zona de continut */}
+        {/* content area */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

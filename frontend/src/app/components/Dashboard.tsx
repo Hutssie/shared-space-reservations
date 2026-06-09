@@ -175,7 +175,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
 
   return (
     <div className="space-y-6">
-      {/* Popup-ul de eroare la anulare */}
+      {/* cancel error popup */}
       <AnimatePresence>
         {cancelErrorPopup && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -216,7 +216,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
         )}
       </AnimatePresence>
 
-      {/* Modalul de confirmare pentru anularea rezervarii */}
+      {/* cancel booking confirmation modal */}
       <AnimatePresence>
         {cancelConfirmBooking && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -292,7 +292,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
         )}
       </AnimatePresence>
 
-      {/* Toast de succes la anulare */}
+      {/* cancel success toast */}
       <AnimatePresence>
         {cancelSuccessToast && (
           <motion.div
@@ -307,7 +307,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
         )}
       </AnimatePresence>
 
-      {/* Modalul de recenzie */}
+      {/* review modal */}
       <AnimatePresence>
         {reviewBooking && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -325,7 +325,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
               className="relative w-full max-w-2xl bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl border border-brand-200 overflow-hidden max-h-[95vh] flex flex-col"
             >
               <div className="relative p-6 sm:p-10 space-y-6 sm:space-y-8 overflow-y-auto">
-                {/* Dialogul de confirmare pentru schimbari nesalvate */}
+                {/* unsaved changes confirmation */}
                 <AnimatePresence>
                   {showConfirmDialog && (
                     <motion.div
@@ -454,7 +454,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
                         setReviewedSpaceIds((prev) => new Set(prev).add(reviewBooking.spaceId));
                         resetReview();
                       } catch {
-                        // tin modalul deschis chiar daca apare o eroare
+                        // keep modal open even if submit fails
                       }
                     }}
                     className="order-1 sm:order-2 flex-[2] px-6 py-3.5 sm:px-8 sm:py-5 bg-brand-700 text-white font-black rounded-xl sm:rounded-2xl shadow-xl shadow-brand-700/20 hover:bg-brand-600 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:bg-brand-700"
@@ -544,7 +544,7 @@ const BookingsTab = ({ bookings, setBookings, newestBookingId }: { bookings: Boo
           animate={{ opacity: 1, y: 0 }}
           className="bg-white rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 border border-brand-200 flex flex-col md:flex-row gap-6 items-center shadow-lg hover:shadow-2xl transition-all group relative overflow-hidden"
         >
-          {/* Badge-ul „NEW” */}
+          {/* NEW badge */}
           {showNewBadge && (
             <motion.div
               initial={{ scale: 0 }}
@@ -836,7 +836,7 @@ const MessagesTab = () => {
       if (evt.event === 'message.created') {
         const { conversationId, message } = evt.data;
         if (conversationId !== activeConversationId) return;
-        // Nu adaug mesajele noastre din flux - le avem deja din update-ul optimist
+        // skip our own messages from the stream — already added optimistically
         if (message.senderId === user?.id) return;
         setChatMessages((prev) => {
           if (prev.some((m) => m.id === message.id)) return prev;
@@ -978,7 +978,7 @@ const MessagesTab = () => {
 
   return (
     <div className={`h-[calc(100vh-120px)] lg:h-[calc(100vh-180px)] min-h-[520px] flex gap-0 md:gap-6 overflow-hidden relative ${mobileView === 'chat' ? 'fixed inset-0 z-50 md:relative md:inset-auto md:z-0 bg-white' : ''}`}>
-      {/* Lista din sidebar */}
+      {/* sidebar conversation list */}
       <div
         className={`w-full md:w-[300px] lg:w-[320px] flex flex-col bg-white rounded-none md:rounded-[1.5rem] md:rounded-[2rem] border-r md:border border-brand-200 overflow-hidden shadow-2xl shadow-brand-700/5 transition-all duration-300
           ${mobileView === 'chat' ? 'hidden md:flex' : 'flex'}
@@ -1075,7 +1075,7 @@ const MessagesTab = () => {
         </div>
       </div>
 
-      {/* Zona principala de chat */}
+      {/* main chat area */}
       <div
         className={`flex-1 flex flex-col bg-white rounded-none md:rounded-[1.5rem] md:rounded-[2rem] border md:border-brand-200 overflow-hidden shadow-2xl shadow-brand-700/10 transition-all duration-300
           ${mobileView === 'list' ? 'hidden md:flex' : 'flex'}
@@ -1160,7 +1160,7 @@ const MessagesTab = () => {
           )}
         </div>
 
-        {/* Modalul de confirmare pentru stergerea conversatiei */}
+        {/* delete conversation confirmation */}
         <AnimatePresence>
           {deleteConversationConfirm && (
             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -1235,7 +1235,7 @@ const MessagesTab = () => {
           )}
         </AnimatePresence>
 
-        {/* Lightbox pentru imagine fullscreen */}
+        {/* fullscreen image lightbox */}
         <AnimatePresence>
           {fullscreenImageUrl && (
             <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
@@ -1416,7 +1416,7 @@ const MessagesTab = () => {
         </div>
       </div>
 
-      {/* Modalul pentru mesaj nou */}
+      {/* new message modal */}
       <AnimatePresence>
         {newModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -1568,7 +1568,7 @@ const ReviewsTab = () => {
       setMyReviews(updated);
       setEditingReview(null);
     } catch {
-      // tin modalul deschis daca apare o eroare
+      // keep modal open on error
     } finally {
       setSubmitting(false);
     }
@@ -1580,14 +1580,14 @@ const ReviewsTab = () => {
       setMyReviews((prev) => prev.filter((r) => r.id !== review.id));
       setDeleteConfirmReview(null);
     } catch {
-      // tin dialogul deschis daca apare o eroare
+      // keep dialog open on error
     }
   };
 
   return (
   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-    {/* Modalul de editare pentru recenzie */}
+    {/* edit review modal */}
     <AnimatePresence>
       {editingReview && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -1605,7 +1605,7 @@ const ReviewsTab = () => {
             className="relative w-full max-w-2xl bg-white rounded-[2rem] sm:rounded-[3rem] shadow-2xl border border-brand-200 overflow-hidden max-h-[95vh] flex flex-col"
           >
             <div className="relative p-6 sm:p-10 space-y-6 sm:space-y-8 overflow-y-auto">
-              {/* Confirmare pentru modificari nesalvate */}
+              {/* unsaved changes confirmation */}
               <AnimatePresence>
                 {editShowConfirm && (
                   <motion.div
@@ -1732,7 +1732,7 @@ const ReviewsTab = () => {
       )}
     </AnimatePresence>
 
-    {/* Dialog de confirmare pentru stergere */}
+    {/* delete confirmation dialog */}
     <AnimatePresence>
       {deleteConfirmReview && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -1971,7 +1971,7 @@ const NotificationsTab = () => {
         )}
       </div>
 
-      {/* Incarca mai multe */}
+      {/* load more */}
       {nextCursor && (
         <div className="flex justify-center pt-2">
           <button
@@ -2486,7 +2486,7 @@ export const Dashboard = () => {
       .catch(() => setFavorites([]));
   }, []);
 
-  // Reiau bookings cand intri pe My Bookings ca sa apara si rezervarea noua in lista
+  // refetch bookings when opening My Bookings so a fresh booking shows up
   useEffect(() => {
     if (activeTab === 'My Bookings') {
       fetchBookings()
@@ -2563,7 +2563,7 @@ export const Dashboard = () => {
     <div className="pt-24 md:pt-32 pb-24 min-h-screen bg-brand-50">
       <div className="max-w-[1600px] mx-auto px-4 md:px-12">
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] xl:grid-cols-[350px_1fr] gap-8 md:gap-12">
-          {/* Meniul lateral */}
+          {/* side menu */}
           <aside className="lg:block">
             <div className="bg-white rounded-[1.5rem] md:rounded-[2.5rem] p-4 md:p-8 border border-brand-200 shadow-xl shadow-brand-700/5 lg:sticky lg:top-32 lg:h-[calc(100vh-180px)] flex flex-col">
               <div className="flex flex-row lg:flex-col items-center gap-4 lg:text-center mb-6 lg:mb-8 border-b lg:border-none border-brand-100 pb-6 lg:pb-0 shrink-0">
@@ -2611,7 +2611,7 @@ export const Dashboard = () => {
             </div>
           </aside>
 
-          {/* Continutul principal */}
+          {/* main content */}
           <main>
             <AnimatePresence mode="wait">
               <motion.div

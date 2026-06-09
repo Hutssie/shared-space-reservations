@@ -45,7 +45,7 @@ import { fetchPublicHostProfile } from '../api/users';
 import type { Space, BookedRange } from '../api/spaces';
 import { calculateServiceFee, PLATFORM_SERVICE_FEE_PERCENT } from '../constants/billing';
 
-// Sloturile zilnice (de la 12 AM la 11 PM), plus miezul noptii din ziua urmatoare.
+// daily slots (12 AM–11 PM) plus midnight on the next day
 const allTimeSlots = [
   '12:00 AM', '01:00 AM', '02:00 AM', '03:00 AM', '04:00 AM', '05:00 AM', '06:00 AM', '07:00 AM',
   '08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
@@ -54,7 +54,7 @@ const allTimeSlots = [
   '12:00 AM+1',
 ];
 
-/** Transform ora (string) intr-un numar comparabil (tin cont de +1 pentru ziua urmatoare). */
+/** Turn a time string into a comparable number (+1 = next day). */
 function timeToNumber(time: string): number {
   const isNextDay = time.includes('+1');
   const cleanTime = time.replace('+1', '').trim();
@@ -66,13 +66,13 @@ function timeToNumber(time: string): number {
   return hours + (minutes ?? 0) / 60;
 }
 
-/** Normalizez ora de final din API: daca se termina la 12:00 AM dupa o pornire tarzie, e miezul noptii din ziua urmatoare. */
+/** Normalize end time from API — late start + 12:00 AM end means next-day midnight. */
 function normalizeRangeEnd(start: string, end: string): string {
   if (end === '12:00 AM' && timeToNumber(start) >= timeToNumber(end)) return '12:00 AM+1';
   return end;
 }
 
-/** Verific daca doua intervale orare se suprapun. */
+/** Check if two time ranges overlap. */
 function rangesOverlap(start1: string, end1: string, start2: string, end2: string): boolean {
   const e1 = normalizeRangeEnd(start1, end1);
   const e2 = normalizeRangeEnd(start2, end2);
@@ -83,13 +83,13 @@ function rangesOverlap(start1: string, end1: string, start2: string, end2: strin
   return s1 < e2n && s2 < e1n;
 }
 
-/** Verific daca intervalul propus e disponibil (nu se suprapune cu nicio rezervare). */
+/** Check if the proposed slot is free (no overlap with bookings). */
 function isRangeAvailable(proposedStart: string, proposedEnd: string, bookedRanges: BookedRange[]): boolean {
   const normalized = bookedRanges.map((r) => ({ start: r.start, end: normalizeRangeEnd(r.start, r.end) }));
   return !normalized.some((r) => rangesOverlap(proposedStart, proposedEnd, r.start, r.end));
 }
 
-/** Verific daca o ora pica in interiorul unei rezervari. */
+/** Check if a time falls inside an existing booking. */
 function isTimeInBookedRange(time: string, bookedRanges: BookedRange[]): boolean {
   const t = timeToNumber(time);
   return bookedRanges.some((r) => {
@@ -99,7 +99,7 @@ function isTimeInBookedRange(time: string, bookedRanges: BookedRange[]): boolean
   });
 }
 
-/** Clasele pentru „badge”-ul de rating (colorat). */
+/** Tailwind classes for the colored rating badge. */
 function getRatingColor(rating: number): string {
   if (rating >= 4.5) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
   if (rating >= 4.0) return 'bg-blue-50 text-blue-700 border-blue-200';
@@ -115,7 +115,7 @@ function slotToDateTime(selectedDate: Date, slot: string): Date | null {
   return isNextDay ? addDays(parsed, 1) : parsed;
 }
 
-/** Desenez vizualizarea cu stele pentru rating (5 stele, completate in functie de rating). */
+/** Star row for rating (5 stars, filled based on score). */
 function renderStars(rating: number) {
   return Array.from({ length: 5 }).map((_, idx) => (
     <Star
@@ -129,14 +129,14 @@ function renderStars(rating: number) {
   ));
 }
 
-/** Finalul e dupa inceput in lista extinsa de sloturi (fara „wrap” prin toate lista). */
+/** End index must be after start in the extended slot list (no wrap-around). */
 const isEndAfterStart = (startIdx: number, endIdx: number) => endIdx > startIdx;
 
-/** Sloturile dintre start si end (fara sa includ end-ul). */
+/** Slots between start and end (end not included). */
 const getSlotsInRange = (startIdx: number, endIdx: number) =>
   allTimeSlots.slice(startIdx, endIdx);
 
-/** Durata, in ore. */
+/** Duration in hours. */
 const getDuration = (startIdx: number, endIdx: number) => endIdx - startIdx;
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -211,7 +211,7 @@ export const SpaceDetails = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Map-ez YYYY-MM-DD la daca toata ziua e indisponibila (rezervata sau in afara programului).
+  // map YYYY-MM-DD → whether the whole day is unavailable (booked or outside hours)
   const [fullyBookedByDate, setFullyBookedByDate] = useState<Record<string, boolean>>({});
 
   const [spaceDetails, setSpaceDetails] = useState<Space | null>(null);
@@ -444,7 +444,7 @@ export const SpaceDetails = () => {
     []
   );
 
-  // Preiau dinainte statusul de „full” (calendar plin) pentru luna afisata acum, ca sa le blocheze date picker-ul.
+  // prefetch "fully booked" days for the visible month so the date picker can disable them
   useEffect(() => {
     if (!id || !spaceDetails) return;
 
@@ -652,7 +652,7 @@ export const SpaceDetails = () => {
   return (
     <div className="pt-24 md:pt-32 pb-12 min-h-screen bg-white">
       <div className="max-w-7xl mx-auto px-4 md:px-8">
-        {/* Breadcrumbs (calea de navigare) */}
+        {/* breadcrumbs */}
         <div className="flex items-center gap-2 mb-6 text-sm font-bold">
           <Link to="/" className="text-brand-400 hover:text-brand-700 transition-colors">Home</Link>
           <ChevronRight className="w-4 h-4 text-brand-200" />
@@ -661,7 +661,7 @@ export const SpaceDetails = () => {
           <span className="text-brand-700">{spaceDetails.category}</span>
         </div>
 
-        {/* Actiunile din header */}
+        {/* header actions */}
         <div className="flex items-center justify-between mb-6">
           <button 
             onClick={() => navigate(-1)}
@@ -679,7 +679,7 @@ export const SpaceDetails = () => {
                 if (!id) return;
                 try {
                   const { link } = await shareSpaceLink(id);
-                  // Mai bag si in consola browserului, ca sa-ti fie usor de verificat.
+                  // also log to browser console for easy debugging
                   console.log('[Share] Space link:', link);
                   toast.success('Share link printed in backend console');
                 } catch (err) {
@@ -747,7 +747,7 @@ export const SpaceDetails = () => {
           </div>
         </div>
 
-        {/* Galeria de poze */}
+        {/* photo gallery */}
         {(() => {
           const images = spaceDetails.images?.length ? spaceDetails.images : (spaceDetails.image ? [spaceDetails.image] : []);
           const imageCount = images.length;
@@ -919,10 +919,10 @@ export const SpaceDetails = () => {
           />
         )}
 
-        {/* Layout-ul continutului */}
+        {/* main content layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-8 lg:gap-12">
           <div className="space-y-10 md:space-y-12">
-            {/* Sectiunea cu gazda */}
+            {/* host section */}
             <section className="flex items-center justify-between py-6 md:py-8 border-b border-brand-100">
               <div className="space-y-1.5">
                 <h2 className="text-2xl md:text-3xl font-black text-brand-700">Space hosted by {spaceDetails.host?.name ?? 'Host'}</h2>
@@ -947,7 +947,7 @@ export const SpaceDetails = () => {
               </div>
             </section>
 
-            {/* Modalul cu profilul gazdei (aceeasi experienta ca la „View Full Profile” din pagina de booking) */}
+            {/* host profile modal (same as "View Full Profile" on booking page) */}
             <AnimatePresence>
               {showHostProfile && spaceDetails.host && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
@@ -1061,7 +1061,7 @@ export const SpaceDetails = () => {
               )}
             </AnimatePresence>
 
-            {/* Descrierea */}
+            {/* description */}
             <section className="space-y-6 md:space-y-8">
               {spaceDetails.isInstantBookable && (
                 <div className="flex gap-4 md:gap-5 items-start">
@@ -1107,7 +1107,7 @@ export const SpaceDetails = () => {
               </div>
             </section>
 
-            {/* Facilitati (amenities) */}
+            {/* amenities */}
             <section className="space-y-6 md:space-y-8 py-8 md:py-10 border-y border-brand-100">
               <h2 className="text-2xl md:text-3xl font-black text-brand-700 mb-6 md:mb-8">What this space offers</h2>
               <div className="relative">
@@ -1129,7 +1129,7 @@ export const SpaceDetails = () => {
               </div>
             </section>
 
-            {/* Recenzii */}
+            {/* reviews */}
             <section id="reviews-section" className="space-y-8 md:space-y-10">
               <div className="flex items-center gap-3 md:gap-4">
                 <Star className="w-6 h-6 md:w-7 md:h-7 text-brand-700 fill-brand-700 shrink-0" />
@@ -1176,7 +1176,7 @@ export const SpaceDetails = () => {
               </button>
             </section>
 
-            {/* Modalul cu recenzii */}
+            {/* reviews modal */}
             <AnimatePresence>
               {isReviewsOpen && (
                 <div className="fixed inset-0 z-[1000] flex items-center justify-center px-4 py-8 md:p-12">
@@ -1193,7 +1193,7 @@ export const SpaceDetails = () => {
                     exit={{ opacity: 0, y: 100, scale: 0.95 }}
                     className="relative w-full max-w-5xl h-full bg-white rounded-[2rem] md:rounded-[2.5rem] overflow-hidden flex flex-col shadow-2xl"
                   >
-                    {/* Header-ul modalului */}
+                    {/* modal header */}
                     <div className="flex items-center justify-between p-5 md:p-6 border-b border-brand-100 shrink-0">
                       <div className="flex items-center gap-3">
                         <Star className="w-5 h-5 md:w-6 md:h-6 text-brand-700 fill-brand-700 shrink-0" />
@@ -1207,15 +1207,15 @@ export const SpaceDetails = () => {
                       </button>
                     </div>
 
-                    {/* Continutul modalului */}
+                    {/* modal body */}
                     <div 
                       ref={scrollRef}
                       className="flex-1 overflow-y-auto p-5 md:p-8"
                     >
                       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8 lg:gap-12">
-                        {/* Descompunerea ratingului */}
+                        {/* rating breakdown */}
                         <div className="space-y-6 md:space-y-8 lg:sticky lg:top-0 h-fit">
-                          {/* Graficul cu distributia ratingului */}
+                          {/* rating distribution chart */}
                           <div className="bg-brand-50 rounded-3xl p-6 space-y-4 border-2 border-brand-100">
                             <h3 className="text-sm font-black text-brand-700 uppercase tracking-widest">Rating Distribution</h3>
                             <div className="space-y-3">
@@ -1245,7 +1245,7 @@ export const SpaceDetails = () => {
                             </div>
                           </div>
 
-                          {/* Ratinguri pe categorii */}
+                          {/* category ratings */}
                           {[
                             { label: 'Cleanliness', score: reviewAggregates.cleanliness ?? 0 },
                             { label: 'Communication', score: reviewAggregates.communication ?? 0 },
@@ -1269,9 +1269,9 @@ export const SpaceDetails = () => {
                           ))}
                         </div>
 
-                        {/* Lista de recenzii */}
+                        {/* review list */}
                         <div className="space-y-8">
-                          {/* Sortarea (header) */}
+                          {/* sort controls (header) */}
                           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-8 border-b border-brand-100">
                             <h3 className="text-xl font-black text-brand-700">Most relevant reviews</h3>
                             <div className="flex items-center gap-3">
@@ -1376,7 +1376,7 @@ export const SpaceDetails = () => {
                             ))}
                           </div>
 
-                          {/* Controale de paginare */}
+                          {/* pagination */}
                           <div className="pt-12 border-t border-brand-100 flex items-center justify-between">
                             <div className="text-sm font-bold text-brand-400">
                               Page {reviewPage} of {totalReviewPages}
@@ -1424,7 +1424,7 @@ export const SpaceDetails = () => {
               )}
             </AnimatePresence>
 
-            {/* Locatia */}
+            {/* location */}
             <section id="location-map" className="space-y-6 md:space-y-8 pt-8 md:pt-10 border-t border-brand-100">
               <h2 className="text-2xl md:text-3xl font-black text-brand-700">Where you'll be</h2>
               {spaceDetails.latitude != null && spaceDetails.longitude != null ? (
@@ -1475,7 +1475,7 @@ export const SpaceDetails = () => {
             </section>
           </div>
 
-          {/* Widget-ul de booking */}
+          {/* booking widget */}
           <div className="relative z-10" id="booking">
             <div className="sticky top-24 md:top-32 bg-white border-2 border-brand-100 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 shadow-2xl shadow-brand-700/5 overflow-hidden flex flex-col max-h-[calc(100vh-5.5rem)] md:max-h-[calc(100vh-7.5rem)]">
               {(spaceDetails?.status ?? 'active') !== 'active' && (
@@ -1506,7 +1506,7 @@ export const SpaceDetails = () => {
               </div>
 
               <div className={`flex flex-col flex-1 min-h-0 ${(spaceDetails?.status ?? 'active') !== 'active' ? 'pointer-events-none opacity-60' : ''}`}>
-                {/* Alegerea datei */}
+                {/* date picker */}
                 <div className="group relative shrink-0 mb-4" ref={calendarRef}>
                   <label className="block text-[10px] font-black text-brand-400 uppercase tracking-[0.2em] mb-2 ml-1">Selected Date</label>
                   <div className="relative">
@@ -1618,7 +1618,7 @@ export const SpaceDetails = () => {
                   </AnimatePresence>
                 </div>
 
-                {/* Grila de disponibilitate (alegere) */}
+                {/* time slot grid */}
                 <div className="flex flex-col flex-1 min-h-[12rem] md:min-h-[14rem] space-y-2.5">
                   <AnimatePresence>
                     {bookingConflict && (
@@ -1722,7 +1722,7 @@ export const SpaceDetails = () => {
                   </div>
                 </div>
 
-                {/* Rezumatul duratei + actiuni (fixat in partea de jos a cardului) */}
+                {/* duration summary + actions (pinned to bottom of card) */}
                 <div className="shrink-0 pt-3 mt-2.5 border-t border-brand-100 space-y-3">
                 <AnimatePresence>
                   {startTime && endTime && (

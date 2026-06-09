@@ -20,8 +20,8 @@ const BUBBLE_WIDTH = 72;
 const BUBBLE_HEIGHT = 36;
 
 /**
- * Airbnb map preview card at ~1080p: ~305px wide, ~410px tall, 3:2 photo (~200px).
- * Layout is authored at 320px then scaled so styling stays identical.
+ * Airbnb-style map preview card at ~1080p: ~305px wide, ~410px tall, 3:2 image (~200px).
+ * Layout is at 320px then scaled so styling stays identical.
  */
 const MAP_POPUP_LAYOUT_WIDTH_PX = 320;
 const MAP_POPUP_WIDTH_PX = 300;
@@ -54,7 +54,7 @@ function getMapProjection(map: google.maps.Map): google.maps.MapCanvasProjection
 
 /**
  * Viewport pixel position for a lat/lng, relative to the popup host element.
- * Uses container pixels (visible map), not div pixels (draggable pane/world coords).
+ * Uses container pixels (visible map), not div pixels (draggable pane / world coords).
  */
 function latLngToHostPoint(
   map: google.maps.Map,
@@ -151,7 +151,7 @@ function choosePopupPlacement(
     }
   }
 
-  // Bubbles in the upper half should open south when it fits.
+  // Bubbles in the upper half open southward when there is room.
   const bubbleCenterY = markerPoint.y - BUBBLE_HEIGHT / 2;
   const south = options.find((o) => o.placement === 'south');
   if (
@@ -309,7 +309,7 @@ function computePopupScreenPosition(
   return { left: rect.left, top: rect.top };
 }
 
-/** Iconul pin pentru harta locatiei spatiului (picatura maro). */
+/** Pin icon for the space location map (brown teardrop). */
 function getLocationPinIcon(): google.maps.Icon {
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="36" height="48" viewBox="0 0 36 48">
@@ -323,7 +323,7 @@ function getLocationPinIcon(): google.maps.Icon {
   };
 }
 
-/** Stil map dezaturat/„sters”, ca sa iasa in evidenta pin-urile de pret (gen Airbnb). */
+/** Desaturated/"washed" map style so price pins stand out (Airbnb-style). */
 const MAP_STYLE_MUTED: google.maps.MapTypeStyle[] = [
   { featureType: 'water', stylers: [{ color: '#c5d4e0' }, { saturation: 35 }] },
   { featureType: 'landscape.natural', stylers: [{ saturation: -15 }, { lightness: 5 }] },
@@ -339,7 +339,7 @@ const MAP_STYLE_MUTED: google.maps.MapTypeStyle[] = [
   { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#5a5a5a' }, { lightness: 8 }] },
 ];
 
-/** Returneaza iconul pentru un bubble de pret; la hover foloseste umplutura maro mai inchis. */
+/** Return the icon for a price bubble; on hover use a darker brown fill. */
 function getPriceMarkerIcon(price: number, hovered = false): google.maps.Icon {
   const text = `$${Number.isInteger(price) ? price : Math.round(price)}`;
   const fill = hovered ? '#5f4731' : 'white';
@@ -380,7 +380,7 @@ export function ListingMap({
     googleMapsApiKey: API_KEY,
   });
 
-  // Prefer the placed pin over a geocoded city/area center so clicking the map
+  // Prefer the placed pin over the geocoded city/area center, so clicking the map
   // zooms to the pin instead of snapping back to the searched location.
   const mapCenter = useMemo(
     () => pin ?? center ?? WORLD_DEFAULT_CENTER,
@@ -453,7 +453,7 @@ export function ListingMap({
   );
 }
 
-/** Harta statica centrata pe un singur punct pentru sectiunea de detalii „Where you'll be”. */
+/** Static map centered on a single point for the "Where you'll be" details section. */
 export function SpaceLocationMap({
   latitude,
   longitude,
@@ -512,7 +512,7 @@ export function SpaceLocationMap({
   );
 }
 
-/** Deseneaza un singur pin pe harta folosind API-ul imperativ, ca sa fie mereu afisat. */
+/** Draw a single pin on the map using the imperative API so it is always visible. */
 function SpaceLocationMapMarker({ position }: { position: LatLng }) {
   const map = useGoogleMap();
   useEffect(() => {
@@ -527,7 +527,7 @@ function SpaceLocationMapMarker({ position }: { position: LatLng }) {
   return null;
 }
 
-/** Deseneaza markerii ca copii ai `GoogleMap`, ca sa primeasca harta din context. */
+/** Render markers as children of `GoogleMap` so they receive the map from context. */
 function SpacesMapMarkers({
   spaces,
   onMarkerClick,
@@ -580,7 +580,7 @@ function boundsFromMap(map: google.maps.Map): MapBounds | null {
   };
 }
 
-/** Ensures MapCanvasProjection exists as soon as the map is on screen. */
+/** Ensure MapCanvasProjection exists as soon as the map appears on screen. */
 function MapProjectionWarmup() {
   const map = useGoogleMap();
   useEffect(() => {
@@ -595,7 +595,7 @@ function MapProjectionWarmup() {
   return null;
 }
 
-/** Reports viewport bounds after pan/zoom settles. */
+/** Send viewport bounds once pan/zoom settles. */
 function MapBoundsReporter({ onBoundsChange }: { onBoundsChange?: (bounds: MapBounds) => void }) {
   const map = useGoogleMap();
   const onBoundsChangeRef = React.useRef(onBoundsChange);
@@ -730,8 +730,8 @@ function MapSpaceDetailCard({
 }
 
 /**
- * Renders the popup inside the clipped map layer so it is hidden past map edges.
- * Pans only once when opened; afterwards only repositions with the marker.
+ * Render the popup in the clipped map layer so it hides beyond the edges.
+ * Pan once on open; then only reposition it with the marker.
  */
 function SelectedMapPopup({
   space,
@@ -783,7 +783,7 @@ function SelectedMapPopup({
     [map, popupHostRef, space.latitude, space.longitude]
   );
 
-  /** Pan at most a few times when a bubble is clicked; never during user drag. */
+  /** Pan at most a few times on bubble click; never during user drag. */
   useEffect(() => {
     const host = popupHostRef.current;
     if (!map || !host) return;
@@ -832,7 +832,7 @@ function SelectedMapPopup({
     };
   }, [map, popupHostRef, space.id, space.latitude, space.longitude, applyPopupLayout]);
 
-  /** Keep the card glued to the marker when the user pans/zooms. */
+  /** Keep the card anchored to the marker when the user pans/zooms. */
   useEffect(() => {
     if (!map || !popupHostRef.current || !position) return;
 
@@ -856,7 +856,7 @@ function SelectedMapPopup({
     };
   }, [map, popupHostRef, space.id, position, applyPopupLayout]);
 
-  /** Retry layout when projection becomes available after the first failed open. */
+  /** Retry layout when projection becomes available after a failed first open. */
   useEffect(() => {
     if (!map || !popupHostRef.current || position) return;
 

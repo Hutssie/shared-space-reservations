@@ -37,7 +37,7 @@ const MainLayout = () => {
   const { clearNewestBooking } = useUnreadBookings();
   const prevPathRef = useRef(location.pathname);
 
-  // sterge badge-ul NEW cand utilizatorul pleaca din dashboard
+  // clear NEW badge when user leaves dashboard
   useEffect(() => {
     if (prevPathRef.current === '/dashboard' && location.pathname !== '/dashboard') {
       clearNewestBooking();

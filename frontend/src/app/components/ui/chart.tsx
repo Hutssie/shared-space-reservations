@@ -315,7 +315,7 @@ function ChartLegendContent({
   );
 }
 
-// helper care extrage config-ul pentru item din payload
+// pull chart config for an item from the payload
 function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,

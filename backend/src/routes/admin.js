@@ -20,7 +20,7 @@ function pagination(req) {
   return { limit, offset };
 }
 
-// GET /api/admin/users - listam utilizatorii (paginat, cautare optionala)
+// GET /api/admin/users - list users (paginated, optional search)
 router.get('/users', async (req, res, next) => {
   try {
     const { limit, offset } = pagination(req);
@@ -48,7 +48,7 @@ router.get('/users', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/users/:id - un user + numarari
+// GET /api/admin/users/:id - single user + counts
 router.get('/users/:id', async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
@@ -172,7 +172,7 @@ router.post('/users/:id/ban', async (req, res, next) => {
   }
 });
 
-// POST /api/admin/users/:id/unban - scoate ban ul
+// POST /api/admin/users/:id/unban - remove ban
 router.post('/users/:id/unban', async (req, res, next) => {
   try {
     const user = await prisma.user.findUnique({
@@ -195,7 +195,7 @@ router.post('/users/:id/unban', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/spaces - listam toate spatiiile (orice status), filtre optionale
+// GET /api/admin/spaces - list all spaces (any status), optional filters
 router.get('/spaces', async (req, res, next) => {
   try {
     const { limit, offset } = pagination(req);
@@ -233,7 +233,7 @@ router.get('/spaces', async (req, res, next) => {
   }
 });
 
-// PATCH /api/admin/spaces/:id - schimb doar statusul spatiului
+// PATCH /api/admin/spaces/:id - update space status only
 router.patch('/spaces/:id', async (req, res, next) => {
   try {
     const { status } = req.body;
@@ -265,7 +265,7 @@ router.patch('/spaces/:id', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/bookings - listam toate rezervarile (paginat)
+// GET /api/admin/bookings - list all bookings (paginated)
 router.get('/bookings', async (req, res, next) => {
   try {
     const { limit, offset } = pagination(req);
@@ -309,7 +309,7 @@ router.get('/bookings', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/reviews - listam recenzii recente (paginat)
+// GET /api/admin/reviews - list recent reviews (paginated)
 router.get('/reviews', async (req, res, next) => {
   try {
     const { limit, offset } = pagination(req);
@@ -352,7 +352,7 @@ router.get('/reviews', async (req, res, next) => {
   }
 });
 
-// DELETE /api/admin/reviews/:id - sterge recenzie
+// DELETE /api/admin/reviews/:id - delete review
 router.delete('/reviews/:id', async (req, res, next) => {
   try {
     await prisma.review.delete({
@@ -365,7 +365,7 @@ router.delete('/reviews/:id', async (req, res, next) => {
   }
 });
 
-// GET /api/admin/stats - statistici extinse ale platformei
+// GET /api/admin/stats - extended platform stats
 router.get('/stats', async (req, res, next) => {
   try {
     const [

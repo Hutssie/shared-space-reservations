@@ -201,7 +201,7 @@ router.post('/reset-password', async (req, res, next) => {
         message: 'Your password has changed successfully.',
       });
     } catch {
-      // resetarea parolei nu trebuie sa pice daca e problema la notificare.
+      // Password reset must not fail if notification delivery has issues.
     }
 
     res.json({ success: true });
@@ -243,7 +243,7 @@ router.post('/change-password', authMiddleware, async (req, res, next) => {
         message: 'Your password has changed successfully.',
       });
     } catch {
-      // schimbarea parolei nu trebuie sa pice daca e problema la notificare.
+      // Password change must not fail if notification delivery has issues.
     }
 
     res.json({ success: true });

@@ -5,7 +5,7 @@ import { prisma } from '../lib/prisma.js';
 const router = Router();
 
 /**
- * helper ca sa creezi o notificare. folosire din bookings, messages, etc.
+ * helper to create a notification — used from bookings, messages, etc.
  * @param {import('@prisma/client').PrismaClient} prismaClient
  * @param {{ userId: string, type: string, title: string, message: string, data?: object }} params
  */
@@ -44,18 +44,18 @@ export async function createNotification(prismaClient, { userId, type, title, me
   const prefs = await fetchNotificationPrefsRaw();
   const destination = data?.destination;
 
-  // decide ce toggle al userului controleaza tipul asta de notificare.
+  // Decide which user toggle controls this notification type.
   let enabled = true;
   if (type?.startsWith('booking_')) {
     enabled = destination === 'host_space_bookings' ? prefs.hostBookingUpdatesEnabled : prefs.bookingUpdatesEnabled;
   } else if (type === 'message_received' || type?.startsWith('message_')) {
     enabled = prefs.messageAlertsEnabled;
   } else if (type === 'system' || type?.startsWith('security')) {
-    // flow-urile de reset/schimbare parola folosesc tipul de notificare `security_password_changed`,
-    // trebuie controlat doar de toggle-ul pentru „System Notifications”.
+    // Password reset/change flows use the `security_password_changed` notification type,
+    // which must be controlled only by the "System Notifications" toggle.
     enabled = prefs.systemNotificationsEnabled;
   } else {
-    // tipurile necunoscute de notificari le tratez ca „System Notifications”.
+    // Treat unknown notification types as "System Notifications".
     enabled = prefs.systemNotificationsEnabled;
   }
 

@@ -2,7 +2,7 @@ export const DEFAULT_CITY_NAME = process.env.DEFAULT_CITY_NAME || 'Craiova';
 export const DEFAULT_CITY_LAT = parseFloat(process.env.DEFAULT_CITY_LAT || '44.3191');
 export const DEFAULT_CITY_LNG = parseFloat(process.env.DEFAULT_CITY_LNG || '23.7936');
 export const NEARBY_RADIUS_KM = parseFloat(process.env.NEARBY_RADIUS_KM || '100');
-/** Fallback when geocoder bbox is unavailable for city search. */
+/** Fallback when the geocoder has no bbox available for city search. */
 export const CITY_FILTER_RADIUS_KM = parseFloat(process.env.CITY_FILTER_RADIUS_KM || '25');
 export const CITY_BBOX_BUFFER_PCT = parseFloat(process.env.CITY_BBOX_BUFFER_PCT || '0.10');
 export const HOME_RECOMMENDATION_LIMIT = parseInt(process.env.HOME_RECOMMENDATION_LIMIT || '15', 10);
@@ -38,11 +38,11 @@ export const RAG_FALLBACK_LIMIT = parseInt(process.env.RAG_FALLBACK_LIMIT || '3'
 export const AI_SEARCH_POOL_SIZE = parseInt(process.env.AI_SEARCH_POOL_SIZE || '30', 10);
 export const AI_SEARCH_DISPLAY_LIMIT = parseInt(process.env.AI_SEARCH_DISPLAY_LIMIT || '6', 10);
 
-// Phase C: semantic retrieval blend. Fraction of the RAG score allocated to
-// pgvector cosine similarity when a query embedding + embedded candidates exist.
-// The remaining (1 - weight) is split across relevance/hybrid/pop as before.
+// Phase C: blend semantic retrieval. Fraction of the RAG score allocated to
+// pgvector cosine similarity when a query embedding and embedded candidates exist.
+// The remainder (1 - weight) is split as before between relevance/hybrid/pop.
 export const RAG_SEMANTIC_WEIGHT = parseFloat(process.env.RAG_SEMANTIC_WEIGHT || '0.30');
 
 // Embedding model config lives in embeddings.js; re-exported here so all
-// recommendation/config knobs are discoverable from one module.
+// recommendation/config knobs are discoverable from a single module.
 export { EMBEDDING_MODEL, EMBEDDING_DIMS } from './embeddings.js';
