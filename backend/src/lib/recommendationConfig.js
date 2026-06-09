@@ -37,3 +37,12 @@ export const RAG_PERSONALIZED_HYBRID_WEIGHT = parseFloat(
 export const RAG_FALLBACK_LIMIT = parseInt(process.env.RAG_FALLBACK_LIMIT || '3', 10);
 export const AI_SEARCH_POOL_SIZE = parseInt(process.env.AI_SEARCH_POOL_SIZE || '30', 10);
 export const AI_SEARCH_DISPLAY_LIMIT = parseInt(process.env.AI_SEARCH_DISPLAY_LIMIT || '6', 10);
+
+// Phase C: semantic retrieval blend. Fraction of the RAG score allocated to
+// pgvector cosine similarity when a query embedding + embedded candidates exist.
+// The remaining (1 - weight) is split across relevance/hybrid/pop as before.
+export const RAG_SEMANTIC_WEIGHT = parseFloat(process.env.RAG_SEMANTIC_WEIGHT || '0.30');
+
+// Embedding model config lives in embeddings.js; re-exported here so all
+// recommendation/config knobs are discoverable from one module.
+export { EMBEDDING_MODEL, EMBEDDING_DIMS } from './embeddings.js';

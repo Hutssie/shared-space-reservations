@@ -15,8 +15,10 @@ import {
   RAG_POP_WEIGHT,
   RAG_RELEVANCE_WEIGHT,
   RAG_RETRIEVAL_LIMIT,
+  RAG_SEMANTIC_WEIGHT,
   defaultRankingCenter,
 } from './recommendationConfig.js';
+import { embedQuery, toSqlVector } from './embeddings.js';
 
 const STOPWORDS = new Set([
   'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one',
@@ -109,6 +111,45 @@ export async function fetchKeywordCandidates(prisma, query, { limit = RAG_CANDID
   });
 }
 
+/**
+ * Fetch semantically nearest spaces for a query via pgvector cosine distance.
+ * Returns { ids, similarity } where similarity maps space id -> cosine similarity
+ * in [-1, 1]. Degrades gracefully to an empty result when no API key, no query,
+ * or any embedding/DB error occurs (keyword-only fallback upstream).
+ */
+export async function fetchSemanticCandidates(prisma, query, { limit = RAG_CANDIDATE_POOL } = {}) {
+  const text = String(query || '').trim();
+  if (!text) return { ids: [], similarity: new Map() };
+
+  let vector = null;
+  try {
+    vector = await embedQuery(text);
+  } catch {
+    vector = null;
+  }
+  if (!vector) return { ids: [], similarity: new Map() };
+
+  let rows;
+  try {
+    const literal = toSqlVector(vector);
+    rows = await prisma.$queryRawUnsafe(
+      `SELECT id, 1 - (embedding <=> $1::vector) AS similarity
+       FROM "Space"
+       WHERE status = 'active' AND embedding IS NOT NULL
+       ORDER BY embedding <=> $1::vector
+       LIMIT $2`,
+      literal,
+      limit
+    );
+  } catch {
+    return { ids: [], similarity: new Map() };
+  }
+
+  const ids = rows.map((r) => r.id);
+  const similarity = new Map(rows.map((r) => [r.id, Number(r.similarity)]));
+  return { ids, similarity };
+}
+
 function truncateDescription(text, maxLen = 180) {
   const s = String(text || '').replace(/\s+/g, ' ').trim();
   if (s.length <= maxLen) return s;
@@ -156,17 +197,32 @@ export function orderSpacesByRetrieval(spaces, retrieved, limit = 6) {
     .slice(0, limit);
 }
 
-function ragBlendWeights(userId) {
+function ragBlendWeights(userId, semanticActive = false) {
+  let base;
   if (userId) {
     const relevance = RAG_PERSONALIZED_RELEVANCE_WEIGHT;
     const hybrid = RAG_PERSONALIZED_HYBRID_WEIGHT;
     const pop = Math.max(0, 1 - relevance - hybrid);
-    return { relevance, hybrid, pop: pop || RAG_POP_WEIGHT };
+    base = { relevance, hybrid, pop: pop || RAG_POP_WEIGHT };
+  } else {
+    base = {
+      relevance: RAG_RELEVANCE_WEIGHT,
+      hybrid: RAG_HYBRID_WEIGHT,
+      pop: RAG_POP_WEIGHT,
+    };
   }
+
+  if (!semanticActive) {
+    return { ...base, semantic: 0 };
+  }
+
+  // Carve out the semantic share, scaling the existing signals proportionally.
+  const s = Math.max(0, Math.min(1, RAG_SEMANTIC_WEIGHT));
   return {
-    relevance: RAG_RELEVANCE_WEIGHT,
-    hybrid: RAG_HYBRID_WEIGHT,
-    pop: RAG_POP_WEIGHT,
+    relevance: base.relevance * (1 - s),
+    hybrid: base.hybrid * (1 - s),
+    pop: base.pop * (1 - s),
+    semantic: s,
   };
 }
 
@@ -178,12 +234,30 @@ export async function retrieveSpacesForRag(
   { messages, userId = null, limit = RAG_RETRIEVAL_LIMIT } = {}
 ) {
   const query = buildRetrievalQuery(messages);
-  const candidates = await fetchKeywordCandidates(prisma, query);
+  const keywordCandidates = await fetchKeywordCandidates(prisma, query);
+
+  // Semantic recall: augment the keyword pool with nearest-neighbour matches.
+  const semantic = await fetchSemanticCandidates(prisma, query);
+  const haveIds = new Set(keywordCandidates.map((s) => s.id));
+  const missingSemanticIds = (semantic.ids || []).filter((id) => !haveIds.has(id));
+  let semanticRows = [];
+  if (missingSemanticIds.length > 0) {
+    semanticRows = await prisma.space.findMany({
+      where: { id: { in: missingSemanticIds }, status: 'active' },
+      select: RAG_SELECT,
+    });
+  }
+
+  const candidates = [...keywordCandidates, ...semanticRows];
   if (candidates.length === 0) return [];
 
   const spaceIds = candidates.map((s) => s.id);
   const relevanceRaw = scoreRelevance(candidates, query);
   const relevanceNorm = minMaxNormalize(relevanceRaw);
+
+  const semanticActive = (semantic.similarity?.size ?? 0) > 0;
+  const semanticRaw = new Map(spaceIds.map((id) => [id, semantic.similarity.get(id) ?? 0]));
+  const semanticNorm = minMaxNormalize(semanticRaw);
 
   const center = defaultRankingCenter();
   const [hybridRaw, popRaw] = await Promise.all([
@@ -200,19 +274,21 @@ export async function retrieveSpacesForRag(
   ]);
   const hybridNorm = minMaxNormalize(hybridRaw);
   const popNorm = minMaxNormalize(popRaw);
-  const weights = ragBlendWeights(userId);
+  const weights = ragBlendWeights(userId, semanticActive);
 
   const blended = new Map();
   for (const id of spaceIds) {
     const rel = relevanceNorm.get(id) ?? 0;
     const hyb = hybridNorm.get(id) ?? 0;
     const pop = popNorm.get(id) ?? 0;
+    const sem = semanticNorm.get(id) ?? 0;
     const rawPop = popRaw.get(id) ?? 0;
     blended.set(
       id,
       weights.relevance * rel +
         weights.hybrid * hyb +
         weights.pop * pop +
+        (weights.semantic ?? 0) * sem +
         rawPop * 1e-6
     );
   }
