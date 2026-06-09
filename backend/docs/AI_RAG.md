@@ -43,6 +43,7 @@ retrievalScore =
   relevanceWeight * normalize(relevance) +
   hybridWeight * normalize(hybrid) +
   popWeight * normalize(pop30d) +
+  semanticWeight * normalize(semantic) +   // Phase C: only when embeddings exist
   rawPop30d * 1e-6   // tie-breaker when counts differ
 ```
 
@@ -51,6 +52,12 @@ retrievalScore =
 | Logged out | 0.45 | 0.35 | 0.20 |
 | Logged in | 0.35 | 0.45 | 0.20 |
 
+When a semantic signal is present (query embedding + embedded candidates), the
+relevance/hybrid/pop weights above are scaled by `(1 - RAG_SEMANTIC_WEIGHT)` and
+the freed share (default **0.30**) is assigned to the semantic signal. With no
+embeddings or no API key the semantic weight is **0** and the blend is identical
+to the pre-Phase-C behavior (keyword-only fallback).
+
 All weights are env-configurable (`RAG_*_WEIGHT`).
 
 | Signal | Source |
@@ -58,8 +65,38 @@ All weights are env-configurable (`RAG_*_WEIGHT`).
 | Relevance | Keyword hits in title (+3), category/location (+2), description (+1) |
 | Hybrid | Existing [`scoreSpaces()`](../src/lib/recommendations.js) — pop30d, content, collab, location |
 | Popularity | Confirmed bookings in the last 30 days (explicit weight + tie-breaker) |
+| Semantic | pgvector cosine similarity between the query embedding and `Space.embedding` (Phase C) |
 
 Logged-out users use cold-start hybrid (pop + location). Logged-in users with booking/favorite history get full hybrid scores with a higher hybrid weight.
+
+## Semantic retrieval (Phase C)
+
+pgvector adds meaning-based recall on top of keyword matching. Each active space
+has a 768-dim `embedding` (gemini-embedding-001) stored in a `vector(768)` column
+with an HNSW cosine index. The retrieval step embeds the query and unions the
+nearest neighbours into the keyword candidate pool before blending.
+
+```mermaid
+flowchart LR
+  Q[Query text] --> KW[fetchKeywordCandidates]
+  Q --> EMB[embedQuery -> gemini-embedding-001]
+  EMB --> ANN[ANN cosine search\nSpace.embedding HNSW]
+  KW --> POOL[Candidate pool union]
+  ANN --> POOL
+  POOL --> BLEND[blend: relevance + hybrid + pop + semantic]
+  BLEND --> TOP[top-k for RAG context]
+```
+
+- **Write path** — `refreshSpaceEmbedding` regenerates a space's embedding
+  (best-effort, fire-and-forget) after create and after updates that touch
+  title/category/location/description/amenities. See [`spaces.js`](../src/routes/spaces.js).
+- **Backfill** — `npm run db:backfill-embeddings` (missing-only by default,
+  `--all` to re-embed every active space). See [`backfill-space-embeddings.js`](../prisma/backfill-space-embeddings.js).
+- **Library** — [`embeddings.js`](../src/lib/embeddings.js): `buildSpaceEmbeddingText`,
+  `embedDocument`/`embedQuery` (task types, `outputDimensionality: 768`),
+  `embedDocumentsBatch` (429 backoff), `toSqlVector`.
+- **Fallback** — any missing API key, empty query, or embedding/DB error makes
+  `fetchSemanticCandidates` return empty, so retrieval degrades to keyword-only.
 
 ## Space card ordering
 
@@ -176,6 +213,9 @@ RAG retrieval still grounds Gemini's prose, but **failed searches no longer retu
 | `RAG_POP_WEIGHT` | 0.20 | Popularity weight (30d bookings) |
 | `RAG_PERSONALIZED_RELEVANCE_WEIGHT` | 0.35 | Logged-in relevance weight |
 | `RAG_PERSONALIZED_HYBRID_WEIGHT` | 0.45 | Logged-in hybrid weight |
+| `RAG_SEMANTIC_WEIGHT` | 0.30 | Semantic share when embeddings exist (Phase C) |
+| `EMBEDDING_MODEL` | gemini-embedding-001 | Embedding model (Phase C) |
+| `EMBEDDING_DIMS` | 768 | Embedding dimensionality; must match the `vector(N)` column (Phase C) |
 | `AI_SEARCH_POOL_SIZE` | 30 | Candidates fetched before card re-rank |
 | `AI_SEARCH_DISPLAY_LIMIT` | 6 | Space cards shown in chat |
 | `RAG_FALLBACK_LIMIT` | 3 | (Legacy config; card fallback removed — RAG is context-only) |
@@ -186,13 +226,16 @@ RAG retrieval still grounds Gemini's prose, but **failed searches no longer retu
 
 ## Key files
 
-- [`backend/src/lib/aiSearchRetrieval.js`](../src/lib/aiSearchRetrieval.js) — retrieval and blending
+- [`backend/src/lib/aiSearchRetrieval.js`](../src/lib/aiSearchRetrieval.js) — retrieval and blending (incl. semantic)
+- [`backend/src/lib/embeddings.js`](../src/lib/embeddings.js) — embedding generation and pgvector helpers
 - [`backend/src/lib/aiSearchTools.js`](../src/lib/aiSearchTools.js) — Gemini `search_spaces` tool schema and parser
 - [`backend/src/lib/aiSearchFilterInference.js`](../src/lib/aiSearchFilterInference.js) — price/date phrase parsing
 - [`backend/src/lib/aiSearchPolicy.js`](../src/lib/aiSearchPolicy.js) — conversation gates, templates, follow-up
 - [`backend/src/routes/ai-search.js`](../src/routes/ai-search.js) — RAG injection, tool wiring, search ladder
 - [`RECOMMENDATIONS.md`](../../RECOMMENDATIONS.md) — hybrid recommender used for the blend
 
-## Out of scope (Phase C)
+## Phase C (delivered)
 
-- pgvector semantic embeddings for retrieval
+- pgvector semantic embeddings for retrieval (768-dim `gemini-embedding-001`,
+  HNSW cosine index, query/document embedding, semantic blend with keyword-only
+  fallback, write-time refresh, and a backfill script).

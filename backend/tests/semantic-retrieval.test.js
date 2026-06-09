@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSpaceEmbeddingText, toSqlVector } from '../src/lib/embeddings.js';
+import { fetchSemanticCandidates } from '../src/lib/aiSearchRetrieval.js';
 
 describe('embeddings text builder (Phase C)', () => {
   it('combines title, category, location, amenities, and description', () => {
@@ -53,5 +54,18 @@ describe('toSqlVector (Phase C)', () => {
     assert.throws(() => toSqlVector([]), /non-empty/);
     assert.throws(() => toSqlVector(null), /non-empty/);
     assert.throws(() => toSqlVector('nope'), /non-empty/);
+  });
+});
+
+describe('fetchSemanticCandidates fallback (Phase C)', () => {
+  it('returns an empty result for blank queries without touching the DB', async () => {
+    const prismaStub = {
+      $queryRawUnsafe: async () => {
+        throw new Error('DB should not be queried for a blank query');
+      },
+    };
+    const result = await fetchSemanticCandidates(prismaStub, '   ');
+    assert.deepEqual(result.ids, []);
+    assert.equal(result.similarity.size, 0);
   });
 });

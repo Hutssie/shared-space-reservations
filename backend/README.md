@@ -41,6 +41,8 @@ After pulling availability-rules migration: `npm run db:deploy` then `npm run db
 
 After pulling drop-json migration (`20250606130000`): `npm run db:deploy` then `npm run db:verify-scalability` and `npm test`.
 
+After pulling the space-embedding migration (`20250609160000`): `npm run db:deploy` then `npm run db:backfill-embeddings` (requires `GEMINI_API_KEY`; missing-only by default, pass `-- --all` to re-embed every active space). Powers AI-search semantic retrieval — see [docs/AI_RAG.md](docs/AI_RAG.md).
+
 **Verification:** `npm run db:verify-scalability` · `npm test` · optional `npm run db:explain-scalability -- --save`
 
 **Date availability (`GET /api/spaces?date=YYYY-MM-DD`):** candidates are scanned in batches of 100 (up to 2000 rows) with bookings loaded per batch; only the result page is fully hydrated. If more matching spaces exist beyond the scan cap, the response may include `availabilityScanCapped: true`. See [DATABASE_SCALABILITY.md](docs/DATABASE_SCALABILITY.md) Phase 3.
