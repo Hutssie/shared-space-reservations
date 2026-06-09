@@ -12,6 +12,7 @@
     "db:backfill-amenities": "node prisma/backfill-space-amenities.js",
     "db:backfill-availability-rules": "node prisma/backfill-space-availability-rules.js",
     "db:backfill-location-norm": "node prisma/backfill-space-location-norm.js",
+    "db:backfill-embeddings": "node prisma/backfill-space-embeddings.js",
     "db:verify-availability-rules": "node prisma/verify-space-availability-rules.js",
     "db:verify-location-norm": "node prisma/verify-space-location-norm.js",
     "db:explain-search": "node prisma/explain-space-search.js",
