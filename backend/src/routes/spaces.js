@@ -37,8 +37,42 @@ import {
   resolveGeoContext,
   searchSpacesRanked,
 } from '../lib/rankedSpaceSearch.js';
+import { buildSpaceEmbeddingText, embedDocument, toSqlVector } from '../lib/embeddings.js';
 
 const router = Router();
+
+/**
+ * Best-effort regeneration of a space's semantic embedding. Runs out of band
+ * (fire-and-forget) so listing writes never block or fail on embedding errors.
+ */
+async function refreshSpaceEmbedding(spaceId) {
+  try {
+    const space = await prisma.space.findUnique({
+      where: { id: spaceId },
+      select: {
+        id: true,
+        title: true,
+        category: true,
+        location: true,
+        description: true,
+        amenities: { select: { amenityId: true } },
+      },
+    });
+    if (!space) return;
+    const vector = await embedDocument(buildSpaceEmbeddingText(space));
+    if (!vector) return;
+    await prisma.$executeRawUnsafe(
+      `UPDATE "Space" SET embedding = $1::vector WHERE id = $2`,
+      toSqlVector(vector),
+      spaceId
+    );
+  } catch (err) {
+    console.error(`refreshSpaceEmbedding failed for ${spaceId}:`, err?.message || err);
+  }
+}
+
+/** Listing fields whose changes warrant regenerating the embedding. */
+const EMBEDDING_RELEVANT_FIELDS = ['title', 'category', 'location', 'description'];
 
 export { TIME_SLOTS, computeIsSpaceAvailableOnDate, computeIsSpaceAvailableInRange } from '../lib/spaceAvailabilityCompute.js';
 
@@ -724,6 +758,7 @@ router.post('/', authMiddleware, async (req, res, next) => {
       });
     });
     res.status(201).json(spaceToResponse(space));
+    void refreshSpaceEmbedding(space.id);
   } catch (e) {
     next(e);
   }
@@ -850,6 +885,11 @@ router.patch('/:id', authMiddleware, async (req, res, next) => {
       });
     });
     res.json(spaceToResponse(updated));
+    const embeddingRelevantChanged =
+      EMBEDDING_RELEVANT_FIELDS.some((key) => key in data) || amenitiesPayload !== undefined;
+    if (embeddingRelevantChanged) {
+      void refreshSpaceEmbedding(req.params.id);
+    }
   } catch (e) {
     if (e.status === 400) {
       return res.status(400).json({ error: e.message });
