@@ -8,6 +8,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "db:bootstrap": "node prisma/bootstrap-fresh-db.js",
     "db:backfill-minutes": "node prisma/backfill-booking-minutes.js",
     "db:backfill-amenities": "node prisma/backfill-space-amenities.js",
     "db:backfill-availability-rules": "node prisma/backfill-space-availability-rules.js",
@@ -25,6 +26,7 @@
     "db:bench-search": "node prisma/bench-spaces-search.js",
     "db:evaluate-recommendations": "node prisma/evaluate-recommendations.js",
     "db:backfill-email-verified": "node prisma/backfill-email-verified.js",
+    "db:seed-test-users": "node prisma/seed-test-users.js",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "db:studio": "prisma studio"

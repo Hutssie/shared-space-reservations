@@ -19,7 +19,17 @@ import { locationNormFromDisplay } from '../src/lib/textNormalize.js';
 
 const prisma = new PrismaClient();
 const FIXTURE_PREFIX = 'D3Avail_';
-const TARGET_DATE = '2026-06-10';
+// Computed relative to "today" so the fixture date is always in the future —
+// host availability rules reject blocked dates in the past. Using local date
+// parts (not toISOString) avoids any timezone off-by-one.
+const TARGET_DATE = (() => {
+  const d = new Date();
+  d.setDate(d.getDate() + 7);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+})();
 const REFERENCE = new Date(`${TARGET_DATE}T12:00:00`);
 const fixtureIds = [];
 const bookingIds = [];

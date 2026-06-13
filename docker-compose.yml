@@ -1,0 +1,48 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: space_reservations
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/space_reservations?schema=public
+      DIRECT_URL: postgresql://postgres:postgres@db:5432/space_reservations?schema=public
+      JWT_SECRET: stress-test-jwt-secret-do-not-use-in-prod
+      PORT: 3000
+      CORS_ORIGIN: "*"
+      FRONTEND_URL: http://localhost:5173
+      # Gemini is needed only for /api/ai-search; other endpoints work without it
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      EMBEDDING_MODEL: gemini-embedding-001
+      EMBEDDING_DIMS: "768"
+      RAG_SEMANTIC_WEIGHT: "0.30"
+      MAILTRAP_HOST: sandbox.smtp.mailtrap.io
+      MAILTRAP_PORT: "2525"
+      MAILTRAP_USER: ${MAILTRAP_USER:-noop}
+      MAILTRAP_PASS: ${MAILTRAP_PASS:-noop}
+      EMAIL_FROM: "SpaceBook <noreply@spacebook.local>"
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_noop}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_noop}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  pgdata:

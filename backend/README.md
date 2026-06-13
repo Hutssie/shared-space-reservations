@@ -15,10 +15,23 @@ Node.js + Express + Prisma + PostgreSQL.
   ```bash
    npm install
    npm run db:generate
-   npm run db:deploy
+   ```
+   **Fresh empty database** (no tables yet, or a failed first `db:deploy`):
+   ```bash
+   npm run db:bootstrap          # creates schema via db push + baselines migrations
    npm run db:seed
    npm run db:backfill-embeddings   # requires GEMINI_API_KEY; semantic AI search
-  ```
+   ```
+   If bootstrap reports existing tables from a partial run, reset and retry:
+   ```bash
+   npm run db:bootstrap -- --force
+   ```
+   **Existing database upgraded from an earlier `db push` baseline:**
+   ```bash
+   npm run db:deploy
+   npm run db:seed
+   npm run db:backfill-embeddings
+   ```
    **Upgrading an existing database** (created earlier with `db push`, no migration history):
    Confirm the exclusion constraint with `npm run db:verify-exclusion`.
    For local schema experiments only, `npm run db:push` remains available; prefer `npm run db:migrate` for changes that should be committed.
