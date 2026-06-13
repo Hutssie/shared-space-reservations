@@ -1,0 +1,11 @@
+{
+  "name": "stress-test",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Stress testing pentru Shared Space Reservations",
+  "scripts": {
+    "start": "node run-local-stress-test.js",
+    "setup-db": "node setup-db.js"
+  },
+  "dependencies": {}
+}
